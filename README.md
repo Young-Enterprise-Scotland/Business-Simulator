@@ -7,6 +7,8 @@
 1. Fork the git repo to your profile.
 
 2. Clone repository.
+    `(https://usernname@stgit.dcs.gla.ac.uk/username/cs33-main.git)`
+
 
 3. Add upstream to forked repo.
 

@@ -31,7 +31,7 @@
 
 ### Django and Database Setup
 
-1. Install MySQL on your system.
+1. Install MySQL on your system.*
 
     `sudo apt-get install mysql-server`
 
@@ -42,7 +42,7 @@
 
     `CREATE USER account_name IDENTIFIED BY 'password';`
 
-    ```GRANT ALL ON `%`.* TO account_name@`%` ```
+    ```GRANT ALL ON '%''.* TO 'account_name@'%'' ```
 
     `exit`
 3. Login to your new mysql user.
@@ -89,3 +89,34 @@
     `git push`
 7. Visit your repository/branch online and click on 'Create new merge request'.
 8. Ask Aaron to review and merge code.
+
+
+\*If error
+```
+Package mysql-server is not available, but is referred to by another package.
+This may mean that the package is missing, has been obsoleted, or
+is only available from another source
+
+E: Package 'mysql-server' has no installation candidate
+```
+This means that the linux distro requires a slightly different mysql bundle
+Follow steps:
+1. Remove any current mysql files and upgrade system: 
+``` 
+sudo apt-get purge mysql-*
+sudo apt-get autoremove
+sudo apt-get autoclean
+sudo apt-get dist-upgrade
+
+sudo rm -rf /etc/mysql
+sudo rm -rf /var/lib/mysql*
+```
+2. Find versions available: `apt-cache search mysql-server`
+3. select the mysql-version available. e.g default-mysql-server
+4. Install the version available, e.g: `sudo apt-get install default-mysql-server`
+5. To get available clients `apt-cache search libmysqlclient-dev`
+6. install corresponding client e.g: `sudo apt-get install default-libmysqlclient-dev`
+7. Allow non root to run mysql: `sudo chown mysql.mysql /var/run/mysqld/`
+8. Finally start the service: `systemctl restart mysql`
+
+

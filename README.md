@@ -118,5 +118,6 @@ sudo rm -rf /var/lib/mysql*
 6. install corresponding client e.g: `sudo apt-get install default-libmysqlclient-dev`
 7. Allow non root to run mysql: `sudo chown mysql.mysql /var/run/mysqld/`
 8. Finally start the service: `systemctl restart mysql`
+9. View `systemctl` and you should see MySql as one of the running processes.  
 
 

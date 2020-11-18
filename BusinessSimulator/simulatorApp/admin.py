@@ -11,5 +11,8 @@ admin.site.register(YES)
 admin.site.register(School)
 admin.site.register(Team)
 admin.site.register(Simulator)
-
+admin.site.register(Strategy)
+admin.site.register(MarketEntry)
+admin.site.register(MarketAttributeType)
+admin.site.register(MarketAttributeTypeData)
 admin.site.site_header = "Young Enterprise Scotland Admin Panel"

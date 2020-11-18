@@ -89,6 +89,9 @@ DATABASES = {
         'PORT': '3306',
         'USER': Key.MYSQL_USERNAME,
         'PASSWORD': Key.MYSQL_PASSWORD,
+        'TEST': {
+            'NAME': 'test_db',
+        },
     }
 }
 

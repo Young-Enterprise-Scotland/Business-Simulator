@@ -9,26 +9,32 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
-from pathlib import Path
-from .key import Key
 import os
+from pathlib import Path
+KEY_FILE_EXISTS = False
+try:
+    from .key import Key
+    KEY_FILE_EXISTS = True
+except ModuleNotFoundError as err:
+    print("Key file doesn't exist. Using Docker method.")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # HTML templates directory
-# All templates should be placed in this directory 
+# All templates should be placed in this directory
 # so they can be used by the views
-TEMPLATE_DIR = os.path.join(BASE_DIR,"templates")
+TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = Key.SECRET_KEY
-
+if KEY_FILE_EXISTS:
+    SECRET_KEY = Key.SECRET_KEY
+else:
+    SECRET_KEY = "sidhantbcosjaoijdowaijiwdhiehfpoifjoiewajoiweajp1234567u54321f9ife0i"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -81,20 +87,33 @@ WSGI_APPLICATION = 'BusinessSimulator.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'BusinessSimulator',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-        'USER': Key.MYSQL_USERNAME,
-        'PASSWORD': Key.MYSQL_PASSWORD,
-        'TEST': {
-            'NAME': 'test_db',
-        },
+if KEY_FILE_EXISTS:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'BusinessSimulator',
+            'HOST': '127.0.0.1',
+            'PORT': '3306',
+            'USER': Key.MYSQL_USERNAME,
+            'PASSWORD': Key.MYSQL_PASSWORD,
+            'TEST': {
+                'NAME': 'test_db', # the database django will use to run tests, make sure mysql user has create database permissions!
+            },
+        }
     }
-}
-
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'django_app',
+            'USER': 'django_app',
+            'PASSWORD': 'django_app123',
+            'HOST': 'db',
+            'PORT': '3306',
+            'OPTIONS': {'charset': 'utf8mb4'},
+        }
+>>>>>>> BusinessSimulator/BusinessSimulator/settings.py
+    }
 
 
 # Password validation
@@ -130,7 +149,6 @@ USE_L10N = True
 USE_TZ = True
 
 
-
 # Static files store: (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 #
@@ -139,4 +157,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'), ]
-STATIC_ROOT  = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+

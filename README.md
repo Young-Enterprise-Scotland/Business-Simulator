@@ -1,5 +1,11 @@
 # Business Simulator
 
+## Docker
+
+1. Install docker from the [offical website](https://www.docker.com/).
+2. go into the root directory of the project.
+3. Run `docker-compose up --build` to build the project
+
 ## Setup
 
 ### Git/Repo Setup
@@ -8,7 +14,6 @@
 
 2. Clone repository.
     `(https://usernname@stgit.dcs.gla.ac.uk/username/cs33-main.git)`
-
 
 3. Add upstream to forked repo.
 
@@ -118,5 +123,6 @@ sudo rm -rf /var/lib/mysql*
 6. install corresponding client e.g: `sudo apt-get install default-libmysqlclient-dev`
 7. Allow non root to run mysql: `sudo chown mysql.mysql /var/run/mysqld/`
 8. Finally start the service: `systemctl restart mysql`
+9. View `systemctl` and you should see MySql as one of the running processes.  
 
 

@@ -1,9 +1,35 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
 from datetime import datetime
 
+
 # Create your models here.
+
+class Simulator(models.Model):
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    lengthOfTradingDay = models.DurationField(default='01:00:00')
+    productName = models.CharField(max_length=100)
+    image = models.ImageField(blank = True)
+    maxPrice = models.DecimalField(max_digits=10, decimal_places = 2)
+    minPrice = models.DecimalField(max_digits=10, decimal_places = 2)
+    marketOpen = models.BooleanField()
+
+    def clean(self):
+        # Start date cannot be after end date
+        # Length of trading day must be less than the duration between start and end
+        if (self.end is None or self.start is None):
+            raise ValidationError("start and end must have values")
+        if (self.end <= self.start):
+            raise ValidationError("Overlapping dates")
+        if (self.start + self.lengthOfTradingDay > self.end):
+            raise ValidationError("Length of Trading Day is too short for given start and end dates")
+        if (self.minPrice > self.maxPrice):
+            raise ValidationError("Minimum price cannot be larger than maximum price")
+
+
 
 class YES(models.Model):
     
@@ -98,6 +124,7 @@ class Team(models.Model):
                       )
     def save(self, *args, **kwargs):
         'Override default save for Team model. If instanciating new object: create strategy instance, create market entry instance'
+
 
         self.user.user_permissions.add(Permission.objects.get(codename="is_team"))
     

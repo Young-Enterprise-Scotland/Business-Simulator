@@ -96,6 +96,9 @@ if KEY_FILE_EXISTS:
             'PORT': '3306',
             'USER': Key.MYSQL_USERNAME,
             'PASSWORD': Key.MYSQL_PASSWORD,
+            'TEST': {
+                'NAME': 'test_db', # the database django will use to run tests, make sure mysql user has create database permissions!
+            },
         }
     }
 else:
@@ -109,6 +112,7 @@ else:
             'PORT': '3306',
             'OPTIONS': {'charset': 'utf8mb4'},
         }
+>>>>>>> BusinessSimulator/BusinessSimulator/settings.py
     }
 
 

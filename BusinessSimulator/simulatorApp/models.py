@@ -13,8 +13,12 @@ class Simulator(models.Model):
     lengthOfTradingDay = models.DurationField(default=timedelta(days=1))
     productName = models.CharField(max_length=100)
     image = models.ImageField(blank = True)
-    maxPrice = models.DecimalField(max_digits=10, decimal_places = 2)
-    minPrice = models.DecimalField(max_digits=10, decimal_places = 2)
+
+    # price is of the format xxxxxxx.xxxx
+    # allow for more than 2dp to help with roundoff errors
+    maxPrice = models.DecimalField(max_digits=12, decimal_places = 4)
+    minPrice = models.DecimalField(max_digits=12, decimal_places = 4)
+
     marketOpen = models.BooleanField(default=True)
 
     def clean(self):
@@ -28,8 +32,10 @@ class Simulator(models.Model):
             raise ValidationError("Length of Trading Day is too short for given start and end dates")
         if (self.minPrice > self.maxPrice):
             raise ValidationError("Minimum price cannot be larger than maximum price")
-
-
+    
+    def __str__(self):
+        return self.productName+"("+str(self.id)+")"
+    
 
 class YES(models.Model):
     
@@ -53,6 +59,9 @@ class YES(models.Model):
     def has_perm(self,permissionString):
         " checks the associated user model for the permission, returns True/False "
         return self.user.has_perm(permissionString)
+    
+    def __str__(self):
+        return self.name
 
 class School(models.Model):
 
@@ -78,6 +87,8 @@ class School(models.Model):
         " checks the associated user model for the permission, returns True/False "
         return self.user.has_perm(permissionString)
 
+    def __str__(self):
+        return self.school_name
 
 """
     Strategy model must go before the Team model otherwise
@@ -96,7 +107,8 @@ class Strategy(models.Model):
     consistency = models.DecimalField(decimal_places=4, max_digits=12, default=0)
     # add relationship with policy once requirements are confirmed
     
-
+    def __str__(self):
+        return Team.objects.get(strategyid=self).team_name+" strategy"
 
 class Team(models.Model):
 
@@ -136,8 +148,9 @@ class Team(models.Model):
         
         # save instance
         super(Team, self).save(*args, **kwargs)
-
-        
+    
+    def __str__(self):
+        return self.team_name
     
     def has_perm(self,permissionString):
         " checks the associated user model for the permission, returns True/False "
@@ -145,20 +158,30 @@ class Team(models.Model):
 
 class MarketEntry(models.Model):
     strategyid = models.ForeignKey(Strategy, on_delete=models.CASCADE)
-    simulatorid = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+    simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
         qs = Simulator.objects.annotate(models.Max('id'))
         if len(qs)>=1:
-            self.simulatorid = qs[0] 
+            self.simulator = qs[0] 
         super(MarketEntry, self).save(*args, **kwargs)
+    
+    def __str__(self):
+        return Team.objects.get(strategyid=self.strategyid).team_name+" Market Entry"
 
 
 class MarketAttributeType(models.Model):
     label = models.CharField(max_length=32)
+
+    def __str__(self):
+        return self.label
+
 
 class MarketAttributeTypeData(models.Model):
     marketEntryId       = models.ForeignKey(MarketEntry, on_delete=models.CASCADE)
     marketAttributeType = models.ForeignKey(MarketAttributeType, on_delete=models.CASCADE)
     date                = models.DateTimeField(default=datetime.now)
     parameterValue      = models.DecimalField(decimal_places=4, max_digits=12)
+
+    def __str__(self):
+        return self.marketEntryId.__str__()+"__"+self.marketAttributeType.__str__()+"__"+str(self.date)

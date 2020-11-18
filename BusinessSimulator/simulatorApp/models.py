@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # Create your models here.
@@ -10,12 +10,12 @@ from datetime import datetime
 class Simulator(models.Model):
     start = models.DateTimeField()
     end = models.DateTimeField()
-    lengthOfTradingDay = models.DurationField(default='01:00:00')
+    lengthOfTradingDay = models.DurationField(default=timedelta(days=1))
     productName = models.CharField(max_length=100)
     image = models.ImageField(blank = True)
     maxPrice = models.DecimalField(max_digits=10, decimal_places = 2)
     minPrice = models.DecimalField(max_digits=10, decimal_places = 2)
-    marketOpen = models.BooleanField()
+    marketOpen = models.BooleanField(default=True)
 
     def clean(self):
         # Start date cannot be after end date
@@ -145,7 +145,13 @@ class Team(models.Model):
 
 class MarketEntry(models.Model):
     strategyid = models.ForeignKey(Strategy, on_delete=models.CASCADE)
-    #simulatorid = models.ForeignKey(<name of simulatormodel>, on_delete=models.CASCADE)
+    simulatorid = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        qs = Simulator.objects.annotate(models.Max('id'))
+        if len(qs)>=1:
+            self.simulatorid = qs[0] 
+        super(MarketEntry, self).save(*args, **kwargs)
 
 
 class MarketAttributeType(models.Model):

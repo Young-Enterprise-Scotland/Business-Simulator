@@ -17,7 +17,13 @@ class TestUserAccessLevels(TestCase):
         # create objects for this test to use
         # django will check for this methods existance 
         # when running python manage.py test
-
+        Simulator.objects.create(
+            start=datetime.now(),
+            end=datetime.now()+ timedelta(1),
+            productName="Test Product",
+            maxPrice=10.00,
+            minPrice=2.50
+            )
         YES.objects.create(name="Staff 1", user=User.objects.create(username="Staff 1"))
         YES.objects.create(name="Staff 2", user=User.objects.create(username="Staff 2"))
 
@@ -139,6 +145,9 @@ class TestUserAccessLevels(TestCase):
 class TestMarketEntry(TestCase):
 
     def setUp(self):
+
+        Simulator.objects.create(start=datetime.now(),end=datetime.now()+ timedelta(1),productName="Test Product",maxPrice=10.00,minPrice=2.50)
+
         MarketAttributeType.objects.create(label="Price")
         MarketAttributeType.objects.create(label="Market Share")
         MarketAttributeType.objects.create(label="Profit")

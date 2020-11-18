@@ -1,5 +1,11 @@
 # Business Simulator
 
+## Docker
+
+1. Install docker from the [offical website](https://www.docker.com/).
+2. go into the root directory of the project.
+3. Run `docker-compose up --build` to build the project
+
 ## Setup
 
 ### Git/Repo Setup
@@ -8,7 +14,6 @@
 
 2. Clone repository.
     `(https://usernname@stgit.dcs.gla.ac.uk/username/cs33-main.git)`
-
 
 3. Add upstream to forked repo.
 

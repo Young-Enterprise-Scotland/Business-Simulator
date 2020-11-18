@@ -10,5 +10,6 @@ from .models import *
 admin.site.register(YES)
 admin.site.register(School)
 admin.site.register(Team)
+admin.site.register(Simulator)
 
 admin.site.site_header = "Young Enterprise Scotland Admin Panel"

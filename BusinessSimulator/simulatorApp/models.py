@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -79,4 +80,26 @@ class Team(models.Model):
                        ("is_team", "Is a team account"),
                       )
 
+class Simulator(models.Model):
+    ID = models.AutoField(primary_key = True)
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    lengthOfTradingDay = models.DurationField(default='01:00:00')
+    productName = models.CharField(max_length=100)
+    image = models.ImageField(blank = True)
+    maxPrice = models.DecimalField(max_digits=10, decimal_places = 2)
+    minPrice = models.DecimalField(max_digits=10, decimal_places = 2)
+    marketOpen = models.BooleanField()
+
+    def clean(self):
+        # Start date cannot be after end date
+        # Length of trading day must be less than the duration between start and end
+        if (self.end is None or self.start is None):
+            raise ValidationError("start and end must have values")
+        if (self.end <= self.start):
+            raise ValidationError("Overlapping dates")
+        if (self.start + self.lengthOfTradingDay > self.end):
+            raise ValidationError("Length of Trading Day is too short for given start and end dates")
+        if (self.minPrice > self.maxPrice):
+            raise ValidationError("Minimum price cannot be larger than maximum price")
     

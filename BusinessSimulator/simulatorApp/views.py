@@ -16,3 +16,11 @@ class Index(View):
 
     def post(self,request):
         pass
+
+class Logout(View):
+
+    def get(self,request):
+        pass
+
+    def post(self, request):
+        pass

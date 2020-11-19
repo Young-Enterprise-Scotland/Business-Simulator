@@ -13,4 +13,5 @@ app_name = 'simulatorApp'
 
 urlpatterns = [
     path('', views.Index.as_view(), name='index'),
+    path('logout', views.Logout.as_view(), name='logout'),
 ]

@@ -93,7 +93,7 @@ if KEY_FILE_EXISTS:
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'BusinessSimulator',
             'HOST': '127.0.0.1',
-            'PORT': '3306',
+            'PORT': '4306',
             'USER': Key.MYSQL_USERNAME,
             'PASSWORD': Key.MYSQL_PASSWORD,
             'TEST': {

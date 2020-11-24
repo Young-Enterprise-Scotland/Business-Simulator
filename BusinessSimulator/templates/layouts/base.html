@@ -45,14 +45,12 @@
 
 <body class="">
 
-  {% if user.has_perm('simulatorApp.is_yes_staff') %}
+  {% if perms.is_yes_staff %}
     {% include 'includes/yes-sidenav.html' %}
-  {% elif user.has_perm('simulatorApp.is_school') %}
+  {% elif perms.is_school %}
     {% include 'includes/school-sidenav.html' %}
-  {% elif user.has_perm('simulatorApp.is_team') %}
+  {% elif perms.is_team %}
     {% include 'includes/team-sidenav.html' %}
-  {% else %}
-    {% include "includes/yes-sidenav.html" %}
   {% endif %}
 
   <div class="main-content">

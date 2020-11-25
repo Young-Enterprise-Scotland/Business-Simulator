@@ -47,11 +47,11 @@
 
 <body class="">
 
-  {% if perms.is_yes_staff %}
+  {% if perms.simulatorApp.is_yes_staff %}
     {% include 'includes/yes-sidenav.html' %}
-  {% elif perms.is_school %}
+  {% elif perms.simulatorApp.is_school %}
     {% include 'includes/school-sidenav.html' %}
-  {% elif perms.is_team %}
+  {% elif perms.simulatorApp.is_team %}
     {% include 'includes/team-sidenav.html' %}
   {% endif %}
 

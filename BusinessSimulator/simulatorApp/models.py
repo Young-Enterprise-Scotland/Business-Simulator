@@ -60,7 +60,7 @@ class YES(models.Model):
         return self.user.has_perm(permissionString)
     
     def __str__(self):
-        return self.name
+        return self.user.first_name
 
 class School(models.Model):
 

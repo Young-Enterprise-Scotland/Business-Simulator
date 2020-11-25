@@ -25,7 +25,13 @@
                 </span>
                 <div class="media-body ml-2 d-none d-lg-block">
                   <span class="mb-0 text-sm  font-weight-bold">
-                    {{ request.user.username }}
+                    {% if perms.simulatorApp.is_yes_staff %}
+                      {{request.user.first_name}}
+                    {% elif perms.simulatorApp.is_school %}
+                      {{ request.user.username }}
+                    {% elif perms.simulatorApp.is_team %}
+                      {{ request.user.username }}
+                    {% endif %}
                   </span>
                 </div>
               </div>

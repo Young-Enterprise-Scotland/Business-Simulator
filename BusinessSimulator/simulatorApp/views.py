@@ -1,4 +1,7 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+
 from django.urls import reverse 
 from django.views import View
 from .models import YES, School, Team
@@ -18,9 +21,10 @@ class Index(View):
     def get(self,request):
 
         # check user is logged in
-        # if(not request.user.is_authenticated):
-        #     return redirect(reverse('simulatorApp:login'))
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
 
+        
         return render(request, 'index.html')
 
     def post(self,request):
@@ -29,18 +33,70 @@ class Index(View):
 class Logout(View):
 
     def get(self,request):
-        pass
+
+        if not request.user.is_authenticated:
+            return redirect(reverse('simulatorApp:login'))
+
+        logout(request)
+        # Take the user back to the homepage.
+        return redirect(reverse('simulatorApp:login'))
 
     def post(self, request):
-        pass
+
+        if not request.user.is_authenticated:
+            return redirect(reverse('simulatorApp:login'))
+
+        logout(request)
+        # Take the user back to the homepage.
+        return redirect(reverse('simulatorApp:login'))
 
 class Login(View):
 
+    
     def get(self,request):
-        return render(request, 'accounts/login.html')
 
+        if request.user.is_authenticated:
+            return redirect(reverse('simulatorApp:index'))
+
+        return render(request=request,
+                        template_name="accounts/login.html",
+                    )
+    
     def post(self, request):
-        pass
+
+        # Hi sid, LoginForm is not defined yet
+        # so I have used old fashoned html way
+        # until you get your crispy forms working
+        # I have commented out your prevous code 
+        # for now
+
+        if request.user.is_authenticated:
+            return redirect(reverse('simulatorApp:index'))
+
+        #form = LoginForm(request=request, data=request.POST)
+        
+        #if form.is_valid():
+        if True:
+
+            #username=form.cleaned_data.get('username')
+            #password=form.cleaned_data.get('password')
+            
+            
+            user=authenticate(username=request.POST.get("username","").strip(), password=request.POST.get("password","").strip())
+            if user is not None:
+                login(request, user)
+                # messages.info(request, f"You are now logged in as {username}")
+                return redirect(reverse('simulatorApp:index'))
+            else:
+                print("User login failed")
+                return redirect(reverse('simulatorApp:login'))
+                # messages.error(request, "Invalid username or password.")
+        else:
+            return redirect(reverse('simulatorApp:login'))
+            # messages.error(request, "Invalid username or password.")
+        
+        return self.get(request)
+
 
 
 class YesProfile(View):
@@ -66,9 +122,11 @@ class YesProfile(View):
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
-            user_profile = YES.objects.get(id=profile_id)
-        except Exception:
+            user = User.objects.get(id=profile_id)
+            user_profile = YES.objects.get(user=user)
+        except Exception as e:
             # No profile exists for this id return to index
+            print(e)
             return redirect(reverse('simulatorApp:index'))
         
         context_dict['user_profile'] = user_profile
@@ -82,7 +140,6 @@ class YesProfile(View):
         return render(request, 'accounts/yes_profile.html', context=context_dict)
 
 
-
     def post(self, request):
         
         if(not request.user.is_authenticated):
@@ -90,6 +147,7 @@ class YesProfile(View):
         
         # check user has the correct view permission
         if(not request.user.has_perm("simulatorApp.is_yes_staff")):
+            print("user does not have permission")
             return redirect(reverse('simulatorApp:index'))
 
         # retrieve the user account from the GET request
@@ -100,7 +158,8 @@ class YesProfile(View):
             return redirect(reverse('simulatorApp:index'))
         
         try: # Try to retrieve the YES profile information
-            user_profile = YES.objects.get(id=profile_id)
+            user = User.objects.get(id=profile_id)
+            user_profile = YES.objects.get(user=user)
         except Exception:
             # No profile exists for this id return to index
             return redirect(reverse('simulatorApp:index'))
@@ -122,6 +181,7 @@ class YesProfile(View):
 class SchoolProfile(View):
 
     def get(self, request):
+
         context_dict = {}
  
         # check user is logged in
@@ -173,6 +233,7 @@ class SchoolProfile(View):
 class TeamProfile(View):
      
      def get(self, request):
+        
         context_dict = {}
  
         # check user is logged in

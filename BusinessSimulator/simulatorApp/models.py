@@ -53,6 +53,7 @@ class YES(models.Model):
     
     def save(self, *args, **kwargs):
         self.user.user_permissions.add(Permission.objects.get(codename="is_yes_staff"))
+        self.user.save()
         super(YES, self).save(*args, **kwargs)
     
     def has_perm(self,permissionString):
@@ -60,7 +61,7 @@ class YES(models.Model):
         return self.user.has_perm(permissionString)
     
     def __str__(self):
-        return self.name
+        return self.user.first_name
 
 class School(models.Model):
 
@@ -80,6 +81,7 @@ class School(models.Model):
                       )
     def save(self, *args, **kwargs):
         self.user.user_permissions.add(Permission.objects.get(codename="is_school"))
+        self.user.save()
         super(School, self).save(*args, **kwargs)
 
     def has_perm(self,permissionString):
@@ -107,7 +109,10 @@ class Strategy(models.Model):
     # add relationship with policy once requirements are confirmed
     
     def __str__(self):
-        return Team.objects.get(strategyid=self).team_name+" strategy"
+        try:
+            return Team.objects.get(strategyid=self).team_name+" strategy"
+        except Exception:
+            return "uninstanciated strategy"
 
 class Team(models.Model):
 
@@ -138,11 +143,13 @@ class Team(models.Model):
 
 
         self.user.user_permissions.add(Permission.objects.get(codename="is_team"))
-    
+        self.user.save()
+
         # create Strategy and MarketEntry for Team if not exists
         team = Team.objects.filter(team_name=self.team_name)
         if(len(team)==0):
             self.strategyid = Strategy.objects.create()
+
             MarketEntry.objects.create(strategyid=self.strategyid)
         
         # save instance

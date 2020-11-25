@@ -11,3 +11,23 @@
 
   <!--   Argon JS   -->
   <script src="/static/assets/js/argon-dashboard.min.js?v=1.1.0"></script>
+  
+  <!-- Load React. -->
+  <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+  <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>  
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+
+
+  <!-- just for now, can remove later -->
+  <script src="/static/assets/js/plugins/jquery/dist/jquery.min.js"></script>
+  <script src="/static/assets/js/plugins/jquery-validation-1.19.2/dist/jquery.validate.min.js"></script>
+  <script>
+  $.validator.addMethod("pwcheck", function(value) {
+      return /^[A-Za-z0-9\d=!\-@._*]*$/.test(value) // consists of only these
+              && /[a-z]/.test(value) // has a lowercase letter
+              && /[A-Z]/.test(value) // has a lowercase letter
+              && /\d/.test(value) // has a digit
+  },
+  "Passwords must contain at least 1 upper and lower case letter as well as a digit. ");
+  </script>
+ 

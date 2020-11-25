@@ -1,6 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.urls import reverse 
 from django.views import View
-from django.models import YES, School, Team
+from .models import YES, School, Team
 # Create your views here.
 
 
@@ -13,6 +14,11 @@ class Index(View):
     '''
 
     def get(self,request):
+
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+
         return render(request, 'index.html')
 
     def post(self,request):
@@ -133,7 +139,7 @@ class ViewSchoolProfile(View):
 class ViewTeamProfile(View):
      
      def get(self, request):
-         context_dict = {}
+        context_dict = {}
  
         # check user is logged in
         if(not request.user.is_authenticated):
@@ -171,7 +177,7 @@ class ViewTeamProfile(View):
 
      def post(self, request):
 
-         if(not request.user.is_authenticated):
+        if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
         # post requests used to store user info in db

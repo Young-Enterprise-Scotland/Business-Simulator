@@ -42,7 +42,6 @@ class YES(models.Model):
     # password is managed by the User model
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    name = models.TextField(max_length=25)
 
     class Meta:
         

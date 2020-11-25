@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.urls import reverse 
 from django.views import View
 from .models import YES, School, Team
+
+
 # Create your views here.
 
 
@@ -16,8 +18,8 @@ class Index(View):
     def get(self,request):
 
         # check user is logged in
-        if(not request.user.is_authenticated):
-            return redirect(reverse('simulatorApp:login'))
+        # if(not request.user.is_authenticated):
+        #     return redirect(reverse('simulatorApp:login'))
 
         return render(request, 'index.html')
 
@@ -41,10 +43,10 @@ class Login(View):
         pass
 
 
-class ViewYesProfile(View):
+class YesProfile(View):
 
     
-    def get(self, request):
+    def get(self, request, **kwargs):
         
         context_dict = {}
  
@@ -60,7 +62,7 @@ class ViewYesProfile(View):
         profile_id = request.GET.get("profile_id",False)
 
         # check profile_id was passed in or return to index page
-        if not profile:
+        if not profile_id:
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
@@ -70,14 +72,19 @@ class ViewYesProfile(View):
             return redirect(reverse('simulatorApp:index'))
         
         context_dict['user_profile'] = user_profile
-        context_dict['can_edit'] = True
 
-        return render(request, 'yes_profile.html', context=context_dict)
+        # if the post method has saved informatio
+        # let the user know that their info has
+        # been updated
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+
+        return render(request, 'accounts/yes_profile.html', context=context_dict)
 
 
 
     def post(self, request):
-
+        
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -85,7 +92,34 @@ class ViewYesProfile(View):
         if(not request.user.has_perm("simulatorApp.is_yes_staff")):
             return redirect(reverse('simulatorApp:index'))
 
-class ViewSchoolProfile(View):
+        # retrieve the user account from the GET request
+        profile_id = request.GET.get("profile_id",False)
+
+        # check profile_id was passed in or return to index page
+        if not profile_id:
+            return redirect(reverse('simulatorApp:index'))
+        
+        try: # Try to retrieve the YES profile information
+            user_profile = YES.objects.get(id=profile_id)
+        except Exception:
+            # No profile exists for this id return to index
+            return redirect(reverse('simulatorApp:index'))
+
+        # check user credentials before editing information
+        if(user_profile.user.check_password(request.POST.get("password").strip())):
+            
+            # set username and update user and YES model
+            user_profile.user.first_name = request.POST.get("first_name",user_profile.user.first_name).strip()
+            user_profile.user.save()
+            user_profile.save()
+
+            notify = "Profile updated."
+        else:
+            notify = "Password is incorrect."
+        
+        return self.get(request, notify=notify)
+
+class SchoolProfile(View):
 
     def get(self, request):
         context_dict = {}
@@ -107,7 +141,7 @@ class ViewSchoolProfile(View):
         profile_id = request.GET.get("profile_id",False)
 
         # check profile_id was passed in or return to index page
-        if not profile:
+        if not profile_id:
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
@@ -136,7 +170,7 @@ class ViewSchoolProfile(View):
         ):
             return redirect(reverse('simulatorApp:index'))
 
-class ViewTeamProfile(View):
+class TeamProfile(View):
      
      def get(self, request):
         context_dict = {}
@@ -161,7 +195,7 @@ class ViewTeamProfile(View):
         profile_id = request.GET.get("profile_id",False)
 
         # check profile_id was passed in or return to index page
-        if not profile:
+        if not profile_id:
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information

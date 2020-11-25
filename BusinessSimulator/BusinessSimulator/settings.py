@@ -158,10 +158,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'), ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles/') #os.path.join(BASE_DIR, 'staticfiles')
 
 # Incase of shit hitting the fan due to this malfunctioning, please refer to https://github.com/jrief/django-sass-processor
-SASS_PROCESSOR_ROOT = os.path.join(STATIC_ROOT, 'assets')
+SASS_PROCESSOR_ROOT = STATIC_ROOT #os.path.join(, 'assets')
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -169,4 +169,4 @@ STATICFILES_FINDERS = [
     'sass_processor.finders.CssFinder',
 ]
 
-SASS_OUTPUT_STYLE = 'compact'
+SASS_OUTPUT_STYLE = 'compressed'

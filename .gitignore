@@ -121,3 +121,4 @@ BusinessSimulator/BusinessSimulator/key.py
 
 # MySQL #
 BusinessSimulator/mysql/*
+BusinessSimulator\mysql\*

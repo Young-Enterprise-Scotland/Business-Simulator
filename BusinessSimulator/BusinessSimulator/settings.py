@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'sass_processor',
     'simulatorApp'
 ]
 
@@ -157,6 +158,16 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'), ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles/') #os.path.join(BASE_DIR, 'staticfiles')
+
+# Incase of shit hitting the fan due to this malfunctioning, please refer to https://github.com/jrief/django-sass-processor
+SASS_PROCESSOR_ROOT = STATIC_ROOT #os.path.join(, 'assets')
+
+# STATICFILES_FINDERS = [
+#     'django.contrib.staticfiles.finders.FileSystemFinder',
+#     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+#     'sass_processor.finders.CssFinder',
+# ]
 
 
+SASS_OUTPUT_STYLE = 'minimize'

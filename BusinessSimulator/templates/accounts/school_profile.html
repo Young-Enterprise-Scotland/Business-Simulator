@@ -13,7 +13,7 @@
       <div class="container-fluid d-flex align-items-center">
         <div class="row">
           <div class="col-lg-7 col-md-10">
-            <h1 class="display-2 text-white">Hello {{ user_profile.user.first_name }}</h1>
+            <h1 class="display-2 text-white">Hello {{ user_profile.school_name }}</h1>
             <p class="text-white mt-0 mb-5">This is your profile page. You can edit your school name. Please note that your username may be different to your school name. You must use your username to login.</p>
           </div>
         </div>
@@ -23,19 +23,6 @@
     <div class="container-fluid mt--7">
 
       <div class="row">
-        <div class="col-xl-4 order-xl-2 mb-5 mb-xl-0">
-          <div class="card card-profile shadow">
-            <div class="row justify-content-center">
-              <div class="col-lg-3 order-lg-2">
-                <div class="card-profile-image">
-                  <a href="#">
-                    <img src="/static/assets/img/theme/team-4-800x800.jpg" class="rounded-circle">
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
         <div class="col-xl-12 order-xl-1">
           <div class="card bg-secondary shadow">
             <div class="card-header bg-white border-0">
@@ -46,7 +33,8 @@
               </div>
             </div>
             <div class="card-body">
-              <form>
+                <form method="POST" action="" id="profile_form">
+                {% csrf_token %}
                 <h6 class="heading-small text-muted mb-4">User information</h6>
                 <div class="pl-lg-4">
                   <div class="row">
@@ -65,50 +53,44 @@
                       </div>
                     </div>
                   </div>
-                </div>
-                <hr class="my-4" />
-                <!-- Address -->
-                <h6 class="heading-small text-muted mb-4">Contact information</h6>
-                <div class="pl-lg-4">
                   <div class="row">
-                    <div class="col-md-12">
+                    <div class="col-lg-12">
                       <div class="form-group">
-                        <label class="form-control-label" for="input-address">Address</label>
-                        <input id="input-address" class="form-control form-control-alternative" placeholder="Home Address" value="Bld Mihail Kogalniceanu, nr. 8 Bl 1, Sc 1, Ap 09" type="text">
-                      </div>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-lg-4">
-                      <div class="form-group">
-                        <label class="form-control-label" for="input-city">City</label>
-                        <input type="text" id="input-city" class="form-control form-control-alternative" placeholder="City" value="New York">
-                      </div>
-                    </div>
-                    <div class="col-lg-4">
-                      <div class="form-group">
-                        <label class="form-control-label" for="input-country">Country</label>
-                        <input type="text" id="input-country" class="form-control form-control-alternative" placeholder="Country" value="United States">
-                      </div>
-                    </div>
-                    <div class="col-lg-4">
-                      <div class="form-group">
-                        <label class="form-control-label" for="input-country">Postal code</label>
-                        <input type="number" id="input-postal-code" class="form-control form-control-alternative" placeholder="Postal code">
+                        <button type="submit" class="btn btn-primary" name="change_name" value="true">Save</button>
                       </div>
                     </div>
                   </div>
                 </div>
+                </form>
                 <hr class="my-4" />
                 <!-- Description -->
-                <h6 class="heading-small text-muted mb-4">About me</h6>
+                <form id="change-pass" method="POST" action="">
+                  {% csrf_token %}
+                <h6 class="heading-small text-muted mb-4">Change Password</h6>
                 <div class="pl-lg-4">
-                  <div class="form-group">
-                    <label>About Me</label>
-                    <textarea rows="4" class="form-control form-control-alternative" placeholder="A few words about you ...">A beautiful Dashboard for Bootstrap 4. It is Free and Open Source.</textarea>
+                  <div class="row">
+                    <div class="col-lg-6">
+                      <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" name="new_password" id="#new-pass" class="form-control form-control-alternative">
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="form-group">
+                        <label>Repeat New Password</label>
+                        <input type="password" name="repeat_new_password" class="form-control form-control-alternative">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-lg-12">
+                      <div class="form-group">
+                        <button type="submit" class="btn btn-primary" name="reset_password" value="true">Change Password</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </form>
+                </form>
             </div>
           </div>
         </div>
@@ -121,4 +103,53 @@
 {% endblock content %}
 
 <!-- Specific JS goes HERE --> 
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<script>
+  /**
+   * This is jQuery not reactJS
+  */
+  $(document).ready(function(){
+
+    $("#profile_form").validate(
+      {
+        rules:{
+          first_name:{
+            required:true,
+            minlength:2,
+            maxlength:32 
+          }
+        },
+        submitHandler: function(form) {
+          form.submit();
+        }
+      }
+    );
+
+    $("#change-pass").validate(
+      {
+        rules:{
+          first_name:{
+            required:true,
+            minlength:2,
+            maxlength:32 
+          },
+          new_password:{
+            required:true,
+            pwcheck:true,
+            minlength:8,
+            maxlength:32
+          },
+          repeat_new_password:{
+            required:true,
+            equalTo:'[name=new_password]'
+          }
+          
+        },
+        submitHandler: function(form) {
+          form.submit();
+        }
+      }
+    );
+  });
+</script>
+{% endblock javascripts %}

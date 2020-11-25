@@ -34,7 +34,7 @@
             <div class=" dropdown-header noti-title">
               <h6 class="text-overflow m-0">Welcome!</h6>
             </div>
-            <a href="{% url 'simulatorApp:schoolAccountView' %}?profile_id={{ request.user.id }}" class="dropdown-item">
+            <a href="{% url 'simulatorApp:viewSchoolAccount' %}?profile_id={{ request.user.id }}" class="dropdown-item">
               <i class="ni ni-single-02"></i>
               <span>My profile</span>
             </a>
@@ -99,7 +99,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link " href="{% url 'simulatorApp:schoolAccountView' %}?profile_id={{ request.user.id }}">
+            <a class="nav-link " href="{% url 'simulatorApp:viewSchoolAccount' %}?profile_id={{ request.user.id }}">
               <i class="ni ni-circle-08 text-red"></i> Profile
             </a>
           </li>

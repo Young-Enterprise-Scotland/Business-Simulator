@@ -20,15 +20,21 @@ class Index(View):
 
     def get(self,request):
 
+        context_dict = {}
+
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
-        
-        return render(request, 'index.html')
+        if request.user.has_perm('simulatorApp.is_school'):
+            context_dict['school_obj'] = School.objects.get(user=request.user)
+        elif request.user.has_perm('simulatorApp.is_team'):
+            context_dict['team_obj'] = Team.objects.get(user=request.user)
+
+        return render(request, 'index.html', context=context_dict)
 
     def post(self,request):
-        pass
+        return self.get(request)
 
 class Logout(View):
 
@@ -205,15 +211,17 @@ class SchoolProfile(View):
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
-            user_profile = School.objects.get(id=profile_id)
-        except Exception:
+            user = User.objects.get(id=profile_id)
+            user_profile = School.objects.get(user=user)
+        except Exception as e:
             # No profile exists for this id return to index
+            print(e)
             return redirect(reverse('simulatorApp:index'))
         
         context_dict['user_profile'] = user_profile
         context_dict['can_edit'] = True
 
-        return render(request, 'school_profile.html', context=context_dict)
+        return render(request, 'accounts/school_profile.html', context=context_dict)
 
     def post(self, request):
 
@@ -229,6 +237,38 @@ class SchoolProfile(View):
             )
         ):
             return redirect(reverse('simulatorApp:index'))
+        
+         # retrieve the user account from the GET request
+        profile_id = request.GET.get("profile_id",False)
+
+        # check profile_id was passed in or return to index page
+        if not profile_id:
+            return redirect(reverse('simulatorApp:index'))
+        
+        try: # Try to retrieve the YES profile information
+            user = User.objects.get(id=profile_id)
+            user_profile = School.objects.get(user=user)
+        except Exception:
+            # No profile exists for this id return to index
+            return redirect(reverse('simulatorApp:index'))
+
+        # if user has requested to change school name
+        if(request.POST.get("change_name")):
+            new_name = request.POST.get("school_name", user_profile.school_name)
+            user_profile.school_name = new_name.strip()
+            user_profile.save()
+
+        elif(request.POST.get("reset_password")):
+            new_password = request.POST.get("new_password").strip()
+            user_profile.user.set_password(new_password)
+            user_profile.user.save()
+            user_profile.save()
+            
+        
+
+        return self.get(request)
+        
+
 
 class TeamProfile(View):
      
@@ -260,13 +300,13 @@ class TeamProfile(View):
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
-            user_profile = Team.objects.get(id=profile_id)
+            user = User.objects.get(id=profile_id)
+            user_profile = Team.objects.get(id=user)
         except Exception:
             # No profile exists for this id return to index
             return redirect(reverse('simulatorApp:index'))
         
         context_dict['user_profile'] = user_profile
-        context_dict['can_edit'] = True
 
         return render(request, 'team_profile.html', context=context_dict)
 

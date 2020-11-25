@@ -28,9 +28,9 @@
                     {% if perms.simulatorApp.is_yes_staff %}
                       {{request.user.first_name}}
                     {% elif perms.simulatorApp.is_school %}
-                      {{ request.user.username }}
+                      {{ school_obj.school_name }}
                     {% elif perms.simulatorApp.is_team %}
-                      {{ request.user.username }}
+                      {{ team_obj.team_name }}
                     {% endif %}
                   </span>
                 </div>
@@ -40,10 +40,22 @@
               <div class=" dropdown-header noti-title">
                 <h6 class="text-overflow m-0">Welcome!</h6>
               </div>
-              <a href="{% url 'simulatorApp:viewYesAccount' %}?profile_id={{ request.user.id }}" class="dropdown-item">
-                <i class="ni ni-single-02"></i>
-                <span>My profile</span>
-              </a>
+              {% if perms.simulatorApp.is_yes_staff %}
+                <a href="{% url 'simulatorApp:viewYesAccount' %}?profile_id={{ request.user.id }}" class="dropdown-item">
+                  <i class="ni ni-single-02"></i>
+                  <span>My profile</span>
+                </a>
+              {% elif perms.simulatorApp.is_school %}
+                <a href="{% url 'simulatorApp:viewSchoolAccount' %}?profile_id={{ request.user.id }}" class="dropdown-item">
+                  <i class="ni ni-single-02"></i>
+                  <span>My profile</span>
+                </a>
+              {% elif perms.simulatorApp.is_team %}
+                <a href="{% url 'simulatorApp:viewTeamAccount' %}?profile_id={{ request.user.id }}" class="dropdown-item">
+                  <i class="ni ni-single-02"></i>
+                  <span>My profile</span>
+                </a>
+              {% endif %}
               <a href="" class="dropdown-item">
                 <i class="ni ni-settings-gear-65"></i>
                 <span>Settings</span>

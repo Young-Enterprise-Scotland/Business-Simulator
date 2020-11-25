@@ -24,3 +24,11 @@ class Logout(View):
 
     def post(self, request):
         pass
+
+class Login(View):
+
+    def get(self,request):
+        return render(request, 'accounts/login.html')
+
+    def post(self, request):
+        pass

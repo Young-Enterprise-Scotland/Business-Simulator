@@ -3,8 +3,10 @@
 ## Docker
 
 1. Install docker from the [offical website](https://www.docker.com/).
-2. go into the root directory of the project.
-3. Run `docker-compose up --build` to build the project
+2. Change the end of line sequence of wait-for-mysql.sh from CRLF to LF in your text-editor.
+3. Make sure port 3306 is free on your machine. To close a certain port: [windows](https://madvens.wordpress.com/2012/06/02/how-to-free-a-port-on-windows/), [Ubuntu](https://stackoverflow.com/a/30753172)
+4. go into the root directory of the project.
+5. Run `docker-compose up --build` to build the project.
 
 ## Setup
 

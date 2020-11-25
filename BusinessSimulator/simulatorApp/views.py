@@ -245,7 +245,7 @@ class SchoolProfile(View):
         if not profile_id:
             return redirect(reverse('simulatorApp:index'))
         
-        try: # Try to retrieve the YES profile information
+        try: # Try to retrieve the School profile information
             user = User.objects.get(id=profile_id)
             user_profile = School.objects.get(user=user)
         except Exception:
@@ -258,14 +258,13 @@ class SchoolProfile(View):
             user_profile.school_name = new_name.strip()
             user_profile.save()
 
+        # if user has requested to reset password
         elif(request.POST.get("reset_password")):
             new_password = request.POST.get("new_password").strip()
             user_profile.user.set_password(new_password)
             user_profile.user.save()
             user_profile.save()
             
-        
-
         return self.get(request)
         
 

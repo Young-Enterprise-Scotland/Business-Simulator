@@ -18,4 +18,5 @@ urlpatterns = [
     path('yesProfile',views.YesProfile.as_view(),name='viewYesAccount'),
     path('schoolProfile',views.SchoolProfile.as_view(),name='viewSchoolAccount'),
     path('teamProfile',views.TeamProfile.as_view(), name="viewTeamAccount"),
+    path('viewTeams', views.ViewTeams.as_view(), name="viewTeams"),
 ]

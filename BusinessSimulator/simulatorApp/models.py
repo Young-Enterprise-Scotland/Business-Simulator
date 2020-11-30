@@ -161,6 +161,16 @@ class Team(models.Model):
     def has_perm(self,permissionString):
         " checks the associated user model for the permission, returns True/False "
         return self.user.has_perm(permissionString)
+    
+    @staticmethod
+    def get_teams_by_school(school_obj):
+        return Team.objects.filter(schoolid=school_obj)
+
+    @staticmethod
+    def get_all_teams():
+        return Team.objects.all()
+
+        
 
 class MarketEntry(models.Model):
     strategyid = models.ForeignKey(Strategy, on_delete=models.CASCADE)

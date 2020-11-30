@@ -285,11 +285,9 @@ class SchoolProfile(View):
             
         return self.get(request, notify=notify)
         
-
-
 class TeamProfile(View):
      
-     def get(self, request):
+     def get(self, request, **kwargs):
         
         context_dict = {}
  
@@ -318,17 +316,20 @@ class TeamProfile(View):
 
         try: # Try to retrieve the YES profile information
             user = User.objects.get(id=profile_id)
-            user_profile = Team.objects.get(id=user)
+            user_profile = Team.objects.get(user=user)
         except Exception:
             # No profile exists for this id return to index
             return redirect(reverse('simulatorApp:index'))
         
+        # Pass on any notification message to sweetalert plugin
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
         context_dict['user_profile'] = user_profile
 
-        return render(request, 'team_profile.html', context=context_dict)
+        return render(request, 'accounts/team_profile.html', context=context_dict)
 
      def post(self, request):
-
+        print(request.POST)
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
@@ -342,3 +343,62 @@ class TeamProfile(View):
             )
         ):
             return redirect(reverse('simulatorApp:index'))
+
+        profile_id = request.GET.get("profile_id",False)
+
+        # check profile_id was passed in or return to index page
+        if not profile_id:
+            return redirect(reverse('simulatorApp:index'))
+        
+        try: # Try to retrieve the School profile information
+            user = User.objects.get(id=profile_id)
+            user_profile = Team.objects.get(user=user)
+        except Exception:
+            # No profile exists for this id return to index
+            return redirect(reverse('simulatorApp:index'))
+
+        notify = {}
+        # if user has requested to change school name
+        if(request.POST.get("update_account_info")):
+            new_name = request.POST.get("first_name", user_profile.team_name)
+            user_profile.team_name = new_name.strip()
+            user_profile.save()
+
+            notify['title'] = "Profile Updated"
+            notify['type'] = 'success'
+
+        # if user has requested to reset password
+        elif(request.POST.get("reset_password")):
+            new_password = request.POST.get("new_password").strip()
+            user_profile.user.set_password(new_password)
+            user_profile.user.save()
+            user_profile.save()
+
+            notify['title'] = "Password Reset"
+            notify['type'] = 'success'
+            
+        return self.get(request, notify=notify)
+        
+
+
+class ViewTeams(View):
+
+
+    def get(self, request, **kwargs):
+        context_dict = {}
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        
+        if request.user.has_perm("simulatorApp.is_team"):
+            return redirect(reverse('simulatorApp:index'))
+        
+        if request.user.has_perm("simulatorApp.is_school"):
+            teams = Team.get_teams_by_school(School.objects.get(user=request.user))
+        if request.user.has_perm("simulatorApp.is_yes_staff"):
+            teams = Team.get_all_teams()
+
+        context_dict['teams'] = teams 
+        return render(request, 'viewTeams.html', context=context_dict)
+
+    def post(self, request, **kwargs):
+        return self.get(request)

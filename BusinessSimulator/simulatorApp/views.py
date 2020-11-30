@@ -137,9 +137,7 @@ class YesProfile(View):
         
         context_dict['user_profile'] = user_profile
 
-        # if the post method has saved informatio
-        # let the user know that their info has
-        # been updated
+        # Pass on any notification message to sweetalert plugin
         if"notify" in kwargs:
             context_dict['notify'] = kwargs['notify']
 
@@ -147,7 +145,6 @@ class YesProfile(View):
 
 
     def post(self, request):
-        
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -170,23 +167,34 @@ class YesProfile(View):
             # No profile exists for this id return to index
             return redirect(reverse('simulatorApp:index'))
 
+
+        notify = {}
         # check user credentials before editing information
-        if(user_profile.user.check_password(request.POST.get("password").strip())):
+        if(request.POST.get("update_account_info",False)):
             
             # set username and update user and YES model
             user_profile.user.first_name = request.POST.get("first_name",user_profile.user.first_name).strip()
             user_profile.user.save()
             user_profile.save()
 
-            notify = "Profile updated."
-        else:
-            notify = "Password is incorrect."
+            notify['title'] = "Profile Updated"
+            notify['type'] = 'success'
+
+        elif request.POST.get("reset_password",False) and request.user == user_profile.user:
+            notify['title'] = "Password Reset"
+            notify['type'] = 'success'
+
+            new_password = request.POST.get("new_password").strip()
+            user_profile.user.set_password(new_password)
+            user_profile.user.save()
+            user_profile.save()
+
         
         return self.get(request, notify=notify)
 
 class SchoolProfile(View):
 
-    def get(self, request):
+    def get(self, request, **kwargs):
 
         context_dict = {}
  
@@ -217,10 +225,13 @@ class SchoolProfile(View):
             # No profile exists for this id return to index
             print(e)
             return redirect(reverse('simulatorApp:index'))
-        
+
+        # Pass on any notification message to sweetalert plugin
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+
         context_dict['user_profile'] = user_profile
         context_dict['can_edit'] = True
-
         return render(request, 'accounts/school_profile.html', context=context_dict)
 
     def post(self, request):
@@ -252,11 +263,15 @@ class SchoolProfile(View):
             # No profile exists for this id return to index
             return redirect(reverse('simulatorApp:index'))
 
+        notify = {}
         # if user has requested to change school name
         if(request.POST.get("change_name")):
             new_name = request.POST.get("school_name", user_profile.school_name)
             user_profile.school_name = new_name.strip()
             user_profile.save()
+
+            notify['title'] = "Profile Updated"
+            notify['type'] = 'success'
 
         # if user has requested to reset password
         elif(request.POST.get("reset_password")):
@@ -264,8 +279,11 @@ class SchoolProfile(View):
             user_profile.user.set_password(new_password)
             user_profile.user.save()
             user_profile.save()
+
+            notify['title'] = "Password Reset"
+            notify['type'] = 'success'
             
-        return self.get(request)
+        return self.get(request, notify=notify)
         
 
 

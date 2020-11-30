@@ -18,10 +18,16 @@
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
 
 
+  <script src="/static/assets/js/plugins/swal/dist/sweetalert2.min.js"></script>
+
+
   <!-- just for now, can remove later -->
   <script src="/static/assets/js/plugins/jquery/dist/jquery.min.js"></script>
   <script src="/static/assets/js/plugins/jquery-validation-1.19.2/dist/jquery.validate.min.js"></script>
   <script>
+    /**
+     * Custom password validation
+    */
   $.validator.addMethod("pwcheck", function(value) {
       return /^[A-Za-z0-9\d=!\-@._*]*$/.test(value) // consists of only these
               && /[a-z]/.test(value) // has a lowercase letter
@@ -29,5 +35,30 @@
               && /\d/.test(value) // has a digit
   },
   "Passwords must contain at least 1 upper and lower case letter as well as a digit. ");
+  </script>
+
+  <script>
+    
+    /**
+     * Initalise Sweetalert plugin.
+     * for displaying success messages
+    */
+    $(document).ready(function(){
+      {% if notify %}
+      Swal.fire({
+        toast:true,
+        position: 'top-end',
+        icon: '{{notify.type}}',
+        title: '<span>{{notify.title}}</span>',
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      })
+      {% endif %}
+    });
   </script>
  

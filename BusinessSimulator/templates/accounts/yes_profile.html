@@ -133,6 +133,32 @@
       }
     );
   });
+  $("#change-pass").validate(
+      {
+        rules:{
+          first_name:{
+            required:true,
+            minlength:2,
+            maxlength:32 
+          },
+          new_password:{
+            required:true,
+            pwcheck:true,
+            minlength:8,
+            maxlength:32
+          },
+          repeat_new_password:{
+            required:true,
+            equalTo:'[name=new_password]'
+          }
+          
+        },
+        submitHandler: function(form) {
+          form.submit();
+        }
+      }
+    );
+    
 </script>
 
 {% endblock javascripts %}

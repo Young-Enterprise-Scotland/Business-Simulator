@@ -3,9 +3,31 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
 from datetime import datetime, timedelta
-
+from .globals import POLICIES
 
 # Create your models here.
+
+class Policy(models.Model):
+
+    name = models.CharField(max_length=56, unique=True)
+
+    low_label = models.CharField(max_length=56, default="Low")
+    low_customer = models.DecimalField(decimal_places=4, max_digits=12)
+    low_cost = models.DecimalField(decimal_places=4, max_digits=12)
+    low_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.85)
+    
+    med_label = models.CharField(max_length=56, default="Medium")
+    med_customer = models.DecimalField(decimal_places=4, max_digits=12, default=2)
+    med_cost = models.DecimalField(decimal_places=4, max_digits=12)
+    med_sales = models.DecimalField(decimal_places=4, max_digits=12, default=1.00)
+
+    high_label = models.CharField(max_length=56, default="High")
+    high_customer = models.DecimalField(decimal_places=4, max_digits=12, default=3)
+    high_cost = models.DecimalField(decimal_places=4, max_digits=12,)
+    high_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.85)
+
+    def __str__(self):
+        return self.name
 
 class Simulator(models.Model):
     start = models.DateTimeField()
@@ -33,10 +55,35 @@ class Simulator(models.Model):
         if (self.minPrice > self.maxPrice):
             raise ValidationError("Minimum price cannot be larger than maximum price")
     
+    def __setup_policies(self):
+        "Setup the policies for the game. These can be edited by YES staff"
+        
+        for policy in POLICIES:
+            Policy.objects.get_or_create(
+                name=policy,
+                low_cost=0.5,
+                low_customer=1,
+                low_sales=0.75,
+                
+                med_cost=1.00,
+                med_customer=3,
+                med_sales=1.00,
+
+                high_cost=1.5,
+                high_customer=2,
+                high_sales=0.75
+            )
+
+    def save(self, *args, **kwargs):
+        
+        #setup policies if they do not already exist
+        self.__setup_policies()
+
+        super(Simulator, self).save(*args, **kwargs)
+
     def __str__(self):
         return self.productName+"("+str(self.id)+")"
     
-
 class YES(models.Model):
     
     # password is managed by the User model
@@ -139,18 +186,32 @@ class Team(models.Model):
                        ("is_team", "Is a team account"),
                       )
     def save(self, *args, **kwargs):
-        'Override default save for Team model. If instanciating new object: create strategy instance, create market entry instance'
-
+        '''
+            Override default save for Team model. 
+            Sets up corresponding Strategy, MarketEntry
+            and PolicyStrategy models if not already in
+            existance. 
+        '''
 
         self.user.user_permissions.add(Permission.objects.get(codename="is_team"))
         self.user.save()
 
-        # create Strategy and MarketEntry for Team if not exists
+        # create Strategy, MarketEntry and PolicyStrategy for Team if not exists
         team = Team.objects.filter(team_name=self.team_name)
         if(len(team)==0):
+            #create strategy object for team
             self.strategyid = Strategy.objects.create()
 
+            #setup market entry for team
             MarketEntry.objects.create(strategyid=self.strategyid)
+
+            # create base PolicyStrategy objects for team
+            for policy in POLICIES:
+                PolicyStrategy.objects.create(
+                    policy=Policy.objects.get(name=policy),
+                    strategy=self.strategyid,
+                    chosen_option=1 #set to be low by default
+                    )
         
         # save instance
         super(Team, self).save(*args, **kwargs)
@@ -159,7 +220,7 @@ class Team(models.Model):
         return self.team_name
     
     def has_perm(self,permissionString):
-        " checks the associated user model for the permission, returns True/False "
+        "Checks the associated user model for the permission, returns True/False"
         return self.user.has_perm(permissionString)
     
     @staticmethod
@@ -169,8 +230,6 @@ class Team(models.Model):
     @staticmethod
     def get_all_teams():
         return Team.objects.all()
-
-        
 
 class MarketEntry(models.Model):
     strategyid = models.ForeignKey(Strategy, on_delete=models.CASCADE)
@@ -185,13 +244,11 @@ class MarketEntry(models.Model):
     def __str__(self):
         return Team.objects.get(strategyid=self.strategyid).team_name+" Market Entry"
 
-
 class MarketAttributeType(models.Model):
     label = models.CharField(max_length=32)
 
     def __str__(self):
         return self.label
-
 
 class MarketAttributeTypeData(models.Model):
     marketEntryId       = models.ForeignKey(MarketEntry, on_delete=models.CASCADE)
@@ -201,3 +258,13 @@ class MarketAttributeTypeData(models.Model):
 
     def __str__(self):
         return self.marketEntryId.__str__()+"__"+self.marketAttributeType.__str__()+"__"+str(self.date)
+
+class PolicyStrategy(models.Model):
+
+    strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE)
+    policy = models.ForeignKey(Policy, on_delete=models.CASCADE)
+
+    chosen_option = models.PositiveSmallIntegerField()
+
+    def __str__(self):
+        return self.strategy.__str__()+"__"+self.policy.__str__()+"__"+str(self.id)

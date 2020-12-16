@@ -2,7 +2,7 @@ from django.test import TestCase
 from datetime import datetime, timedelta
 # Create your tests here.
 from simulatorApp.models import *
-
+from simulatorApp.globals import POLICIES
 
 class TestUserAccessLevels(TestCase):
 
@@ -24,8 +24,8 @@ class TestUserAccessLevels(TestCase):
             maxPrice=10.00,
             minPrice=2.50
             )
-        YES.objects.create(name="Staff 1", user=User.objects.create(username="Staff 1"))
-        YES.objects.create(name="Staff 2", user=User.objects.create(username="Staff 2"))
+        YES.objects.create(user=User.objects.create(username="Staff 1"))
+        YES.objects.create(user=User.objects.create(username="Staff 2"))
 
         School.objects.create(school_name="School 1", user=User.objects.create(username="School 1"))
         School.objects.create(school_name="School 2", user=User.objects.create(username="School 2"))
@@ -40,8 +40,9 @@ class TestUserAccessLevels(TestCase):
         #   YES user model objects
         #
 
-        staff_1 = YES.objects.get(name="Staff 1")
-        staff_2 = YES.objects.get(name="Staff 2")
+        staff_1 = YES.objects.get(user=User.objects.get(username="Staff 1"))
+        staff_2 = YES.objects.get(user=User.objects.get(username="Staff 2"))
+
         self.assertTrue(staff_1.user.has_perm("simulatorApp.is_yes_staff"))
         self.assertTrue(staff_2.user.has_perm("simulatorApp.is_yes_staff"))
 
@@ -63,8 +64,8 @@ class TestUserAccessLevels(TestCase):
         #   school user model objects
         #
 
-        staff_1 = YES.objects.get(name="Staff 1")
-        staff_2 = YES.objects.get(name="Staff 2")
+        staff_1 = YES.objects.get(user=User.objects.get(username="Staff 1"))
+        staff_2 = YES.objects.get(user=User.objects.get(username="Staff 2"))
         self.assertFalse(staff_1.user.has_perm("simulatorApp.is_school"))
         self.assertFalse(staff_2.user.has_perm("simulatorApp.is_school"))
 
@@ -80,8 +81,8 @@ class TestUserAccessLevels(TestCase):
         self.assertFalse(team_2.user.has_perm("simulatorApp.is_school"))
 
 
-        staff_1 = YES.objects.get(name="Staff 1")
-        staff_2 = YES.objects.get(name="Staff 2")
+        staff_1 = YES.objects.get(user=User.objects.get(username="Staff 1"))
+        staff_2 = YES.objects.get(user=User.objects.get(username="Staff 2"))
         self.assertFalse(staff_1.has_perm("simulatorApp.is_school"))
         self.assertFalse(staff_2.has_perm("simulatorApp.is_school"))
 
@@ -103,8 +104,8 @@ class TestUserAccessLevels(TestCase):
         #   team user model objects
         #
 
-        staff_1 = YES.objects.get(name="Staff 1")
-        staff_2 = YES.objects.get(name="Staff 2")
+        staff_1 = YES.objects.get(user=User.objects.get(username="Staff 1"))
+        staff_2 = YES.objects.get(user=User.objects.get(username="Staff 2"))
         self.assertFalse(staff_1.user.has_perm("simulatorApp.is_team"))
         self.assertFalse(staff_2.user.has_perm("simulatorApp.is_team"))
 
@@ -119,8 +120,8 @@ class TestUserAccessLevels(TestCase):
         self.assertTrue(team_1.user.has_perm("simulatorApp.is_team"))
         self.assertTrue(team_2.user.has_perm("simulatorApp.is_team"))
 
-        staff_1 = YES.objects.get(name="Staff 1")
-        staff_2 = YES.objects.get(name="Staff 2")
+        staff_1 = YES.objects.get(user=User.objects.get(username="Staff 1"))
+        staff_2 = YES.objects.get(user=User.objects.get(username="Staff 2"))
         self.assertFalse(staff_1.has_perm("simulatorApp.is_team"))
         self.assertFalse(staff_2.has_perm("simulatorApp.is_team"))
 
@@ -134,12 +135,6 @@ class TestUserAccessLevels(TestCase):
 
         self.assertTrue(team_1.has_perm("simulatorApp.is_team"))
         self.assertTrue(team_2.has_perm("simulatorApp.is_team"))
-
-    # def test_team_save(self):
-
-    #     team_1              = Team.objects.get(team_name="Team 1")
-    #     team_1.team_name    ="Team 1.5"
-    #     self.assertIsNone(team_1.save())
 
 
 class TestMarketEntry(TestCase):
@@ -215,3 +210,35 @@ class TestMarketEntry(TestCase):
                 0
             )
         
+
+class TestPolicy(TestCase):
+
+    def setUp(self):
+        # create objects for this test to use
+        # django will check for this methods existance 
+        # when running python manage.py test
+        Simulator.objects.create(
+            start=datetime.now(),
+            end=datetime.now()+ timedelta(1),
+            productName="Test Product",
+            maxPrice=10.00,
+            minPrice=2.50
+            )
+        YES.objects.create(user=User.objects.create(username="Staff 1"))
+        YES.objects.create(user=User.objects.create(username="Staff 2"))
+
+        School.objects.create(school_name="School 1", user=User.objects.create(username="School 1"))
+        School.objects.create(school_name="School 2", user=User.objects.create(username="School 2"))
+
+        Team.objects.create(team_name="Team 1", schoolid=School.objects.get(school_name="School 1"), user=User.objects.create(username="Team 1"))
+        Team.objects.create(team_name="Team 2", schoolid=School.objects.get(school_name="School 2"), user=User.objects.create(username="Team 2"))
+
+
+
+    def TestPolicyAssign(self):
+        
+        team_1 = Team.objects.get(team_name="Team 1") 
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        self.assertTrue(len(team_1_policy_strategies) == len(POLICIES))
+        
+

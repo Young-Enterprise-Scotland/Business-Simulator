@@ -28,7 +28,7 @@
                     <th scope="col">School</th>
                     <th scope="col">School Position</th>
                     <th scope="col">Leaderboard Position</th>
-                    <th scope="col">Account</th>
+                    <th scope="col">Edit Account</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -60,11 +60,13 @@
                             <td>
                                 <div class="dropdown">
                                     <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <i class="ni ni-hat-3 text-blue"></i>
+                                        <i class="ni ni-settings-gear-65 text-blue"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-arrow">
-                                    <a class="dropdown-item" href="{% url 'simulatorApp:viewTeamAccount' %}?profile_id={{ team.user.id }}">Edit Account</a>
+                                      <a class="dropdown-item" href="{% url 'simulatorApp:viewTeamAccount' %}?profile_id={{ team.user.id }}">Edit Account</a>
+                                      <a class="dropdown-item" href="">Delete Account</a>¬
                                     </div>
+                                  
                                 </div>
                             </td>
                         </tr>

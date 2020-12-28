@@ -5,7 +5,7 @@ from django.utils import timezone
 # Create your tests here.
 from .models import *
 from .globals import POLICIES
-from .calculations import num_customers
+from .calculations import num_customers, number_of_products_sold, daily_cost
 
 class TestUserAccessLevels(TestCase):
 
@@ -236,8 +236,6 @@ class TestPolicy(TestCase):
         Team.objects.create(team_name="Team 1", schoolid=School.objects.get(school_name="School 1"), user=User.objects.create(username="Team 1"))
         Team.objects.create(team_name="Team 2", schoolid=School.objects.get(school_name="School 2"), user=User.objects.create(username="Team 2"))
 
-
-
     def test_policy_assign(self):
         # test that policies are assigned 
         # to teams when teams are created
@@ -279,7 +277,50 @@ class TestPolicy(TestCase):
             strat.save()
         self.assertEqual(num_customers(team_1),20)
         
-
-
+    def test_num_customers_calculation(self):
+        # Test that the number of customers  
+        # allocated is correct
+        team_1 = Team.objects.get(team_name="Team 1") 
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 1
+            strat.save()
+        self.assertEqual(float(number_of_products_sold(team_1)),0.56)
 
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 2
+            strat.save()
+        self.assertEqual(float(number_of_products_sold(team_1)),30.00)
+
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 3
+            strat.save()
+        self.assertEqual(float(number_of_products_sold(team_1)),1.13)
+
+    def test_total_cost(self):
+        team_1 = Team.objects.get(team_name="Team 1") 
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 1
+            strat.save()
+        self.assertEqual(float(daily_cost(team_1)),5.00)
+
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 2
+            strat.save()
+        self.assertEqual(float(daily_cost(team_1)),10.00)
+
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 3
+            strat.save()
+        self.assertEqual(float(daily_cost(team_1)),15.00)

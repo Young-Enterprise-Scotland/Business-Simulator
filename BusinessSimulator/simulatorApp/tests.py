@@ -5,7 +5,7 @@ from django.utils import timezone
 # Create your tests here.
 from .models import *
 from .globals import POLICIES
-from .calculations import num_customers, number_of_products_sold, daily_cost
+from .calculations import num_customers, number_of_products_sold, daily_cost, product_cost
 
 class TestUserAccessLevels(TestCase):
 
@@ -324,3 +324,26 @@ class TestPolicy(TestCase):
             strat.chosen_option = 3
             strat.save()
         self.assertEqual(float(daily_cost(team_1)),15.00)
+
+    def test_product_cost(self):
+        team_1 = Team.objects.get(team_name="Team 1") 
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 1
+            strat.save()
+        self.assertEqual(float(product_cost(team_1)),1.00)
+
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 2
+            strat.save()
+        self.assertEqual(float(product_cost(team_1)),2.00)
+
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 3
+            strat.save()
+        self.assertEqual(float(product_cost(team_1)),3.00)

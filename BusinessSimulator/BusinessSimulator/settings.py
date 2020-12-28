@@ -26,6 +26,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # so they can be used by the views
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
 
+#set timezone
+os.environ['tz'] = "Europe/London"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/

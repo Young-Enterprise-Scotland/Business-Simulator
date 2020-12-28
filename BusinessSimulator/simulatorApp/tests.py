@@ -1,8 +1,11 @@
 from django.test import TestCase
-from datetime import datetime, timedelta
+from datetime import timedelta
+from django.utils import timezone
+
 # Create your tests here.
-from simulatorApp.models import *
-from simulatorApp.globals import POLICIES
+from .models import *
+from .globals import POLICIES
+from .calculations import num_customers
 
 class TestUserAccessLevels(TestCase):
 
@@ -18,8 +21,8 @@ class TestUserAccessLevels(TestCase):
         # django will check for this methods existance 
         # when running python manage.py test
         Simulator.objects.create(
-            start=datetime.now(),
-            end=datetime.now()+ timedelta(1),
+            start=timezone.now(),
+            end=timezone.now()+ timedelta(1),
             productName="Test Product",
             maxPrice=10.00,
             minPrice=2.50
@@ -141,7 +144,7 @@ class TestMarketEntry(TestCase):
 
     def setUp(self):
 
-        Simulator.objects.create(start=datetime.now(),end=datetime.now()+ timedelta(1),productName="Test Product",maxPrice=10.00,minPrice=2.50)
+        Simulator.objects.create(start=timezone.now(),end=timezone.now()+ timedelta(1),productName="Test Product",maxPrice=10.00,minPrice=2.50)
 
         MarketAttributeType.objects.create(label="Price")
         MarketAttributeType.objects.create(label="Market Share")
@@ -179,7 +182,7 @@ class TestMarketEntry(TestCase):
             marketEntryId=market_entry_t_1, 
             marketAttributeType=MarketAttributeType.objects.get(label="Price"),
             parameterValue=10.50,
-            date=datetime.now()+timedelta(1) 
+            date=timezone.now()+timedelta(1) 
             )
 
         attib_data_t_1_2 = MarketAttributeTypeData.objects.create(
@@ -218,8 +221,8 @@ class TestPolicy(TestCase):
         # django will check for this methods existance 
         # when running python manage.py test
         Simulator.objects.create(
-            start=datetime.now(),
-            end=datetime.now()+ timedelta(1),
+            start=timezone.now(),
+            end=timezone.now()+ timedelta(1),
             productName="Test Product",
             maxPrice=10.00,
             minPrice=2.50
@@ -235,10 +238,48 @@ class TestPolicy(TestCase):
 
 
 
-    def TestPolicyAssign(self):
-        
+    def test_policy_assign(self):
+        # test that policies are assigned 
+        # to teams when teams are created
         team_1 = Team.objects.get(team_name="Team 1") 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         self.assertTrue(len(team_1_policy_strategies) == len(POLICIES))
+    
+    def test_policy_change(self):
+        # test that teams can change policy
+        team_1 = Team.objects.get(team_name="Team 1")
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 2
+            strat.save()
+            self.assertFalse(strat.chosen_option == 1)
+
+    def test_num_customers_calculation(self):
+        # Test that the number of customers  
+        # allocated is correct
+        team_1 = Team.objects.get(team_name="Team 1") 
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 1
+            strat.save()
+        self.assertEqual(num_customers(team_1),10)
+
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 2
+            strat.save()
+        self.assertEqual(num_customers(team_1),30)
+
+        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        for strat in team_1_policy_strategies:
+            strat.chosen_option = 3
+            strat.save()
+        self.assertEqual(num_customers(team_1),20)
+        
+
+
         
 

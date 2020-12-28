@@ -2,7 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
-from datetime import datetime, timedelta
+from django.utils import timezone
+from datetime import timedelta
 from .globals import POLICIES
 
 # Create your models here.
@@ -253,7 +254,7 @@ class MarketAttributeType(models.Model):
 class MarketAttributeTypeData(models.Model):
     marketEntryId       = models.ForeignKey(MarketEntry, on_delete=models.CASCADE)
     marketAttributeType = models.ForeignKey(MarketAttributeType, on_delete=models.CASCADE)
-    date                = models.DateTimeField(default=datetime.now)
+    date                = models.DateTimeField(default=timezone.now)
     parameterValue      = models.DecimalField(decimal_places=4, max_digits=12)
 
     def __str__(self):

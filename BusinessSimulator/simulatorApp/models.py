@@ -42,6 +42,9 @@ class Simulator(models.Model):
     maxPrice = models.DecimalField(max_digits=12, decimal_places = 4)
     minPrice = models.DecimalField(max_digits=12, decimal_places = 4)
 
+    priceBoundary1 = models.DecimalField(max_digits=12, decimal_places = 4)
+    priceBoundary2 = models.DecimalField(max_digits=12, decimal_places = 4)
+
     marketOpen = models.BooleanField(default=True)
 
     def clean(self):
@@ -55,6 +58,11 @@ class Simulator(models.Model):
             raise ValidationError("Length of Trading Day is too short for given start and end dates")
         if (self.minPrice > self.maxPrice):
             raise ValidationError("Minimum price cannot be larger than maximum price")
+
+        if (self.priceBoundary1 < self.minPrice) or (self.priceBoundary2 < self.minPrice):
+            raise ValidationError("Price boundaries must be higher than the minimum price")
+        if (self.priceBoundary1 > self.maxPrice) or (self.priceBoundary2 > self.maxPrice):
+            raise ValidationError("Price boundaries must be lower than the maximum price")
     
     def __setup_policies(self):
         "Setup the policies for the game. These can be edited by YES staff"
@@ -269,3 +277,54 @@ class PolicyStrategy(models.Model):
 
     def __str__(self):
         return self.strategy.__str__()+"__"+self.policy.__str__()+"__"+str(self.id)
+
+class Price(models.Model):
+    team = models.OneToOneField(Team, on_delete=models.CASCADE)
+    qual = models.ForeignKey(PolicyStrategy, on_delete=models.CASCADE)
+    simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+    price = models.DecimalField(decimal_places=2, max_digits=10)
+    efctOnSales = models.DecimalField(decimal_places=2, max_digits=10)
+    customers = models.DecimalField(decimal_places=2, max_digits=10)
+
+    def clean(self):
+        # Price must be in range
+        if (self.price < self.simulator.minPrice):
+            raise ValidationError("Price too low.")
+        elif (self.price > self.simulator.maxPrice):
+            raise ValidationError("Price too high.")
+        
+        qual = self.qual.chosen_option
+        price = self.price
+        bound1 = self.simulator.priceBoundary1
+        bound2 = self.simulator.priceBoundary2
+
+        if qual == 1 and (price <= bound1 and price >= self.simulator.minPrice):
+            self.efctOnSales = 1
+            self.customers = 2
+        elif qual == 1 and (price <= bound2 and price >= bound1):
+            self.efctOnSales = 0.9
+            self.customers = 1
+        elif qual == 1 and (price <= self.simulator.maxPrice and price >= bound2):
+            self.efctOnSales = 0.8
+            self.customers = 0
+        elif qual == 2 and (price <= bound1 and price >= self.simulator.minPrice):
+            self.efctOnSales = 0.85
+            self.customers = 1
+        elif qual == 2 and (price <= bound2 and price >= bound1):
+            self.efctOnSales = 1
+            self.customers = 2
+        elif qual == 2 and (price <= self.simulator.maxPrice and price >= bound2):
+            self.efctOnSales = 0.85
+            self.customers = 1
+        elif qual == 3 and (price <= bound1 and price >= self.simulator.minPrice):
+            self.efctOnSales = 0.8
+            self.customers = 0
+        elif qual == 3 and (price <= bound2 and price >= bound1):
+            self.efctOnSales = 0.9
+            self.customers = 1
+        elif qual == 3 and (price <= self.simulator.maxPrice and price >= bound2):
+            self.efctOnSales = 1
+            self.customers = 2
+
+    def __str__(self):
+        return self.team.__str__()+" Price"

@@ -274,9 +274,6 @@ class PolicyStrategy(models.Model):
 
     chosen_option = models.PositiveSmallIntegerField()
 
-    def chosen(self):
-        return self.chosen_option
-
     def __str__(self):
         return self.strategy.__str__()+"__"+self.policy.__str__()+"__"+str(self.id)
 
@@ -327,6 +324,6 @@ class Price(models.Model):
         elif qual == 3 and (price <= self.simulator.maxPrice and price >= bound2):
             self.efctOnSales = 1
             self.customers = 2
-    
-    #def __str__(self):
-     #   return self.name
+
+    def __str__(self):
+        return self.team.__str__()+" Price"

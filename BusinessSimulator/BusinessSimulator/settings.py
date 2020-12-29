@@ -170,4 +170,4 @@ SASS_PROCESSOR_ROOT = STATIC_ROOT #os.path.join(, 'assets')
 # ]
 
 
-SASS_OUTPUT_STYLE = 'minimize'
+SASS_OUTPUT_STYLE = 'compressed'

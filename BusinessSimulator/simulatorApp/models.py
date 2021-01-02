@@ -42,8 +42,8 @@ class Simulator(models.Model):
     maxPrice = models.DecimalField(max_digits=12, decimal_places = 4)
     minPrice = models.DecimalField(max_digits=12, decimal_places = 4)
 
-    priceBoundary1 = models.DecimalField(max_digits=12, decimal_places = 4)
-    priceBoundary2 = models.DecimalField(max_digits=12, decimal_places = 4)
+    priceBoundary1 = models.DecimalField(max_digits=12, decimal_places = 4, default=1.50)
+    priceBoundary2 = models.DecimalField(max_digits=12, decimal_places = 4, default=3.50)
 
     marketOpen = models.BooleanField(default=True)
 
@@ -220,11 +220,18 @@ class Team(models.Model):
                     policy=Policy.objects.get(name=policy),
                     strategy=self.strategyid,
                     chosen_option=1 #set to be low by default
-                    )
-        
+                    )  
         # save instance
-        super(Team, self).save(*args, **kwargs)
-    
+        super().save(*args, **kwargs)
+
+        if(len(team)==0):
+            #create price object for team
+            Price.objects.create(
+                simulator=Simulator.objects.annotate(models.Max('id'))[0],
+                team=self,
+                qual=PolicyStrategy.objects.get(strategy=self.strategyid, policy=Policy.objects.get(name="Quality of Raw Materials")),
+                ) 
+        
     def __str__(self):
         return self.team_name
     
@@ -282,22 +289,46 @@ class Price(models.Model):
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
     qual = models.ForeignKey(PolicyStrategy, on_delete=models.CASCADE)
     simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
-    price = models.DecimalField(decimal_places=2, max_digits=10)
-    efctOnSales = models.DecimalField(decimal_places=2, max_digits=10)
-    customers = models.DecimalField(decimal_places=2, max_digits=10)
+    price = models.DecimalField(decimal_places=4, max_digits=12, default=1)
+    efctOnSales = models.DecimalField(decimal_places=4, max_digits=12, default=0)
+    customers = models.DecimalField(decimal_places=2, max_digits=10, default=0)
 
     def clean(self):
+        '''
+            Cleanes new fields and saves the object
+            returns True if data is clean 
+            or raises a ValidationError exception.
+        '''
         # Price must be in range
         if (self.price < self.simulator.minPrice):
             raise ValidationError("Price too low.")
         elif (self.price > self.simulator.maxPrice):
             raise ValidationError("Price too high.")
         
+        if(self.simulator.priceBoundary1 < self.simulator.minPrice):
+            raise ValidationError("Boundary Price is less than minimum price")
+        elif(self.simulator.priceBoundary2 > self.simulator.maxPrice):
+            raise ValidationError("Boundary price is greater than max price")
+
+        return True
+
+    def getAndSetCustomersAndSales(self):
+        '''
+            Re-calculates the number of customers and effect on sales. 
+            Returns tuple: (no. customers, effect on sales).
+
+            Call this method before handling the num customers 
+            and effect on sales attribute as they need to be 
+            re-calculated everytime the strategypolicy changes 
+        '''
+        
+        # make sure values are valid
+        self.clean()
+
         qual = self.qual.chosen_option
         price = self.price
         bound1 = self.simulator.priceBoundary1
         bound2 = self.simulator.priceBoundary2
-
         if qual == 1 and (price <= bound1 and price >= self.simulator.minPrice):
             self.efctOnSales = 1
             self.customers = 2
@@ -325,6 +356,10 @@ class Price(models.Model):
         elif qual == 3 and (price <= self.simulator.maxPrice and price >= bound2):
             self.efctOnSales = 1
             self.customers = 2
-
+        
+        #save changes
+        self.save()
+        return self.customers, self.efctOnSales
+        
     def __str__(self):
         return self.team.__str__()+" Price"

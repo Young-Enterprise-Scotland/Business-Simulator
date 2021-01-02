@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
+import decimal
+
 from  .models import *
 from BusinessSimulator.settings import DEBUG
 from .globals import POLICIES
+
 # Place calculations which are used at the end of the trading day here
 #
 #
@@ -12,7 +15,13 @@ def num_customers(teamobject):
     'Calculate the number of customers a team recieves based on their policy stratagy'
 
     policystrategies = PolicyStrategy.objects.filter(strategy=teamobject.strategyid)
-    total_customers = 0
+    
+    # initalise total_customers to be the minimum number of customers
+    
+
+    price_obj = Price.objects.get(team=teamobject)
+    price_obj.getAndSetCustomersAndSales()
+    total_customers = price_obj.customers
 
     for ps in policystrategies:
         if ps.chosen_option == 1: # low option
@@ -21,30 +30,30 @@ def num_customers(teamobject):
             total_customers += ps.policy.med_customer 
         elif ps.chosen_option == 3: # high option
             total_customers += ps.policy.high_customer
-        
+    
     return total_customers
 
 def number_of_products_sold(teamobject):
 
     policystrategies = PolicyStrategy.objects.filter(strategy=teamobject.strategyid)
-    cum_sales = 1
 
+    price_obj = Price.objects.get(team=teamobject)
+    price_obj.getAndSetCustomersAndSales()
+    cum_sales = decimal.Decimal(price_obj.efctOnSales)
     for ps in policystrategies:
         if ps.chosen_option == 1: # low option
-            cum_sales *= ps.policy.low_sales
+            cum_sales *= decimal.Decimal(ps.policy.low_sales)
         elif ps.chosen_option == 2: # med option
-            cum_sales *= ps.policy.med_sales 
+            cum_sales *= decimal.Decimal(ps.policy.med_sales)
         elif ps.chosen_option == 3: # high option
-            cum_sales *= ps.policy.high_sales
-    
-    # YES allows for products to be non integer and rounded to 2dp
-    return round(cum_sales*num_customers(teamobject),2)
+            cum_sales *= decimal.Decimal(ps.policy.high_sales)
+    return cum_sales*decimal.Decimal(num_customers(teamobject))
 
 def daily_cost(teamobject):
     'Calculates a teams daily cost based on their policy choices'
 
     policystrategies = PolicyStrategy.objects.filter(strategy=teamobject.strategyid)
-    total_cost = 0
+    total_cost = decimal.Decimal(0)
 
     for ps in policystrategies:
         if ps.chosen_option == 1: # low option
@@ -61,11 +70,10 @@ def product_cost(teamobject):
     
     policystrategies = PolicyStrategy.objects.filter(
         strategy=teamobject.strategyid, 
-
-        # select quality of raw materials and appearance of packaging Policies 
+        # select 'quality of raw materials' and 'appearance of packaging' Policies 
         policy__in=Policy.objects.filter(name__in=POLICIES[2:4])
         )
-    total_cost = 0
+    total_cost = decimal.Decimal(0)
 
     for ps in policystrategies:
         if ps.chosen_option == 1: # low option

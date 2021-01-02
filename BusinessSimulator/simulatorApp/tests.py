@@ -1,6 +1,7 @@
 from django.test import TestCase
 from datetime import timedelta
 from django.utils import timezone
+import decimal
 
 # Create your tests here.
 from .models import *
@@ -225,7 +226,7 @@ class TestPolicy(TestCase):
             end=timezone.now()+ timedelta(1),
             productName="Test Product",
             maxPrice=10.00,
-            minPrice=2.50
+            minPrice=1.00
             )
         YES.objects.create(user=User.objects.create(username="Staff 1"))
         YES.objects.create(user=User.objects.create(username="Staff 2"))
@@ -257,52 +258,72 @@ class TestPolicy(TestCase):
         # allocated is correct
         team_1 = Team.objects.get(team_name="Team 1") 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
-        
+        price_obj = Price.objects.get(team=team_1)
+        price_obj.price = decimal.Decimal(5.00)
+
         for strat in team_1_policy_strategies:
+
             strat.chosen_option = 1
             strat.save()
+
+        price_obj.getAndSetCustomersAndSales()
         self.assertEqual(num_customers(team_1),10)
 
-        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
         for strat in team_1_policy_strategies:
             strat.chosen_option = 2
             strat.save()
-        self.assertEqual(num_customers(team_1),30)
 
-        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        price_obj.getAndSetCustomersAndSales()
+        self.assertEqual(num_customers(team_1),31)
+
         
         for strat in team_1_policy_strategies:
             strat.chosen_option = 3
             strat.save()
-        self.assertEqual(num_customers(team_1),20)
         
-    def test_num_customers_calculation(self):
+        price_obj.getAndSetCustomersAndSales()
+        self.assertEqual(num_customers(team_1),22)
+        
+    def test_num_products_sold_calculation(self):
         # Test that the number of customers  
         # allocated is correct
         team_1 = Team.objects.get(team_name="Team 1") 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
+        price_obj = Price.objects.get(team=team_1)
+        price_obj.price = decimal.Decimal(5.00)
+        x,y = price_obj.getAndSetCustomersAndSales()
+
         for strat in team_1_policy_strategies:
             strat.chosen_option = 1
             strat.save()
-        self.assertEqual(float(number_of_products_sold(team_1)),0.56)
-
-        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        self.assertAlmostEqual(
+            number_of_products_sold(team_1),
+            decimal.Decimal(0.0450508118)*decimal.Decimal(num_customers(team_1)),
+            places=4)
         
         for strat in team_1_policy_strategies:
             strat.chosen_option = 2
             strat.save()
-        self.assertEqual(float(number_of_products_sold(team_1)),30.00)
-
-        team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
+        
+        x,y = price_obj.getAndSetCustomersAndSales()
+        self.assertAlmostEqual(
+            number_of_products_sold(team_1), 
+            decimal.Decimal(0.85)*decimal.Decimal(num_customers(team_1)),
+            places=4)
         
         for strat in team_1_policy_strategies:
             strat.chosen_option = 3
             strat.save()
-        self.assertEqual(float(number_of_products_sold(team_1)),1.13)
 
-    def test_total_cost(self):
+        x,y = price_obj.getAndSetCustomersAndSales()
+        self.assertAlmostEqual(
+            number_of_products_sold(team_1), 
+            decimal.Decimal(0.0563135147)*decimal.Decimal(num_customers(team_1)),
+            places=4)
+
+    def test_total_cost_calculation(self):
         team_1 = Team.objects.get(team_name="Team 1") 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
@@ -325,7 +346,7 @@ class TestPolicy(TestCase):
             strat.save()
         self.assertEqual(float(daily_cost(team_1)),15.00)
 
-    def test_product_cost(self):
+    def test_product_cost_calculation(self):
         team_1 = Team.objects.get(team_name="Team 1") 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
@@ -347,3 +368,49 @@ class TestPolicy(TestCase):
             strat.chosen_option = 3
             strat.save()
         self.assertEqual(float(product_cost(team_1)),3.00)
+
+class TestPrice(TestCase):
+
+    def setUp(self):
+        # create objects for this test to use
+        # django will check for this methods existance 
+        # when running python manage.py test
+        Simulator.objects.create(
+            start=timezone.now(),
+            end=timezone.now()+ timedelta(1),
+            productName="Test Product",
+            maxPrice=10.00,
+            minPrice=1.00
+            )
+        YES.objects.create(user=User.objects.create(username="Staff 1"))
+       
+        School.objects.create(school_name="School 1", user=User.objects.create(username="School 1"))
+        
+        Team.objects.create(team_name="Team 1", schoolid=School.objects.get(school_name="School 1"), user=User.objects.create(username="Team 1"))
+    
+    def test_price_model_clean_min(self):
+        'Test that the clean method enforces min prices boundary'
+        team1 = Team.objects.get(team_name="Team 1")
+        simulator = Simulator.objects.annotate(models.Max('id'))[0]
+        team1_price = Price.objects.get(team=team1)
+        team1_price.price = simulator.minPrice- decimal.Decimal(0.01)
+        self.assertRaises(ValidationError,team1_price.clean)
+    
+    def test_price_model_clean_max(self):
+        'Test that the max price boundary is enforced'
+        team1 = Team.objects.get(team_name="Team 1")
+        simulator = Simulator.objects.annotate(models.Max('id'))[0]
+        team1_price = Price.objects.get(team=team1)
+        team1_price.price = simulator.maxPrice+decimal.Decimal(0.01)
+        self.assertRaises(ValidationError, team1_price.clean)
+
+    def test_price_clean_valid(self):
+        'Check that clean method saves data once it has updated parameters'
+        team1 = Team.objects.get(team_name="Team 1")
+        simulator = Simulator.objects.annotate(models.Max('id'))[0]
+        team1_price = Price.objects.get(team=team1)
+
+        team1_price.price= decimal.Decimal(5.00)
+        team1_price.save()
+        self.assertEqual(team1_price.price, decimal.Decimal(5.00))
+        self.assertEqual(team1_price.price, Price.objects.get(team=team1).price)

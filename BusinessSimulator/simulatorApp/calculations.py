@@ -84,3 +84,19 @@ def product_cost(teamobject):
             total_cost += ps.policy.high_cost
         
     return total_cost
+
+def profit(teamobject):
+    price_obj = Price.objects.get(team=teamobject)
+    return (price_obj.price - product_cost(teamobject)) * number_of_products_sold(teamobject)
+
+def net_profit(teamobject):
+    return profit(teamobject) - daily_cost(teamobject)
+
+def size_of_market():
+    total_prods_sold = 0
+    for each in Team.objects.all():
+        total_prods_sold += number_of_products_sold(each)
+    return total_prods_sold
+
+def market_share(teamobject):
+    return number_of_products_sold(teamobject)/size_of_market()

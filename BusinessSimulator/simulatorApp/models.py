@@ -67,24 +67,22 @@ class Simulator(models.Model):
     
     def __setup_policies(self):
         "Setup the policies for the game. These can be edited by YES staff"
-        
-        newSim = False
         for policy in POLICIES:
             (object,created) = Policy.objects.get_or_create(name=policy)
-            
-            if(created):
-                newSim = True
-        return newSim
 
     def save(self, *args, **kwargs):
         
         #setup policies if they do not already exist
-        newSim = self.__setup_policies()
+        self.__setup_policies()
+        
 
+        if self._state.adding: # if not already saved
+            cronjobs.start(self)
+        else:
+            cronjobs.update()
         super(Simulator, self).save(*args, **kwargs)
-        if newSim:
-            cronjobs.start()
-            
+        
+
     def __str__(self):
         return self.productName+"("+str(self.id)+")"
 

@@ -2,6 +2,7 @@ from django.test import TestCase
 from datetime import timedelta
 from django.utils import timezone
 import decimal
+import time
 
 # Create your tests here.
 from .models import *
@@ -405,6 +406,7 @@ class TestPrice(TestCase):
         self.assertRaises(ValidationError, team1_price.clean)
 
     def test_price_clean_valid(self):
+
         'Check that clean method saves data once it has updated parameters'
         team1 = Team.objects.get(team_name="Team 1")
         simulator = Simulator.objects.annotate(models.Max('id'))[0]
@@ -414,3 +416,52 @@ class TestPrice(TestCase):
         team1_price.save()
         self.assertEqual(team1_price.price, decimal.Decimal(5.00))
         self.assertEqual(team1_price.price, Price.objects.get(team=team1).price)
+
+class TestSchedule(TestCase):
+    
+    def test_schedule_start(self):
+        noErr = True
+        try:
+            simulator = Simulator.objects.create(
+                start=timezone.now(),
+                end=timezone.now()+ timedelta(1),
+                productName="Test Product",
+                maxPrice=10.00,
+                minPrice=1.00
+            )
+        except Exception as e:
+            print(e)
+            noErr = False
+
+        self.assertTrue(noErr == True)
+
+    def test_schedule_update(self):
+        noErr = True
+        simulator = Simulator.objects.create(
+            start=timezone.now(),
+            end=timezone.now()+ timedelta(1),
+            productName="Test Product",
+            maxPrice=10.00,
+            minPrice=1.00
+        )
+
+        simulator.end += timedelta(1)
+
+        noErr = True
+        try:
+            simulator.save()
+        except Exception as e:
+            print(e)
+            noErr = False
+        self.assertTrue(noErr==True)
+
+    def test_process_fire(self):
+        simulator = Simulator.objects.create(
+            start=timezone.now(),
+            end=timezone.now()+ timedelta(1),
+            productName="Test Product",
+            maxPrice=10.00,
+            minPrice=1.00
+        )
+
+        time.sleep(5)

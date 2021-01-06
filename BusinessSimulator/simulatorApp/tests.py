@@ -7,7 +7,7 @@ import time
 # Create your tests here.
 from .models import *
 from .globals import POLICIES
-from .calculations import num_customers, number_of_products_sold, daily_cost, product_cost
+from .calculations import *
 
 class TestUserAccessLevels(TestCase):
 

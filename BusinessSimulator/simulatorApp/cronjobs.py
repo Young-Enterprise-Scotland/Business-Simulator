@@ -64,7 +64,9 @@ def start(simulation=None):
     print(f"\nTotal seconds: {length}")    
     print(f"Setting up a schedule every {days}days {hours}hours {minutes}minutes {seconds}seconds\n")
     scheduler = BackgroundScheduler()
-    scheduler.add_job(process_teams, 'cron', start_date=start, end_date=end, id="calculate", day=days, hour=hours, minute=minutes, second=seconds)
+
+    # temp fix until seconds to days calculation works
+    scheduler.add_job(process_teams, 'cron', start_date=start, end_date=end, id="calculate", day=1, hour=1, minute=1, second=1)
     scheduler.start()
     scheduler_global = scheduler 
 

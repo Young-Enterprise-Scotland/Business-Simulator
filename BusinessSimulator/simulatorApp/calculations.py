@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
+from django.utils import timezone
 import decimal
 
-from  .models import *
+from .models import Simulator, Policy, PolicyStrategy, Team, Strategy, Price
 from BusinessSimulator.settings import DEBUG
 from .globals import POLICIES
 

@@ -5,7 +5,7 @@ from django.contrib.auth.models import Permission
 from django.utils import timezone
 from datetime import timedelta
 from .globals import POLICIES
-
+from . import cronjobs
 # Create your models here.
 
 class Policy(models.Model):
@@ -13,19 +13,20 @@ class Policy(models.Model):
     name = models.CharField(max_length=56, unique=True)
 
     low_label = models.CharField(max_length=56, default="Low")
-    low_customer = models.DecimalField(decimal_places=4, max_digits=12)
-    low_cost = models.DecimalField(decimal_places=4, max_digits=12)
-    low_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.85)
+    
+    low_cost = models.DecimalField(decimal_places=4, max_digits=12, default=0.5)
+    low_customer = models.DecimalField(decimal_places=4, max_digits=12, default=1)
+    low_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.75)
     
     med_label = models.CharField(max_length=56, default="Medium")
-    med_customer = models.DecimalField(decimal_places=4, max_digits=12, default=2)
-    med_cost = models.DecimalField(decimal_places=4, max_digits=12)
+    med_cost = models.DecimalField(decimal_places=4, max_digits=12, default=1.00)
+    med_customer = models.DecimalField(decimal_places=4, max_digits=12, default=3)
     med_sales = models.DecimalField(decimal_places=4, max_digits=12, default=1.00)
 
     high_label = models.CharField(max_length=56, default="High")
-    high_customer = models.DecimalField(decimal_places=4, max_digits=12, default=3)
-    high_cost = models.DecimalField(decimal_places=4, max_digits=12,)
-    high_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.85)
+    high_cost = models.DecimalField(decimal_places=4, max_digits=12,default=1.5)
+    high_customer = models.DecimalField(decimal_places=4, max_digits=12, default=2)
+    high_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.75)
 
     def __str__(self):
         return self.name
@@ -66,33 +67,26 @@ class Simulator(models.Model):
     
     def __setup_policies(self):
         "Setup the policies for the game. These can be edited by YES staff"
-        
         for policy in POLICIES:
-            Policy.objects.get_or_create(
-                name=policy,
-                low_cost=0.5,
-                low_customer=1,
-                low_sales=0.75,
-                
-                med_cost=1.00,
-                med_customer=3,
-                med_sales=1.00,
-
-                high_cost=1.5,
-                high_customer=2,
-                high_sales=0.75
-            )
+            (object,created) = Policy.objects.get_or_create(name=policy)
 
     def save(self, *args, **kwargs):
         
         #setup policies if they do not already exist
         self.__setup_policies()
+        
 
+        if self._state.adding: # if not already saved
+            cronjobs.start(self)
+        else:
+            cronjobs.update()
         super(Simulator, self).save(*args, **kwargs)
+        
 
     def __str__(self):
         return self.productName+"("+str(self.id)+")"
-    
+
+
 class YES(models.Model):
     
     # password is managed by the User model

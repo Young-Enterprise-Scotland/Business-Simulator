@@ -122,3 +122,9 @@ BusinessSimulator/BusinessSimulator/key.py
 # MySQL #
 BusinessSimulator/mysql/*
 BusinessSimulator\mysql\*
+mysql\*
+mysql/*
+
+# Staticfiles #
+BusinessSimulator/staticfiles/*
+staticfiles/*

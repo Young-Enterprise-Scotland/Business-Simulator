@@ -16,7 +16,7 @@ test:
     - pip3 install --no-cache-dir -r requirements.txt
     - ln -s /usr/bin/python3 /usr/bin/python
     - apk del --no-cache python3-dev postgresql-dev unixodbc-dev musl-dev g++ libffi-dev
-    - pip install -r requirements.txt
+    - pip install -r requirements.txt --ignore-installed six --user
     - python manage.py test
 
 staging:

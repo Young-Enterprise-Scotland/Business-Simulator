@@ -9,8 +9,7 @@ test:
   script:
     # this configures Django application to use attached postgres database that is run on `postgres` host
     - export DATABASE_URL=postgres://xwdkxnwjnswaqw:3693d1d203490aa0b4a77003bc3565c8d218fda933ab9a9c109039c347147d18@ec2-54-170-100-209.eu-west-1.compute.amazonaws.com:5432/d4v54uvok6a6kk
-    - apt-get update -qy
-    - apt-get install -y python-dev python-pip
+    - apk add -y python-dev python-pip
     - pip install -r requirements.txt
     - python manage.py test
 
@@ -19,8 +18,7 @@ staging:
     - docker
   stage: deploy
   script:
-    - apt-get update -qy
-    - apt-get install -y ruby-dev
+    - apk add -y ruby-dev
     - gem install dpl
     - dpl --provider=heroku --app=yescotland-staging --api-key=$HEROKU_STAGING_API_KEY
   only:
@@ -31,8 +29,7 @@ production:
     - docker
   stage: deploy
   script:
-    - apt-get update -qy
-    - apt-get install -y ruby-dev
+    - apk add -y ruby-dev
     - gem install dpl
     - dpl --provider=heroku --app=yescotland --api-key=$HEROKU_PRODUCTION_API_KEY
   only:

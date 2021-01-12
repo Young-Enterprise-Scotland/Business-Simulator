@@ -11,9 +11,10 @@ test:
     - export DATABASE_URL=postgres://xwdkxnwjnswaqw:3693d1d203490aa0b4a77003bc3565c8d218fda933ab9a9c109039c347147d18@ec2-54-170-100-209.eu-west-1.compute.amazonaws.com:5432/d4v54uvok6a6kk
     - apk add --no-cache curl jq python3 py3-pip
     - pip install -U pip setuptools
+    - pip install wheel
     - apk add -U --no-cache bash python3 python3-dev libpq postgresql-dev unixodbc-dev musl-dev g++ libffi-dev
     - pip3 install --upgrade --no-cache-dir pip setuptools==49.6.0
-    - pip install -U Pillow
+    - pip3 install -U Pillow
     - pip3 install -r requirements.txt --ignore-installed six --user
     - python manage.py test
 

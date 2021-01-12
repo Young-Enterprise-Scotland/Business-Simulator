@@ -12,7 +12,7 @@ test:
     - apk add --no-cache curl jq python3 py3-pip
     - pip install -U pip setuptools
     - pip install wheel
-    - apk add -U --no-cache bash python3 python3-dev libpq postgresql-dev unixodbc-dev musl-dev g++ libffi-dev libxml2-dev libxslt1-dev
+    - apk add -U --no-cache bash python3 python3-dev libpq postgresql-dev unixodbc-dev musl-dev g++ libffi-dev libxml2-dev
     - pip3 install --upgrade --no-cache-dir pip setuptools==49.6.0
     - pip3 install -U Pillow
     - pip3 install -r requirements.txt --ignore-installed six --user

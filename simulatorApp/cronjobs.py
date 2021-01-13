@@ -5,7 +5,29 @@ from django.db import models
 from django.utils import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 
+
 scheduler_global = None
+
+def secondsToDHMS(n: int)-> tuple: 
+    '''
+    Turn seconds into days hours minutes and seconds
+    @return tuple of integers (day, hour, minute, second)
+    Source:
+    https://www.geeksforgeeks.org/converting-seconds-into-days-hours-minutes-and-seconds/
+    Accessed 13/01/2021
+    '''
+    day = n // (24 * 3600) 
+  
+    n %= (24 * 3600) 
+    hour = n // 3600
+  
+    n %= 3600
+    minutes = n // 60
+  
+    n %= 60
+    seconds = n 
+    return (int(day),int(hour),int(minutes),int(seconds))
+
 
 def process_teams():
 
@@ -47,11 +69,7 @@ def start(simulation=None):
     start = simulation.start
     end = simulation.end
     length = simulation.lengthOfTradingDay.total_seconds()
-
-    days    = int(length/(24*3600))
-    hours   = int((length%(24*3600))/3600)
-    minutes = int((length%(24*3600*3600))/60)
-    seconds = int((length%(24*3600*3600*60))/60)
+    days, hours, minutes, seconds = secondsToDHMS(length)
     
     if(days==0):
         days='*'        # everyday
@@ -63,12 +81,12 @@ def start(simulation=None):
         seconds = '*'   # everysecond
     print(f"\nTotal seconds: {length}")    
     print(f"Setting up a schedule every {days}days {hours}hours {minutes}minutes {seconds}seconds\n")
-    scheduler = BackgroundScheduler()
+    
 
     # temp fix until seconds to days calculation works
-    scheduler.add_job(process_teams, 'cron', start_date=start, end_date=end, id="calculate", day=1, hour=1, minute=1, second=1)
-    scheduler.start()
+    scheduler.add_job(process_teams, 'cron', start_date=start, end_date=end, id="calculate", day=days, hour=hours, minute=minutes, second=seconds)
     scheduler_global = scheduler 
+    
 
 
 def update():
@@ -80,3 +98,6 @@ def update():
         scheduler_global.remove_job("calculate")
     start()
     
+
+scheduler = BackgroundScheduler()
+scheduler.start()

@@ -12,7 +12,7 @@ from .globals import POLICIES
 
 #startdate=timezone.now()-timedelta(days=1),enddate=timezone.now()
 
-def num_customers(teamobject):
+def numCustomers(teamobject):
     'Calculate the number of customers a team recieves based on their policy stratagy'
 
     policystrategies = PolicyStrategy.objects.filter(strategy=teamobject.strategyid)
@@ -34,7 +34,7 @@ def num_customers(teamobject):
     
     return total_customers
 
-def number_of_products_sold(teamobject):
+def numberOfProductsSold(teamobject):
 
     policystrategies = PolicyStrategy.objects.filter(strategy=teamobject.strategyid)
 
@@ -50,7 +50,7 @@ def number_of_products_sold(teamobject):
             cum_sales *= decimal.Decimal(ps.policy.high_sales)
     return cum_sales*decimal.Decimal(num_customers(teamobject))
 
-def daily_cost(teamobject):
+def dailyCost(teamobject):
     'Calculates a teams daily cost based on their policy choices'
 
     policystrategies = PolicyStrategy.objects.filter(strategy=teamobject.strategyid)
@@ -66,7 +66,7 @@ def daily_cost(teamobject):
         
     return total_cost
 
-def product_cost(teamobject):
+def productCost(teamobject):
     'Calculates the cost of a product'
     
     policystrategies = PolicyStrategy.objects.filter(
@@ -88,16 +88,16 @@ def product_cost(teamobject):
 
 def profit(teamobject):
     price_obj = Price.objects.get(team=teamobject)
-    return (price_obj.price - product_cost(teamobject)) * number_of_products_sold(teamobject)
+    return (price_obj.price - productCost(teamobject)) * numberOfProductsSold(teamobject)
 
-def net_profit(teamobject):
-    return profit(teamobject) - daily_cost(teamobject)
+def netProfit(teamobject):
+    return profit(teamobject) - dailyCost(teamobject)
 
-def size_of_market():
+def sizeOfMarket():
     total_prods_sold = 0
     for each in Team.objects.all():
-        total_prods_sold += number_of_products_sold(each)
+        total_prods_sold += numberOfProductsSold(each)
     return total_prods_sold
 
-def market_share(teamobject):
-    return number_of_products_sold(teamobject)/size_of_market()
+def marketShare(teamobject):
+    return numberOfProductsSold(teamobject)/sizeOfMarket()

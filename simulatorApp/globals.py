@@ -15,3 +15,14 @@ POLICIES = [
         "Newspaper Advert"
     ]
 
+MARKET_ATTRIBUTE_TYPES = [
+    "Product Cost",
+    "Daily Cost",
+    "Price",
+    "Number of Customers",
+    "Number of Products Sold",
+    "Profit",
+    "Net Profit",
+    "Size of Market",
+    "Market Share"
+]

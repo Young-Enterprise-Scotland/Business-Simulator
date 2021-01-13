@@ -148,10 +148,6 @@ class TestMarketEntry(TestCase):
 
         Simulator.objects.create(start=timezone.now(),end=timezone.now()+ timedelta(1),productName="Test Product",maxPrice=10.00,minPrice=2.50)
 
-        MarketAttributeType.objects.create(label="Price")
-        MarketAttributeType.objects.create(label="Market Share")
-        MarketAttributeType.objects.create(label="Profit")
-
         School.objects.create(school_name="School 1", user=User.objects.create(username="School 1"))
       
         Team.objects.create(team_name="Team 1", schoolid=School.objects.get(school_name="School 1"), user=User.objects.create(username="Team 1"))
@@ -254,7 +250,7 @@ class TestPolicy(TestCase):
             strat.save()
             self.assertFalse(strat.chosen_option == 1)
 
-    def test_num_customers_calculation(self):
+    def test_numCustomers_calculation(self):
         # Test that the number of customers  
         # allocated is correct
         team_1 = Team.objects.get(team_name="Team 1") 
@@ -268,7 +264,7 @@ class TestPolicy(TestCase):
             strat.save()
 
         price_obj.getAndSetCustomersAndSales()
-        self.assertEqual(num_customers(team_1),10)
+        self.assertEqual(numCustomers(team_1),10)
 
         
         for strat in team_1_policy_strategies:
@@ -276,7 +272,7 @@ class TestPolicy(TestCase):
             strat.save()
 
         price_obj.getAndSetCustomersAndSales()
-        self.assertEqual(num_customers(team_1),31)
+        self.assertEqual(numCustomers(team_1),31)
 
         
         for strat in team_1_policy_strategies:
@@ -284,7 +280,7 @@ class TestPolicy(TestCase):
             strat.save()
         
         price_obj.getAndSetCustomersAndSales()
-        self.assertEqual(num_customers(team_1),22)
+        self.assertEqual(numCustomers(team_1),22)
         
     def test_num_products_sold_calculation(self):
         # Test that the number of customers  
@@ -300,8 +296,8 @@ class TestPolicy(TestCase):
             strat.chosen_option = 1
             strat.save()
         self.assertAlmostEqual(
-            number_of_products_sold(team_1),
-            decimal.Decimal(0.0450508118)*decimal.Decimal(num_customers(team_1)),
+            numberOfProductsSold(team_1),
+            decimal.Decimal(0.0450508118)*decimal.Decimal(numCustomers(team_1)),
             places=4)
         
         for strat in team_1_policy_strategies:
@@ -310,8 +306,8 @@ class TestPolicy(TestCase):
         
         x,y = price_obj.getAndSetCustomersAndSales()
         self.assertAlmostEqual(
-            number_of_products_sold(team_1), 
-            decimal.Decimal(0.85)*decimal.Decimal(num_customers(team_1)),
+            numberOfProductsSold(team_1), 
+            decimal.Decimal(0.85)*decimal.Decimal(numCustomers(team_1)),
             places=4)
         
         for strat in team_1_policy_strategies:
@@ -320,8 +316,8 @@ class TestPolicy(TestCase):
 
         x,y = price_obj.getAndSetCustomersAndSales()
         self.assertAlmostEqual(
-            number_of_products_sold(team_1), 
-            decimal.Decimal(0.0563135147)*decimal.Decimal(num_customers(team_1)),
+            numberOfProductsSold(team_1), 
+            decimal.Decimal(0.0563135147)*decimal.Decimal(numCustomers(team_1)),
             places=4)
 
     def test_total_cost_calculation(self):
@@ -331,44 +327,44 @@ class TestPolicy(TestCase):
         for strat in team_1_policy_strategies:
             strat.chosen_option = 1
             strat.save()
-        self.assertEqual(float(daily_cost(team_1)),5.00)
+        self.assertEqual(float(dailyCost(team_1)),5.00)
 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
         for strat in team_1_policy_strategies:
             strat.chosen_option = 2
             strat.save()
-        self.assertEqual(float(daily_cost(team_1)),10.00)
+        self.assertEqual(float(dailyCost(team_1)),10.00)
 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
         for strat in team_1_policy_strategies:
             strat.chosen_option = 3
             strat.save()
-        self.assertEqual(float(daily_cost(team_1)),15.00)
+        self.assertEqual(float(dailyCost(team_1)),15.00)
 
-    def test_product_cost_calculation(self):
+    def test_productCost_calculation(self):
         team_1 = Team.objects.get(team_name="Team 1") 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
         for strat in team_1_policy_strategies:
             strat.chosen_option = 1
             strat.save()
-        self.assertEqual(float(product_cost(team_1)),1.00)
+        self.assertEqual(float(productCost(team_1)),1.00)
 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
         for strat in team_1_policy_strategies:
             strat.chosen_option = 2
             strat.save()
-        self.assertEqual(float(product_cost(team_1)),2.00)
+        self.assertEqual(float(productCost(team_1)),2.00)
 
         team_1_policy_strategies = PolicyStrategy.objects.filter(strategy=team_1.strategyid)
         
         for strat in team_1_policy_strategies:
             strat.chosen_option = 3
             strat.save()
-        self.assertEqual(float(product_cost(team_1)),3.00)
+        self.assertEqual(float(productCost(team_1)),3.00)
 
 class TestPrice(TestCase):
 

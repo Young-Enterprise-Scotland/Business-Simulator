@@ -1,12 +1,63 @@
 
   <!--   Core   -->
   <script src="/static/assets/js/plugins/jquery/dist/jquery.min.js"></script>
-  <script src="/static/assets/js/plugins/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/assets/js/plugins/bootstrap/dist/js/bootstrap.min.js"></script>
+
   <!--   Optional JS   -->
+  <script src="/static/assets/js/plugins/chart.js/dist/Chart.min.js"></script>
+  <script src="/static/assets/js/plugins/chart.js/dist/Chart.extension.js"></script>
+
+  <!--   G.Maps   -->
+  <!-- <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY_HERE"></script> -->
+
   <!--   Argon JS   -->
   <script src="/static/assets/js/argon-dashboard.min.js?v=1.1.0"></script>
-
-    <!-- Load React. -->
+  
+  <!-- Load React. -->
   <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
   <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>  
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+
+  <script type="module" src="/static/assets/js/plugins/swal/src/sweetalert2.js"></script>
+
+  <!-- just for now, can remove later -->
+  <script src="/static/assets/js/plugins/jquery/jquery-3.5.1.min.js"></script>
+  <script src="/static/assets/js/plugins/jquery-validation-1.19.3/dist/jquery.validate.min.js"></script>
+  <script>
+    /**
+     * Custom password validation
+    */
+  $.validator.addMethod("pwcheck", function(value) {
+      return /^[A-Za-z0-9\d=!\-@._*]*$/.test(value) // consists of only these
+              && /[a-z]/.test(value) // has a lowercase letter
+              && /[A-Z]/.test(value) // has a lowercase letter
+              && /\d/.test(value) // has a digit
+  },
+  "Passwords must contain at least 1 upper and lower case letter as well as a digit. ");
+  </script>
+
+  <script>
+    
+    /**
+     * Initalise Sweetalert plugin.
+     * for displaying success messages
+    */
+    $(document).ready(function(){
+      {% if notify %}
+      Swal.fire({
+        toast:true,
+        position: 'top-end',
+        icon: '{{notify.type}}',
+        title: '<span>{{notify.title}}</span>',
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      {% endif %}
+    });
+  </script>
+ 

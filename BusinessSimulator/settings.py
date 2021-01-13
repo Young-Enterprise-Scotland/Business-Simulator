@@ -16,7 +16,11 @@ try:
     from .key import Key
     KEY_FILE_EXISTS = True
 except ModuleNotFoundError as err:
-    print("Key file doesn't exist. Using Docker method.")
+    try:
+        from .BusinessSimulator.key import Key
+        KEY_FILE_EXISTS = True
+    except ModuleNotFoundError as err:
+        print("Key file doesn't exist. Using Docker method.")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

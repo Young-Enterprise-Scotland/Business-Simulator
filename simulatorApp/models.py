@@ -3,9 +3,12 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
 from django.utils import timezone
+from apscheduler.schedulers.background import BackgroundScheduler
+
 from datetime import timedelta
-from .globals import POLICIES
-from . import cronjobs
+from .globals import POLICIES, MARKET_ATTRIBUTE_TYPES
+
+
 # Create your models here.
 
 class Policy(models.Model):
@@ -69,20 +72,25 @@ class Simulator(models.Model):
         "Setup the policies for the game. These can be edited by YES staff"
         for policy in POLICIES:
             (object,created) = Policy.objects.get_or_create(name=policy)
+    
+    def __setup_market_attribute_types(self):
+        for attribute_type in MARKET_ATTRIBUTE_TYPES:
+            (object,created) = MarketAttributeType.objects.get_or_create(label=attribute_type)  
 
     def save(self, *args, **kwargs):
         
         #setup policies if they do not already exist
         self.__setup_policies()
+        self.__setup_market_attribute_types()
         
-
-        if self._state.adding: # if not already saved
-            cronjobs.start(self)
-        else:
-            cronjobs.update()
         super(Simulator, self).save(*args, **kwargs)
+        from . import cronjobs
+        # if self._state.adding: # if not already saved
+        #     cronjobs.start(self)
+        # else:
+        #     cronjobs.update()
+        cronjobs.update()
         
-
     def __str__(self):
         return self.productName+"("+str(self.id)+")"
 
@@ -357,3 +365,10 @@ class Price(models.Model):
         
     def __str__(self):
         return self.team.__str__()+" Price"
+
+
+
+
+# start scheduler when server loads app
+scheduler = BackgroundScheduler()
+scheduler.start()

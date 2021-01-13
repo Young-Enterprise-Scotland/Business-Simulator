@@ -48,7 +48,7 @@ def numberOfProductsSold(teamobject):
             cum_sales *= decimal.Decimal(ps.policy.med_sales)
         elif ps.chosen_option == 3: # high option
             cum_sales *= decimal.Decimal(ps.policy.high_sales)
-    return cum_sales*decimal.Decimal(num_customers(teamobject))
+    return cum_sales*decimal.Decimal(numCustomers(teamobject))
 
 def dailyCost(teamobject):
     'Calculates a teams daily cost based on their policy choices'
@@ -99,5 +99,8 @@ def sizeOfMarket():
         total_prods_sold += numberOfProductsSold(each)
     return total_prods_sold
 
-def marketShare(teamobject):
-    return numberOfProductsSold(teamobject)/sizeOfMarket()
+def marketShare(teamobject, sizeofmarket=None):
+    'allow size of market to be passed in so it is not recalculated many times'
+    if not sizeofmarket:
+        sizeofmarket = sizeOfMarket()
+    return (numberOfProductsSold(teamobject)/sizeofmarket)*100

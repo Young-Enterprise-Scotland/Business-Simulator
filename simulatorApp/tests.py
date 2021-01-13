@@ -148,10 +148,6 @@ class TestMarketEntry(TestCase):
 
         Simulator.objects.create(start=timezone.now(),end=timezone.now()+ timedelta(1),productName="Test Product",maxPrice=10.00,minPrice=2.50)
 
-        MarketAttributeType.objects.create(label="Price")
-        MarketAttributeType.objects.create(label="Market Share")
-        MarketAttributeType.objects.create(label="Profit")
-
         School.objects.create(school_name="School 1", user=User.objects.create(username="School 1"))
       
         Team.objects.create(team_name="Team 1", schoolid=School.objects.get(school_name="School 1"), user=User.objects.create(username="Team 1"))

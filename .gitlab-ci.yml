@@ -8,15 +8,14 @@ test:
   stage: test
   script:
     # this configures Django application to use attached postgres database that is run on `postgres` host
-    - export DATABASE_URL=postgres://xwdkxnwjnswaqw:3693d1d203490aa0b4a77003bc3565c8d218fda933ab9a9c109039c347147d18@ec2-54-170-100-209.eu-west-1.compute.amazonaws.com:5432/d4v54uvok6a6kk
+    - export DJANGO_SETTINGS_MODULE=BusinessSimulator.testing_settings
+    - export DATABASE="postgres://rravnbmftiazvd:cf6e0133e17846863bda128248a5c7996e2288906b717473fb69b620a373181d@ec2-52-208-138-246.eu-west-1.compute.amazonaws.com:5432/d58iuktotpk364"
     - apk add --no-cache curl jq python3 py3-pip
     - pip install -U pip setuptools
     - pip install wheel
     - apk add -U --no-cache bash python3 python3-dev libpq postgresql-dev unixodbc-dev musl-dev g++ libffi-dev libxml2-dev clang
     - apk --update add libxml2-dev libxslt-dev libffi-dev gcc musl-dev libgcc openssl-dev curl
     - apk add jpeg-dev zlib-dev freetype-dev lcms2-dev openjpeg-dev tiff-dev tk-dev tcl-dev
-    - pip3 install --upgrade --no-cache-dir pip setuptools==49.6.0
-    - pip3 install -U Pillow
     - pip3 install -r requirements.txt --ignore-installed six --user
     - python3 manage.py test
 
@@ -25,19 +24,16 @@ staging:
     - docker
   stage: deploy
   script:
+    - apk add --no-cache bash
+    - apk update && apk add --virtual build-dependencies build-base
     - apk add ruby
-    - gem install dpl
+    - apk add ruby-full
+    - apk add ruby-dev
+    - apk add git
+    - apk --no-cache add curl
+    - gem install dpl --pre
+    - gem install dpl-heroku
+    - gem install bundler
     - dpl --provider=heroku --app=yescotland-staging --api-key=$HEROKU_STAGING_API_KEY
   only:
     - master
-
-production:
-  tags: 
-    - docker
-  stage: deploy
-  script:
-    - apk add ruby
-    - gem install dpl
-    - dpl --provider=heroku --app=yescotland --api-key=$HEROKU_PRODUCTION_API_KEY
-  only:
-    - tags

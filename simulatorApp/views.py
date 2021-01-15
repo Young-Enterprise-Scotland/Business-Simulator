@@ -385,7 +385,8 @@ class ViewTeams(View):
     def get(self, request, **kwargs):
         context_dict = {}
         teams = None
-
+        schools = None
+        
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -394,15 +395,19 @@ class ViewTeams(View):
         
         if request.user.has_perm("simulatorApp.is_school"):
             teams = Team.get_teams_by_school(School.objects.get(user=request.user))
+            schools = School.objects.filter(user=request.user)
+            
         if request.user.has_perm("simulatorApp.is_yes_staff"):
             teams = Team.get_all_teams()
+            schools = School.objects.all()
 
         # Pass on any notification message to sweetalert plugin
         if"notify" in kwargs:
             context_dict['notify'] = kwargs['notify']
 
         context_dict['teams'] = teams 
-        context_dict['schools'] = School.objects.all()
+        context_dict['schools'] = schools
+
         return render(request, 'viewTeams.html', context=context_dict)
 
     
@@ -412,10 +417,8 @@ class ViewTeams(View):
         # check permissions
         if not request.user.is_authenticated:
             return redirect(reverse('simulatorApp:login'))
-        if not request.user.has_perm("simulatorApp.is_yes_staff"):
+        if request.user.has_perm("simulatorApp.is_team"):
             return redirect(reverse('simulatorApp:index'))
-        
-       
 
         #check post request for add user
         if request.POST.get('add_team'):
@@ -424,7 +427,24 @@ class ViewTeams(View):
             username = request.POST.get('username')
             team_name = request.POST.get('team_name')
             schoolid = request.POST.get('school')
-            school = School.objects.get(id=schoolid)
+
+            try:
+                # If a school is adding then force the schoolid for 
+                # the team to be the authenticated school account 
+                # submitting the request. This is an extra layer on 
+                # top of the csrf token to stop schools from 
+                # editing the schoolid and assigning users to different
+                # schools. 
+                if request.user.has_perm("simulatorApp.is_school"):
+                    school = School.objects.get(user=request.user)
+                else:
+                    school = School.objects.get(id=schoolid)
+
+            except Exception:
+                notify['title'] = "School does not exist"
+                notify['type'] = 'error'
+                return self.get(request, notify=notify)
+
             password = request.POST.get('password')
 
             # create new user

@@ -164,12 +164,12 @@ class Strategy(models.Model):
     # Note: max_digits must always be larger than
     #       decimal_places!
     consistency = models.DecimalField(decimal_places=4, max_digits=12, default=0)
-    # add relationship with policy once requirements are confirmed
-    
+
     def __str__(self):
         try:
             return Team.objects.get(strategyid=self).team_name+" strategy"
-        except Exception:
+        except Exception as e:
+           
             return "uninstanciated strategy"
 
 class Team(models.Model):
@@ -179,7 +179,7 @@ class Team(models.Model):
     user                    = models.OneToOneField(User, on_delete=models.CASCADE)
 
     schoolid                = models.ForeignKey(School, on_delete=models.CASCADE)
-    strategyid              = models.OneToOneField(Strategy, on_delete=models.CASCADE)
+    strategyid              = models.OneToOneField(Strategy, on_delete=models.CASCADE, blank=True)
     
     team_name = models.TextField(max_length=256)
 
@@ -208,9 +208,11 @@ class Team(models.Model):
         self.user.save()
 
         # create Strategy, MarketEntry and PolicyStrategy for Team if not exists
-        team = Team.objects.filter(team_name=self.team_name)
+        team = Team.objects.filter(user=self.user)
+       
         if(len(team)==0):
             #create strategy object for team
+            
             self.strategyid = Strategy.objects.create()
 
             #setup market entry for team

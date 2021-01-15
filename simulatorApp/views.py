@@ -378,8 +378,6 @@ class TeamProfile(View):
             notify['type'] = 'success'
             
         return self.get(request, notify=notify)
-        
-
 
 class ViewTeams(View):
 
@@ -401,4 +399,26 @@ class ViewTeams(View):
         return render(request, 'viewTeams.html', context=context_dict)
 
     def post(self, request, **kwargs):
+        return self.get(request)
+
+
+class ViewSchools(View):
+
+    def get(self, request, **kwargs):
+        context_dict = {}
+        schools = None
+
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        
+        if request.user.has_perm("simulatorApp.is_team") or request.user.has_perm("simulatorApp.is_school"):
+            return redirect(reverse('simulatorApp:index'))
+        
+        if request.user.has_perm("simulatorApp.is_yes_staff"):
+            schools = School.objects.all()
+
+        context_dict['schools'] = schools 
+        return render(request, 'viewSchools.html', context=context_dict)
+
+    def post(self, request):
         return self.get(request)

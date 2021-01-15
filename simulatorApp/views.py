@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 from django.urls import reverse 
 from django.views import View
-from .models import YES, School, Team
+from .models import Strategy, YES, School, Team
 
 
 # Create your views here.
@@ -132,7 +132,7 @@ class YesProfile(View):
             user_profile = YES.objects.get(user=user)
         except Exception as e:
             # No profile exists for this id return to index
-            print(e)
+            
             return redirect(reverse('simulatorApp:index'))
         
         context_dict['user_profile'] = user_profile
@@ -150,7 +150,7 @@ class YesProfile(View):
         
         # check user has the correct view permission
         if(not request.user.has_perm("simulatorApp.is_yes_staff")):
-            print("user does not have permission")
+            print("User does not have permission")
             return redirect(reverse('simulatorApp:index'))
 
         # retrieve the user account from the GET request
@@ -223,7 +223,7 @@ class SchoolProfile(View):
             user_profile = School.objects.get(user=user)
         except Exception as e:
             # No profile exists for this id return to index
-            print(e)
+            
             return redirect(reverse('simulatorApp:index'))
 
         # Pass on any notification message to sweetalert plugin
@@ -329,7 +329,7 @@ class TeamProfile(View):
         return render(request, 'accounts/team_profile.html', context=context_dict)
 
      def post(self, request):
-        print(request.POST)
+        
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
@@ -384,6 +384,8 @@ class ViewTeams(View):
 
     def get(self, request, **kwargs):
         context_dict = {}
+        teams = None
+
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -395,11 +397,73 @@ class ViewTeams(View):
         if request.user.has_perm("simulatorApp.is_yes_staff"):
             teams = Team.get_all_teams()
 
+        # Pass on any notification message to sweetalert plugin
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+
         context_dict['teams'] = teams 
+        context_dict['schools'] = School.objects.all()
         return render(request, 'viewTeams.html', context=context_dict)
 
-    def post(self, request, **kwargs):
-        return self.get(request)
+    
+    def post(self, request):
+        notify = {}
+
+        # check permissions
+        if not request.user.is_authenticated:
+            return redirect(reverse('simulatorApp:login'))
+        if not request.user.has_perm("simulatorApp.is_yes_staff"):
+            return redirect(reverse('simulatorApp:index'))
+        
+       
+
+        #check post request for add user
+        if request.POST.get('add_team'):
+            
+            #retrieve and add new team account
+            username = request.POST.get('username')
+            team_name = request.POST.get('team_name')
+            schoolid = request.POST.get('school')
+            school = School.objects.get(id=schoolid)
+            password = request.POST.get('password')
+
+            # create new user
+            (user,created) = User.objects.get_or_create(
+                username=username
+            )
+            
+            if not created:
+                notify['title'] = "Username already exists, no new account was created"
+                notify['type'] = 'warning'
+                return self.get(request,notify=notify)
+            
+            user.set_password(password)
+
+            # create new team for user account
+
+            (team, created)= Team.objects.get_or_create(
+                user=user,
+                schoolid = school,
+                team_name = team_name
+            )
+
+            if not created:
+                notify['title'] = "Team already exists, no new account was added"
+                notify['type'] = 'warning'
+
+                # delete user we just setup as 
+                # no new team to assign to
+                User.objects.get(id=user.id).delete()
+
+
+                return self.get(request,notify=notify)
+            
+            notify['title'] = "Team successfully created"
+            notify['type'] = 'success'
+
+        return self.get(request, notify=notify)
+    
+    
 
 
 class ViewSchools(View):
@@ -417,8 +481,12 @@ class ViewSchools(View):
         if request.user.has_perm("simulatorApp.is_yes_staff"):
             schools = School.objects.all()
 
+        # Pass on any notification message to sweetalert plugin
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+
         context_dict['schools'] = schools 
         return render(request, 'viewSchools.html', context=context_dict)
 
-    def post(self, request):
+    def post(self, request, **kwargs):
         return self.get(request)

@@ -280,7 +280,6 @@ class MarketAttributeTypeData(models.Model):
         return self.marketEntryId.__str__()+"__"+self.marketAttributeType.__str__()+"__"+str(self.date)
 
 class PolicyStrategy(models.Model):
-
     strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE)
     policy = models.ForeignKey(Policy, on_delete=models.CASCADE)
 
@@ -329,7 +328,7 @@ class Price(models.Model):
         # make sure values are valid
         self.clean()
 
-        qual = self.qual.chosen_option
+        qual = int(self.qual.chosen_option)
         price = self.price
         bound1 = self.simulator.priceBoundary1
         bound2 = self.simulator.priceBoundary2
@@ -362,8 +361,14 @@ class Price(models.Model):
             self.customers = 2
         
         #save changes
-        self.save()
+      #  self.save()
+    
         return self.customers, self.efctOnSales
+
+
+    def save(self, *args, **kwargs):
+        self.getAndSetCustomersAndSales()
+        super(Price, self).save(*args, **kwargs)
         
     def __str__(self):
         return self.team.__str__()+" Price"

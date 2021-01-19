@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 from django.urls import reverse 
 from django.views import View
-from .models import Strategy, YES, School, Team
+from .models import Strategy, YES, School, Team, PolicyStrategy, Price, Simulator
 
 
 # Create your views here.
@@ -510,3 +510,96 @@ class ViewSchools(View):
 
     def post(self, request, **kwargs):
         return self.get(request)
+
+class EditStrategy(View):
+    
+    def get(self, request, **kwargs):
+        context_dict = {}
+ 
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+
+        # check user has the correct view permission
+        if(not (
+            request.user.has_perm("simulatorApp.is_team")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
+
+        # retrieve the user account from the GET request
+        profile_id = request.GET.get("profile_id",False)
+
+        # check profile_id was passed in or return to index page
+        if not profile_id:
+            return redirect(reverse('simulatorApp:index'))
+
+        try: # Try to retrieve the profile information
+            user = User.objects.get(id=profile_id)
+            user_profile = Team.objects.get(user=user)
+        except Exception as e:
+            # No profile exists for this id return to index
+            
+            return redirect(reverse('simulatorApp:index'))
+
+        # Pass on any notification message to sweetalert plugin
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+
+        policies = PolicyStrategy.objects.filter(strategy=user_profile.strategyid)
+        price = Price.objects.get(team=user_profile)
+        maxPrice = float(price.simulator.maxPrice)-0.01
+
+        context_dict['maxPrice']=maxPrice
+        context_dict['price'] = price
+        context_dict['policies'] = policies
+        context_dict['user_profile'] = user_profile
+        context_dict['can_edit'] = True
+        return render(request, 'editStrategy.html', context=context_dict)
+
+    def post(self, request, **kwargs):
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        
+        # check user has the correct view permission
+        if(not (
+            request.user.has_perm("simulatorApp.is_team")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
+        
+         # retrieve the user account from the GET request
+        profile_id = request.GET.get("profile_id",False)
+
+        # check profile_id was passed in or return to index page
+        if not profile_id:
+            return redirect(reverse('simulatorApp:index'))
+        
+        try: # Try to retrieve the profile information
+            user = User.objects.get(id=profile_id)
+            user_profile = Team.objects.get(user=user)
+        except Exception:
+            # No profile exists for this id return to index
+            return redirect(reverse('simulatorApp:index'))
+
+        notify = {}
+
+        # retrieve all policy strategies linked to this team and the price of their product
+        policies = PolicyStrategy.objects.filter(strategy=user_profile.strategyid)
+        price = Price.objects.get(team=user_profile)
+        
+        # if user has requested to change strategy
+        if(request.POST.get("change_strat")):
+            # Update each policy
+            for pol in policies:
+                pol.chosen_option = request.POST.get(pol.policy.name + "_option").strip()
+                pol.save()
+
+            # Update the price
+            price.price = float(request.POST.get("price").strip())
+            price.save()
+
+            notify['title'] = "Policy Updated"
+            notify['type'] = 'success'
+            
+        return self.get(request, notify=notify)

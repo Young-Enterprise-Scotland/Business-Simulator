@@ -509,7 +509,54 @@ class ViewSchools(View):
         return render(request, 'viewSchools.html', context=context_dict)
 
     def post(self, request, **kwargs):
-        return self.get(request)
+        notify = {}
+
+        # check permissions
+        if not request.user.is_authenticated:
+            return redirect(reverse('simulatorApp:login'))
+        if request.user.has_perm("simulatorApp.is_team"):
+            return redirect(reverse('simulatorApp:index'))
+        if request.user.has_perm("simulatorApp.is_school"):
+            return redirect(reverse("simulatorApp:index"))
+
+        #check post request for add user
+        if request.POST.get('add_school'):
+            
+            #retrieve and add new team account
+            username = request.POST.get('username')
+            school_name = request.POST.get('school_name')
+            password = request.POST.get('password')
+
+            # create new user
+            (user,created) = User.objects.get_or_create(
+                username=username
+            )
+            
+            if not created:
+                notify['title'] = "Username already exists, no new account was created"
+                notify['type'] = 'warning'
+                return self.get(request,notify=notify)
+            
+            user.set_password(password)
+
+            # create new school for user account
+            (team, created)= School.objects.get_or_create(
+                user=user,
+                school_name=school_name
+            )
+            if not created:
+                notify['title'] = "School already exists, no new account was added"
+                notify['type'] = 'warning'
+
+                # delete user we just setup as 
+                # no new team to assign to
+                User.objects.get(id=user.id).delete()
+                return self.get(request,notify=notify)
+            
+            notify['title'] = "School account successfully created"
+            notify['type'] = 'success'
+
+        return self.get(request, notify=notify)
 
 class EditStrategy(View):
     

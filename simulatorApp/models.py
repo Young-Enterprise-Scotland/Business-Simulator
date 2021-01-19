@@ -1,4 +1,5 @@
 from django.db import models
+from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
@@ -230,10 +231,12 @@ class Team(models.Model):
 
         if(len(team)==0):
             #create price object for team
+            simulator  = Simulator.objects.annotate(models.Max('id'))[0]
             Price.objects.create(
-                simulator=Simulator.objects.annotate(models.Max('id'))[0],
+                simulator=simulator,
                 team=self,
                 qual=PolicyStrategy.objects.get(strategy=self.strategyid, policy=Policy.objects.get(name="Quality of Raw Materials")),
+                price=simulator.minPrice
                 ) 
         
     def __str__(self):
@@ -374,6 +377,16 @@ class Price(models.Model):
         return self.team.__str__()+" Price"
 
 
+@receiver(models.signals.post_delete, sender=Team)
+def delete_related_team_objects(sender, instance, **kwargs):
+    """
+        Strategy is linked to Team however deleting team does not 
+        automatically delete the strategy, however the reverse is true. 
+        
+        This method deletes all strategy and Market Entry instances when
+        Team.delete() is called     
+    """
+    instance.strategyid.delete()
 
 
 # start scheduler when server loads app

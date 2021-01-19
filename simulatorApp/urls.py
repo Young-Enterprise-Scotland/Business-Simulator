@@ -19,5 +19,6 @@ urlpatterns = [
     path('schoolProfile',views.SchoolProfile.as_view(),name='viewSchoolAccount'),
     path('teamProfile',views.TeamProfile.as_view(), name="viewTeamAccount"),
     path('viewTeams', views.ViewTeams.as_view(), name="viewTeams"),
-    path('viewSchools', views.ViewSchools.as_view(), name="viewSchools")
+    path('viewSchools', views.ViewSchools.as_view(), name="viewSchools"),
+    path('editStrategy', views.EditStrategy.as_view(), name="editStrategy")
 ]

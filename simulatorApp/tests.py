@@ -27,7 +27,7 @@ class TestUserAccessLevels(TestCase):
             end=timezone.now()+ timedelta(1),
             productName="Test Product",
             maxPrice=10.00,
-            minPrice=2.50
+            minPrice=1.00
             )
         YES.objects.create(user=User.objects.create(username="Staff 1"))
         YES.objects.create(user=User.objects.create(username="Staff 2"))
@@ -146,7 +146,7 @@ class TestMarketEntry(TestCase):
 
     def setUp(self):
 
-        Simulator.objects.create(start=timezone.now(),end=timezone.now()+ timedelta(1),productName="Test Product",maxPrice=10.00,minPrice=2.50)
+        Simulator.objects.create(start=timezone.now(),end=timezone.now()+ timedelta(1),productName="Test Product",maxPrice=10.00,minPrice=1.00)
 
         School.objects.create(school_name="School 1", user=User.objects.create(username="School 1"))
       
@@ -263,7 +263,8 @@ class TestPolicy(TestCase):
             strat.chosen_option = 1
             strat.save()
 
-        price_obj.getAndSetCustomersAndSales()
+        #price_obj.getAndSetCustomersAndSales()
+        price_obj.save()
         self.assertEqual(numCustomers(team_1),10)
 
         
@@ -271,7 +272,8 @@ class TestPolicy(TestCase):
             strat.chosen_option = 2
             strat.save()
 
-        price_obj.getAndSetCustomersAndSales()
+        #price_obj.getAndSetCustomersAndSales()
+        price_obj.save()
         self.assertEqual(numCustomers(team_1),31)
 
         
@@ -279,7 +281,8 @@ class TestPolicy(TestCase):
             strat.chosen_option = 3
             strat.save()
         
-        price_obj.getAndSetCustomersAndSales()
+        #price_obj.getAndSetCustomersAndSales()
+        price_obj.save()
         self.assertEqual(numCustomers(team_1),22)
         
     def test_num_products_sold_calculation(self):
@@ -291,6 +294,7 @@ class TestPolicy(TestCase):
         price_obj = Price.objects.get(team=team_1)
         price_obj.price = decimal.Decimal(5.00)
         x,y = price_obj.getAndSetCustomersAndSales()
+        price_obj.save()
 
         for strat in team_1_policy_strategies:
             strat.chosen_option = 1
@@ -305,6 +309,7 @@ class TestPolicy(TestCase):
             strat.save()
         
         x,y = price_obj.getAndSetCustomersAndSales()
+        price_obj.save()
         self.assertAlmostEqual(
             numberOfProductsSold(team_1), 
             decimal.Decimal(0.85)*decimal.Decimal(numCustomers(team_1)),
@@ -315,6 +320,7 @@ class TestPolicy(TestCase):
             strat.save()
 
         x,y = price_obj.getAndSetCustomersAndSales()
+        price_obj.save()
         self.assertAlmostEqual(
             numberOfProductsSold(team_1), 
             decimal.Decimal(0.0563135147)*decimal.Decimal(numCustomers(team_1)),

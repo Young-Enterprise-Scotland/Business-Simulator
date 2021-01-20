@@ -86,6 +86,66 @@
           </div>
         </div>
       </div>
+      <div class="row mt-2">
+        <div class="col-lg-12">
+          <div class="card shadow">
+            <div class="card-header border-0">
+              <h3 class="mb-0">Add Team</h3>
+            </div>
+            <div class="card-body py-4">
+              <form action="{% url 'simulatorApp:viewSchools' %}" method="POST" id="add-team">
+                {% csrf_token %}
+                <div class="row">
+                  <div class="col-lg-12">
+                    <h6 class="heading-small text-muted mb-4">User information</h6>
+                    <div class="pl-lg-4">
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-username">Username</label>
+                            <input type="text" id="input-username" name="username" class="form-control" placeholder="Username" >
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-schoolname">School Name</label>
+                            <input type="text" id="team-name" name="school_name" class="form-control form-control-alternative" placeholder="Team name">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-username">Password</label>
+                            <input type="password" id="input-password" name="password" class="form-control" >
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-schoolname">Repeat Password</label>
+                            <input type="password" id="repeat-password" name="repeat_password" class="form-control form-control-alternative">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-12">
+                          <div class="form-group">
+                            <button type="submit" class="btn btn-primary" name="add_school" value="true">Save</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
       {% include "includes/footer.html" %}
 
     </div>
@@ -93,4 +153,38 @@
 {% endblock content %}
 
 <!-- Specific JS goes HERE --> 
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+
+<script>
+  $(document).ready(function(){
+    $("#add-team").validate(
+      {
+        rules:{
+          username:{
+            required:true,
+            minlength:2,
+            maxlength:32
+          }, 
+          'team_name':{
+            required:true,
+          },
+          password:{
+            required:true,
+            pwcheck:true,
+            minlength:8,
+            maxlength:32
+          },
+          'repeat_password':{
+            required:true,
+            equalTo: "#input-password"
+          },
+        },
+        submitHandler: function(form) {
+          form.submit();
+        }
+    });
+
+  });
+
+</script>
+{% endblock javascripts %}

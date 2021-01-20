@@ -20,5 +20,6 @@ urlpatterns = [
     path('teamProfile',views.TeamProfile.as_view(), name="viewTeamAccount"),
     path('viewTeams', views.ViewTeams.as_view(), name="viewTeams"),
     path('viewSchools', views.ViewSchools.as_view(), name="viewSchools"),
-    path('editStrategy', views.EditStrategy.as_view(), name="editStrategy")
+    path('editStrategy', views.EditStrategy.as_view(), name="editStrategy"),
+    path('gameSettings', views.GameSettings.as_view(), name="gameSettings")
 ]

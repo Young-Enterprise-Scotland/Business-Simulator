@@ -650,3 +650,23 @@ class EditStrategy(View):
             notify['type'] = 'success'
             
         return self.get(request, notify=notify)
+
+
+class GameSettings(View):
+
+    def get(self, request, **kwargs):
+        
+        context_dict = {}
+ 
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+
+        # check user has the correct view permission
+        if(not request.user.has_perm("simulatorApp.is_yes_staff")):
+            return redirect(reverse('simulatorApp:index'))
+
+        return render(request, 'maps.html', context=context_dict)
+    
+    def post(self, request):
+        return self.get(request)

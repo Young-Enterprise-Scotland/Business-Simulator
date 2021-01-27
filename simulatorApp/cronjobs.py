@@ -1,15 +1,13 @@
-from datetime import timedelta
-from simulatorApp.calculations import marketShare, profit, sizeOfMarket
-from simulatorApp.models import Team
 import time
+from datetime import timedelta
 from django.db import models
-
 from django.utils import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
+from django.conf import settings
+from simulatorApp.calculations import marketShare, profit, sizeOfMarket
+from simulatorApp.models import Team
 from .models import MarketAttributeType, MarketAttributeTypeData, MarketEntry, Price, scheduler
 from .globals import MARKET_ATTRIBUTE_TYPES
-
-scheduler_global = None
 
 def secondsToDHMS(n: int)-> tuple: 
     '''
@@ -44,13 +42,21 @@ def process_teams():
                                 profit, netProfit,     \
                                 sizeOfMarket, marketShare    
     from django.db import models
-    from .models import Team, Simulator, Price 
+    from .models import Team, Simulator, Price, MarketEvent
+
+    market_events = MarketEvent.get_current_events() 
+    if settings.DEBUG:
+        for event in market_events:
+            print(event)
+
 
     simulation = Simulator.objects.annotate(models.Max('id'))[0]
     start = simulation.start
     end = simulation.end
     length = simulation.lengthOfTradingDay
-    print(f"Closing Market {timezone.now()}")
+
+    if settings.DEBUG:
+        print(f"Closing Market {timezone.now()}")
     simulation.marketOpen = False
     simulation.save()
 
@@ -147,16 +153,16 @@ def process_teams():
 
     simulation.marketOpen = True
     simulation.save()
-    print(f"Market Re-opened {timezone.now()}")
+
+    if settings.DEBUG:
+        print(f"Market Re-opened {timezone.now()}")
     
 
 
 def start(simulation=None):
     # start scheduler when simulator is created/updated
-
     # avoid circular imports
     from .models import Simulator
-    global scheduler_global
 
     if simulation is None:
         simulation = Simulator.objects.annotate(models.Max('id'))[0]
@@ -174,18 +180,9 @@ def start(simulation=None):
         minutes = '*'   # everyminute
     if seconds==0:
         seconds = '*'   # everysecond
-
+    if settings.DEBUG:
+        print(f"Setting up cronjob,{days}days {hours}hours {minutes}minutes {seconds}seconds.")
     scheduler.add_job(process_teams, 'cron', start_date=start, end_date=end, id="calculate", replace_existing=True, day=days, hour=hours, minute=minutes, second=seconds)
-    scheduler_global = scheduler 
+    
     
 
-
-def update():
-
-    global scheduler_global
-    
-    # Update sheduler when simulator is updated
-    if scheduler_global is not None:
-        scheduler_global.remove_job("calculate")
-    start()
-    

@@ -2,13 +2,36 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
-from django.urls import reverse 
+from django.urls import reverse
+from django.utils import timezone 
 from django.views import View
-from .models import Strategy, YES, School, Team, PolicyStrategy, Price, Simulator
+from .models import AcknowledgedEvent, Strategy, YES, School, Team, PolicyStrategy, Price, Simulator, MarketEvent, PopupEvent
 
 
 # Create your views here.
 
+def get_popups(request):
+    'gets the most recent popup notifications for a team'
+
+    if not request.user.is_authenticated:
+        return []
+    if not request.user.has_perm('simulatorApp.is_team'):
+        return []
+
+    return  PopupEvent.objects.filter(
+        simulator=Simulator.objects.all()[0]
+        ).exclude(
+            id__in=[
+                x.event.id for x in AcknowledgedEvent.objects.filter(
+                    team=Team.objects.get(user=request.user)
+                    )
+                ]
+        )
+
+def get_popup(request):
+    'get one popup to display'
+    popups = get_popups(request)
+    return popups[0] if len(popups)>0 else popups
 
 class Index(View):
 
@@ -31,9 +54,32 @@ class Index(View):
         elif request.user.has_perm('simulatorApp.is_team'):
             context_dict['team_obj'] = Team.objects.get(user=request.user)
 
+        # display market events as 'news articles'
+        context_dict['news_articles'] = MarketEvent.objects.filter(valid_from__lte=timezone.now()).order_by("-id")
+        
+        # load any fullscreen notifications for the user
+        context_dict['fullscreen_popup'] = get_popup(request)
         return render(request, 'index.html', context=context_dict)
 
     def post(self,request):
+        team=None
+
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+
+        if request.user.has_perm('simulatorApp.is_school'):
+            return self.get(request)
+        if request.user.has_perm('sumilator.is_yes_staff'):
+            return self.get(request)
+        
+        elif request.user.has_perm('simulatorApp.is_team'):
+            team = Team.objects.get(user=request.user)
+        if(request.POST.get('mark_popup_as_read', False)=='true'):
+            AcknowledgedEvent.objects.get_or_create(
+                team=team,
+                event= PopupEvent.objects.get(id=request.POST.get("popup_id",0)),
+                has_acknowledged = True
+            )
         return self.get(request)
 
 class Logout(View):
@@ -102,8 +148,6 @@ class Login(View):
             # messages.error(request, "Invalid username or password.")
         
         return self.get(request)
-
-
 
 class YesProfile(View):
 
@@ -381,7 +425,6 @@ class TeamProfile(View):
 
 class ViewTeams(View):
 
-
     def get(self, request, **kwargs):
         context_dict = {}
         teams = None
@@ -483,9 +526,6 @@ class ViewTeams(View):
 
         return self.get(request, notify=notify)
     
-    
-
-
 class ViewSchools(View):
 
     def get(self, request, **kwargs):

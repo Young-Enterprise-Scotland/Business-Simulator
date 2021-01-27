@@ -452,6 +452,28 @@ class PolicyEvent(models.Model):
     def __str__(self):
         return self.market_event.__str__()+"--"+self.policy.__str__()
 
+class PopupEvent(models.Model):
+    
+    simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+    title = models.CharField(max_length=256, default="Alert")
+    body_text = models.CharField(max_length=2048, default="")
+
+    # force the popup icon to be from the sweetalert icon library
+    icon_class = models.CharField(max_length=32, choices=[
+        ("success","Green Tick"),
+        ("info","Blue Info"),
+        ("error", "Red Cross"),
+        ("question", "Grey Question Mark"),
+        ("warning", "Yellow Warning"),
+        ],
+         default="info")
+
+class AcknowledgedEvent(models.Model):
+    
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    event = models.ForeignKey(PopupEvent, on_delete=models.CASCADE)
+    has_acknowledged = models.BooleanField(default=False)
+
 
 @receiver(models.signals.post_delete, sender=Team)
 def delete_related_team_objects(sender, instance, **kwargs):

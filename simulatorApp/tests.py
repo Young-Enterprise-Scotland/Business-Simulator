@@ -262,7 +262,7 @@ class TestPolicy(TestCase):
 
         #price_obj.getAndSetCustomersAndSales()
         price_obj.save()
-        self.assertEqual(numCustomers(team_1),10)
+        self.assertEqual(numCustomers(team_1),11)
 
         
         for strat in team_1_policy_strategies:
@@ -280,7 +280,7 @@ class TestPolicy(TestCase):
         
         #price_obj.getAndSetCustomersAndSales()
         price_obj.save()
-        self.assertEqual(numCustomers(team_1),22)
+        self.assertEqual(numCustomers(team_1),21)
         
     def test_num_products_sold_calculation(self):
         # Test that the number of customers  
@@ -298,7 +298,7 @@ class TestPolicy(TestCase):
             strat.save()
         self.assertAlmostEqual(
             numberOfProductsSold(team_1),
-            decimal.Decimal(0.0450508118)*decimal.Decimal(numCustomers(team_1)),
+            decimal.Decimal(0.05631500)*decimal.Decimal(numCustomers(team_1)),
             places=4)
         
         for strat in team_1_policy_strategies:
@@ -309,7 +309,7 @@ class TestPolicy(TestCase):
         price_obj.save()
         self.assertAlmostEqual(
             numberOfProductsSold(team_1), 
-            decimal.Decimal(0.85)*decimal.Decimal(numCustomers(team_1)),
+            decimal.Decimal(1)*decimal.Decimal(numCustomers(team_1)),
             places=4)
         
         for strat in team_1_policy_strategies:
@@ -542,3 +542,5 @@ class TestMarketEvent(TestCase):
             )
         
         self.assertTrue(len(MarketEvent.get_current_events())==5)
+
+    

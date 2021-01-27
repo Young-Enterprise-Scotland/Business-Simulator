@@ -265,25 +265,24 @@
             <div class="card-header border-0">
               <div class="row align-items-center">
                 <div class="col">
-                  <h3 class="mb-0">Social traffic</h3>
+                  <h3 class="mb-0">News</h3>
                 </div>
-                <div class="col text-right">
+                <!-- <div class="col text-right">
                   <a href="#!" class="btn btn-sm btn-primary">See all</a>
-                </div>
+                </div> -->
               </div>
             </div>
             <div class="table-responsive">
               <!-- Projects table -->
-              <table class="table align-items-center table-flush">
+              <table class="table align-items-center table-flush" id="news_table">
                 <thead class="thead-light">
                   <tr>
-                    <th scope="col">Referral</th>
-                    <th scope="col">Visitors</th>
-                    <th scope="col"></th>
+                    <th scope="col">Article Title</th>
+                    <th scope="col">Contents</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <!-- <tr>
                     <th scope="row">
                       Facebook
                     </th>
@@ -300,79 +299,13 @@
                         </div>
                       </div>
                     </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      Facebook
-                    </th>
-                    <td>
-                      5,480
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <span class="mr-2">70%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-success" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width: 70%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      Google
-                    </th>
-                    <td>
-                      4,807
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <span class="mr-2">80%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-primary" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" style="width: 80%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      Instagram
-                    </th>
-                    <td>
-                      3,678
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <span class="mr-2">75%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-info" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      twitter
-                    </th>
-                    <td>
-                      2,645
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <span class="mr-2">30%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-warning" role="progressbar" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" style="width: 30%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
+                  </tr> -->
+                  {% for article in news_articles %}
+                    <tr>
+                      <th scope="row" width="40%">{{ article.market_event_title }} </th>
+                      <td width="60%">{{ article.market_event_text }} </td>
+                    </tr>
+                  {% endfor %}
                 </tbody>
               </table>
             </div>
@@ -387,4 +320,44 @@
 {% endblock content %}
 
 <!-- Specific JS goes HERE --> 
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+  {% if fullscreen_popup %}
+  <script>
+    
+    $(document).ready(function(){
+      Swal.fire({
+        title: '{{ fullscreen_popup.title }}',
+        text: "{{ fullscreen_popup.body_text }}",
+        icon: '{{ fullscreen_popup.icon_class }}',
+        showCancelButton: true,
+        confirmButtonText: 'Got It!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+
+          let cookie = document.cookie
+          let csrfToken = cookie.substring(cookie.indexOf('=') + 1)
+
+          $.ajax({
+            url: "{% url 'simulatorApp:index' %}",
+            type: "POST",
+            data: {
+                mark_popup_as_read: "true",
+                popup_id: "{{fullscreen_popup.id}}",
+            },
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            },
+            success: function (data) {
+                console.log(data);
+            },
+            error: function (error) {
+                console.log(error);
+            }
+          });
+        }
+      })
+    });
+    
+  </script>
+  {% endif %}
+{% endblock javascripts %}

@@ -1,8 +1,7 @@
-from django.test import TestCase
-from datetime import timedelta
-from django.utils import timezone
 import decimal
-import time
+from django.test import TestCase
+from datetime import timedelta, datetime, time
+from django.utils import timezone
 
 # Create your tests here.
 from .models import *
@@ -141,7 +140,6 @@ class TestUserAccessLevels(TestCase):
         self.assertTrue(team_1.has_perm("simulatorApp.is_team"))
         self.assertTrue(team_2.has_perm("simulatorApp.is_team"))
 
-
 class TestMarketEntry(TestCase):
 
     def setUp(self):
@@ -211,7 +209,6 @@ class TestMarketEntry(TestCase):
                 0
             )
         
-
 class TestPolicy(TestCase):
 
     def setUp(self):
@@ -265,7 +262,7 @@ class TestPolicy(TestCase):
 
         #price_obj.getAndSetCustomersAndSales()
         price_obj.save()
-        self.assertEqual(numCustomers(team_1),10)
+        self.assertEqual(numCustomers(team_1),11)
 
         
         for strat in team_1_policy_strategies:
@@ -283,7 +280,7 @@ class TestPolicy(TestCase):
         
         #price_obj.getAndSetCustomersAndSales()
         price_obj.save()
-        self.assertEqual(numCustomers(team_1),22)
+        self.assertEqual(numCustomers(team_1),21)
         
     def test_num_products_sold_calculation(self):
         # Test that the number of customers  
@@ -301,7 +298,7 @@ class TestPolicy(TestCase):
             strat.save()
         self.assertAlmostEqual(
             numberOfProductsSold(team_1),
-            decimal.Decimal(0.0450508118)*decimal.Decimal(numCustomers(team_1)),
+            decimal.Decimal(0.05631500)*decimal.Decimal(numCustomers(team_1)),
             places=4)
         
         for strat in team_1_policy_strategies:
@@ -312,7 +309,7 @@ class TestPolicy(TestCase):
         price_obj.save()
         self.assertAlmostEqual(
             numberOfProductsSold(team_1), 
-            decimal.Decimal(0.85)*decimal.Decimal(numCustomers(team_1)),
+            decimal.Decimal(1)*decimal.Decimal(numCustomers(team_1)),
             places=4)
         
         for strat in team_1_policy_strategies:
@@ -457,13 +454,93 @@ class TestSchedule(TestCase):
             noErr = False
         self.assertTrue(noErr==True)
 
-    def test_process_fire(self):
-        simulator = Simulator.objects.create(
+class TestMarketEvent(TestCase):
+
+    def setUp(self):
+        # create objects for this test to use
+        # django will check for this methods existance 
+        # when running python manage.py test
+        Simulator.objects.create(
             start=timezone.now(),
             end=timezone.now()+ timedelta(1),
             productName="Test Product",
             maxPrice=10.00,
             minPrice=1.00
+            )
+        YES.objects.create(user=User.objects.create(username="Staff 1"))
+       
+        School.objects.create(school_name="School 1", user=User.objects.create(username="School 1"))
+        
+        Team.objects.create(team_name="Team 1", schoolid=School.objects.get(school_name="School 1"), user=User.objects.create(username="Team 1"))
+    
+        
+    def market_event_create(self):
+
+        (obj,created) = MarketEvent.objects.get_or_create(
+            simulator = Simulator.objects.annotate(models.Max('id'))[0],
+            market_event_title = "Custom Title",
+            market_event_text = "Custom Text"
+        )
+        self.assertTrue(created)
+
+    def policy_event_create(self):
+
+        (obj,created) = MarketEvent.objects.get_or_create(
+            simulator = Simulator.objects.annotate(models.Max('id'))[0],
+            market_event_title = "Custom Title",
+            market_event_text = "Custom Text"
         )
 
-        time.sleep(5)
+        (policyEvent, created) = PolicyEvent.objects.get_or_create(
+            market_event = obj,
+            policy = Policy.objects.get(name=POLICIES[0]),
+            low_cost = 2.0,
+            low_customer = 5,
+            low_sales = 2
+        )
+
+        self.assertTrue(created)
+
+    def market_event_update(self):
+
+        (obj,created) = MarketEvent.objects.get_or_create(
+            simulator = Simulator.objects.annotate(models.Max('id'))[0],
+            market_event_title = "Custom Title",
+            market_event_text = "Custom Text"
+        )
+
+        cpy = obj
+        cpy.market_event_title="Updated Title"
+        cpy.save()
+
+        self.assertNotEqual(cpy, obj)
+
+        obj = MarketEvent.objects.get(
+            simulator = Simulator.objects.annotate(models.Max('id'))[0],
+            market_event_title = "Updated Title",
+            market_event_text = "Custom Text"
+        )
+        self.assertEqual(cpy, obj)
+
+    def get_market_events(self):
+
+        for i in range(1,6):
+            (obj,created) = MarketEvent.objects.get_or_create(
+                simulator = Simulator.objects.annotate(models.Max('id'))[0],
+                market_event_title = "Custom Title "+str(i),
+                market_event_text = "Custom Text",
+                valid_from = timezone.now(),
+                valid_to = datetime.combine(timezone.now().date(), timedelta(1))
+            )
+        
+        (obj,created) = MarketEvent.objects.get_or_create(
+                simulator = Simulator.objects.annotate(models.Max('id'))[0],
+                market_event_title = "Custom Title expected failure",
+                market_event_text = "Custom Text",
+                valid_from = timezone.now(),
+                valid_to = datetime.combine(timezone.now().date(), time(0,0)-timedelta(2))
+            )
+        
+        self.assertTrue(len(MarketEvent.get_current_events())==5)
+
+    

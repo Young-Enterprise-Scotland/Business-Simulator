@@ -78,23 +78,25 @@ class Simulator(models.Model):
         for attribute_type in MARKET_ATTRIBUTE_TYPES:
             (object,created) = MarketAttributeType.objects.get_or_create(label=attribute_type)  
 
+    def __setup_price_effects(self):
+        
+        for i in range(1,4):
+            PriceEffects.objects.get_or_create(boundary=i)
+        return
     def save(self, *args, **kwargs):
         
-        #setup policies if they do not already exist
+        # setup game related models
         self.__setup_policies()
         self.__setup_market_attribute_types()
-        
+        self.__setup_price_effects()
+
         super(Simulator, self).save(*args, **kwargs)
+        
         from . import cronjobs
-        # if self._state.adding: # if not already saved
-        #     cronjobs.start(self)
-        # else:
-        #     cronjobs.update()
-        cronjobs.update()
+        cronjobs.start()
         
     def __str__(self):
         return self.productName+"("+str(self.id)+")"
-
 
 class YES(models.Model):
     
@@ -291,7 +293,21 @@ class PolicyStrategy(models.Model):
     def __str__(self):
         return self.strategy.__str__()+"__"+self.policy.__str__()+"__"+str(self.id)
 
+class PriceEffects(models.Model):
+
+    boundary = models.SmallIntegerField(choices=[(1,'Low'),(2,'Medium'),(3,'High')], default=1)
+
+    low_customers = models.IntegerField(default=1)
+    low_sales = models.IntegerField(default=1)
+
+    med_customers = models.IntegerField(default=1)
+    med_sales = models.IntegerField(default=1)
+
+    high_customers = models.IntegerField(default=1)
+    high_sales = models.IntegerField(default=1)
+
 class Price(models.Model):
+    
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
     qual = models.ForeignKey(PolicyStrategy, on_delete=models.CASCADE)
     simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
@@ -335,36 +351,58 @@ class Price(models.Model):
         price = self.price
         bound1 = self.simulator.priceBoundary1
         bound2 = self.simulator.priceBoundary2
+        
+        # low quality, low price
         if qual == 1 and (price <= bound1 and price >= self.simulator.minPrice):
-            self.efctOnSales = 1
-            self.customers = 2
+            price_effect = PriceEffects.objects.get(boundary=1)
+            self.efctOnSales = price_effect.low_sales
+            self.customers = price_effect.low_customers
+
+        # low quality med price
         elif qual == 1 and (price <= bound2 and price >= bound1):
-            self.efctOnSales = 0.9
-            self.customers = 1
+            price_effect = PriceEffects.objects.get(boundary=1)
+            self.efctOnSales = price_effect.med_sales
+            self.customers = price_effect.med_customers
+
+        #low quality high price
         elif qual == 1 and (price <= self.simulator.maxPrice and price >= bound2):
-            self.efctOnSales = 0.8
-            self.customers = 0
+            price_effect = PriceEffects.objects.get(boundary=1)
+            self.efctOnSales = price_effect.high_sales
+            self.customers = price_effect.high_customers
+
+        #med quality low price
         elif qual == 2 and (price <= bound1 and price >= self.simulator.minPrice):
-            self.efctOnSales = 0.85
-            self.customers = 1
+            price_effect = PriceEffects.objects.get(boundary=2)
+            self.efctOnSales = price_effect.low_sales
+            self.customers = price_effect.low_customers
+
         elif qual == 2 and (price <= bound2 and price >= bound1):
-            self.efctOnSales = 1
-            self.customers = 2
+            price_effect = PriceEffects.objects.get(boundary=2)
+            self.efctOnSales = price_effect.med_sales
+            self.customers = price_effect.med_customers
+
         elif qual == 2 and (price <= self.simulator.maxPrice and price >= bound2):
-            self.efctOnSales = 0.85
-            self.customers = 1
+            price_effect = PriceEffects.objects.get(boundary=2)
+            self.efctOnSales = price_effect.high_sales
+            self.customers = price_effect.high_customers
+
         elif qual == 3 and (price <= bound1 and price >= self.simulator.minPrice):
-            self.efctOnSales = 0.8
-            self.customers = 0
+            price_effect = PriceEffects.objects.get(boundary=3)
+            self.efctOnSales = price_effect.low_sales
+            self.customers = price_effect.low_customers
+
         elif qual == 3 and (price <= bound2 and price >= bound1):
-            self.efctOnSales = 0.9
-            self.customers = 1
+            price_effect = PriceEffects.objects.get(boundary=3)
+            self.efctOnSales = price_effect.med_sales
+            self.customers = price_effect.med_customers
+
         elif qual == 3 and (price <= self.simulator.maxPrice and price >= bound2):
-            self.efctOnSales = 1
-            self.customers = 2
+            price_effect = PriceEffects.objects.get(boundary=3)
+            self.efctOnSales = price_effect.high_sales
+            self.customers = price_effect.high_customers
         
         #save changes
-      #  self.save()
+        #self.save()
     
         return self.customers, self.efctOnSales
 
@@ -376,19 +414,79 @@ class Price(models.Model):
     def __str__(self):
         return self.team.__str__()+" Price"
 
+class MarketEvent(models.Model):
+
+    simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+    valid_from = models.DateTimeField(default= timezone.now)
+    valid_to   = models.DateTimeField(default= timezone.now)
+    market_event_title = models.CharField(max_length=256, default="Market Event")
+    market_event_text = models.CharField(max_length=5096, default="The market has changed, this means that consumer habits may also have changed.")
+
+    def __str__(self):
+        return self.simulator.__str__()+"__"+self.market_event_title
+
+    @staticmethod
+    def get_current_events():
+        return MarketEvent.objects.filter(valid_from__lte=timezone.now(), valid_to__gte=timezone.now())
+
+    def get_new_policies(self):
+        return PolicyEvent.objects.filter(market_event=self)
+
+class PolicyEvent(models.Model):
+
+    market_event = models.ForeignKey(MarketEvent, on_delete=models.CASCADE)
+    policy       = models.ForeignKey(Policy, on_delete=models.CASCADE)
+    
+    low_cost = models.DecimalField(decimal_places=4, max_digits=12, default=0.5)
+    low_customer = models.DecimalField(decimal_places=4, max_digits=12, default=1)
+    low_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.75)
+    
+    med_cost = models.DecimalField(decimal_places=4, max_digits=12, default=1.00)
+    med_customer = models.DecimalField(decimal_places=4, max_digits=12, default=3)
+    med_sales = models.DecimalField(decimal_places=4, max_digits=12, default=1.00)
+
+    high_cost = models.DecimalField(decimal_places=4, max_digits=12,default=1.5)
+    high_customer = models.DecimalField(decimal_places=4, max_digits=12, default=2)
+    high_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.75)
+
+    def __str__(self):
+        return self.market_event.__str__()+"--"+self.policy.__str__()
+
+class PopupEvent(models.Model):
+    
+    simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+    title = models.CharField(max_length=256, default="Alert")
+    body_text = models.CharField(max_length=2048, default="")
+
+    # force the popup icon to be from the sweetalert icon library
+    icon_class = models.CharField(max_length=32, choices=[
+        ("success","Green Tick"),
+        ("info","Blue Info"),
+        ("error", "Red Cross"),
+        ("question", "Grey Question Mark"),
+        ("warning", "Yellow Warning"),
+        ],
+         default="info")
+
+class AcknowledgedEvent(models.Model):
+    
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    event = models.ForeignKey(PopupEvent, on_delete=models.CASCADE)
+    has_acknowledged = models.BooleanField(default=False)
+
 
 @receiver(models.signals.post_delete, sender=Team)
 def delete_related_team_objects(sender, instance, **kwargs):
     """
         Strategy is linked to Team however deleting team does not 
-        automatically delete the strategy, however the reverse is true. 
+        automatically delete the strategy, the reverse is true. 
         
-        This method deletes all strategy and Market Entry instances when
-        Team.delete() is called     
+        This method deletes all strategy instances when
+        Team.delete() is called
     """
     instance.strategyid.delete()
 
 
 # start scheduler when server loads app
 scheduler = BackgroundScheduler()
-scheduler.start()
+scheduler.start() 

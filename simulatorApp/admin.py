@@ -18,4 +18,7 @@ admin.site.register(MarketAttributeTypeData)
 admin.site.register(Policy)
 admin.site.register(PolicyStrategy)
 admin.site.register(Price)
+admin.site.register(MarketEvent)
+admin.site.register(PolicyEvent)
+admin.site.register(PopupEvent)
 admin.site.site_header = "Young Enterprise Scotland Admin Panel"

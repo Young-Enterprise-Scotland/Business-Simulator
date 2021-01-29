@@ -427,8 +427,10 @@ class MarketEvent(models.Model):
 
     def save(self, *args, **kwargs):
         from .cronjobs import add_market_event_job
+
+        return_vals = super().save(*args, **kwargs) 
         add_market_event_job(self)
-        return super().save(*args, **kwargs)
+        return return_vals
 
     @staticmethod
     def get_current_events():
@@ -503,7 +505,8 @@ def delete_old_simulation(sender,instance, **kwargs):
         User.objects.get(user=team.user).delete()
 
     Strategy.objects.all().delete()
-    School.objects.all().delete()
+    for school in School.objects.all():
+        User.objects.get(user=school.user).delete()
     
 
 # start scheduler when server loads app

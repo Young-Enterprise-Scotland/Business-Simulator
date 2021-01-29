@@ -29,12 +29,12 @@ def secondsToDHMS(n: int)-> tuple:
     seconds = n 
     return (int(day),int(hour),int(minutes),int(seconds))
 
-def trigger_market_event_popup(eventid):
-    
-    market_event = MarketEvent.objects.get(id=eventid)
+def trigger_market_event_popup(marketid):
+    'create fullscreen popup displaying M.E. info'
 
+    market_event = MarketEvent.objects.get(id=marketid)
     if settings.DEBUG:
-        print(f"Creating market Event Popup for {market_event.title}")
+        print(f"Creating market Event Popup for {market_event.market_event_title}")
     PopupEvent.objects.create(
         simulator = Simulator.objects.all()[0],
         title = market_event.market_event_title,
@@ -61,7 +61,7 @@ def process_teams():
             print(event)
 
 
-    simulation = Simulator.objects.annotate(models.Max('id'))[0]
+    simulation = Simulator.objects.all()[0]
     start = simulation.start
     end = simulation.end
     length = simulation.lengthOfTradingDay
@@ -192,7 +192,18 @@ def start(simulation=None):
         seconds = '*'   # everysecond
     if settings.DEBUG:
         print(f"Setting up cronjob,{days}days {hours}hours {minutes}minutes {seconds}seconds.")
-    scheduler.add_job(process_teams, 'cron', start_date=start, end_date=end, id="calculate", replace_existing=True, day=days, hour=hours, minute=minutes, second=seconds)
+    scheduler.add_job(
+        process_teams,
+        'cron', 
+        start_date=start, 
+        end_date=end, 
+        id="calculate", 
+        replace_existing=True, 
+        day=days, 
+        hour=hours, 
+        minute=minutes, 
+        second=seconds
+    )
     
 
 def add_market_event_job(marketevent):    
@@ -201,7 +212,7 @@ def add_market_event_job(marketevent):
     if(trigger_time <= timezone.now()):
         trigger_time = timezone.now()+ timedelta(seconds=5)
     scheduler.add_job(trigger_market_event_popup,
-    'date',
-    run_date=trigger_time,
-    args=[marketevent.id]
+        'date',
+        run_date=trigger_time,
+        args=[marketevent.id]
     )

@@ -6,7 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django.conf import settings
 from simulatorApp.calculations import marketShare, profit, sizeOfMarket
 from simulatorApp.models import Team
-from .models import MarketAttributeType, MarketAttributeTypeData, MarketEntry, Price, scheduler
+from .models import MarketAttributeType, MarketAttributeTypeData, MarketEntry, PopupEvent, Price,MarketEvent, Simulator, scheduler
 from .globals import MARKET_ATTRIBUTE_TYPES
 
 def secondsToDHMS(n: int)-> tuple: 
@@ -29,6 +29,17 @@ def secondsToDHMS(n: int)-> tuple:
     seconds = n 
     return (int(day),int(hour),int(minutes),int(seconds))
 
+def trigger_market_event_popup(eventid):
+    
+    market_event = MarketEvent.objects.get(id=eventid)
+
+    if settings.DEBUG:
+        print(f"Creating market Event Popup for {market_event.title}")
+    PopupEvent.objects.create(
+        simulator = Simulator.objects.all()[0],
+        title = market_event.market_event_title,
+        body_text = market_event.market_event_text
+    )
 
 def process_teams():
 
@@ -157,10 +168,9 @@ def process_teams():
     if settings.DEBUG:
         print(f"Market Re-opened {timezone.now()}")
     
-
-
 def start(simulation=None):
-    # start scheduler when simulator is created/updated
+    'setup autocalculations when simulator is created/updated'
+    
     # avoid circular imports
     from .models import Simulator
 
@@ -184,5 +194,14 @@ def start(simulation=None):
         print(f"Setting up cronjob,{days}days {hours}hours {minutes}minutes {seconds}seconds.")
     scheduler.add_job(process_teams, 'cron', start_date=start, end_date=end, id="calculate", replace_existing=True, day=days, hour=hours, minute=minutes, second=seconds)
     
-    
 
+def add_market_event_job(marketevent):    
+
+    trigger_time = marketevent.valid_from
+    if(trigger_time <= timezone.now()):
+        trigger_time = timezone.now()+ timedelta(seconds=5)
+    scheduler.add_job(trigger_market_event_popup,
+    'date',
+    run_date=trigger_time,
+    args=[marketevent.id]
+    )

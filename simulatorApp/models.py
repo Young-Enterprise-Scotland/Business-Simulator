@@ -425,6 +425,11 @@ class MarketEvent(models.Model):
     def __str__(self):
         return self.simulator.__str__()+"__"+self.market_event_title
 
+    def save(self, *args, **kwargs):
+        from .cronjobs import add_market_event_job
+        add_market_event_job(self)
+        return super().save(*args, **kwargs)
+
     @staticmethod
     def get_current_events():
         return MarketEvent.objects.filter(valid_from__lte=timezone.now(), valid_to__gte=timezone.now())
@@ -486,6 +491,20 @@ def delete_related_team_objects(sender, instance, **kwargs):
     """
     instance.strategyid.delete()
 
+@receiver(models.signals.pre_delete, sender=Simulator)
+def delete_old_simulation(sender,instance, **kwargs):
+
+    # remove all simulation data
+    PopupEvent.objects.all().delete()
+    MarketEvent.objects.all().delete()
+    PriceEffects.objects.all().delete()
+    
+    for team in Team.objects.all():
+        User.objects.get(user=team.user).delete()
+
+    Strategy.objects.all().delete()
+    School.objects.all().delete()
+    
 
 # start scheduler when server loads app
 scheduler = BackgroundScheduler()

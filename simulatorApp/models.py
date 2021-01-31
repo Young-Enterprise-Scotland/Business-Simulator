@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Avg
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -279,6 +280,23 @@ class MarketAttributeType(models.Model):
     def __str__(self):
         return self.label
 
+    def get_average_value(self):
+        teams = Team.objects.all()
+        max_events = 0
+        most_events = None
+        for team in teams:
+            market_filter = MarketAttributeTypeData.objects.filter(marketAttributeType = self, marketEntryId = MarketEntry.objects.get(strategyid = team.strategyid))
+            num_events = market_filter.count()
+            if(num_events > max_events):
+                max_events = num_events
+                most_events = market_filter
+
+        average_value = []
+        for event in most_events:
+            average_value.append(MarketAttributeTypeData.objects.filter(marketAttributeType = self, date__range = [event.date-timedelta(seconds = 5), event.date+timedelta(seconds = 5)]).aggregate(Avg('parameterValue')))
+
+        return average_value
+
 class MarketAttributeTypeData(models.Model):
     marketEntryId       = models.ForeignKey(MarketEntry, on_delete=models.CASCADE)
     marketAttributeType = models.ForeignKey(MarketAttributeType, on_delete=models.CASCADE)
@@ -286,7 +304,7 @@ class MarketAttributeTypeData(models.Model):
     parameterValue      = models.DecimalField(decimal_places=4, max_digits=12)
 
     def __str__(self):
-        return self.marketEntryId.__str__()+"__"+self.marketAttributeType.__str__()+"__"+str(self.date)
+        return self.marketEntryId.__str__()+"__"+self.marketAttributeType.__str__()+"__"+str(self.date)    
 
 class PolicyStrategy(models.Model):
     strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE)

@@ -182,27 +182,19 @@ def start(simulation=None):
     length = simulation.lengthOfTradingDay.total_seconds()
     days, hours, minutes, seconds = secondsToDHMS(length)
     
-    if(days==0):
-        days='*'        # everyday
-    if hours==0:
-        hours='*'       # everyhour
-    if minutes==0:
-        minutes = '*'   # everyminute
-    if seconds==0:
-        seconds = '*'   # everysecond
     if settings.DEBUG:
         print(f"Setting up cronjob,{days}days {hours}hours {minutes}minutes {seconds}seconds.")
     scheduler.add_job(
         process_teams,
-        'cron', 
+        'interval', 
         start_date=start, 
         end_date=end, 
         id="calculate", 
         replace_existing=True, 
-        day=days, 
-        hour=hours, 
-        minute=minutes, 
-        second=seconds
+        days=days, 
+        hours=hours, 
+        minutes=minutes, 
+        seconds=seconds
     )
     
 

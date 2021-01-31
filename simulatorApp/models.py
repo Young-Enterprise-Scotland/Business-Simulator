@@ -506,11 +506,11 @@ def delete_old_simulation(sender,instance, **kwargs):
     PriceEffects.objects.all().delete()
     
     for team in Team.objects.all():
-        User.objects.get(user=team.user).delete()
+        User.objects.get(username=team.user).delete()
 
     Strategy.objects.all().delete()
     for school in School.objects.all():
-        User.objects.get(user=school.user).delete()
+        User.objects.get(username=school.user).delete()
     
 
 # start scheduler when server loads app

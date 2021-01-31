@@ -107,13 +107,21 @@
       <div class="row">
         <div class="col-xl-8 mb-5 mb-xl-0">
           <div class="card bg-gradient-default shadow pt-2">
-            <canvas id="lineChart" width="350" height="180"></canvas>
+            <canvas id="lineChart" ></canvas>
           </div>
         </div>
         <div class="col-xl-4">
-          <div class="card bg-gradient-default shadow pt-2 pb-2 pl-4 pr-4">
-            <canvas id="pieChart" width="150" height="173"></canvas>
+          <div class="form-group">
+            <div class="card bg-gradient-default shadow pt-2 pb-3 pl-4 pr-4">
+              <canvas id="pieChart" ></canvas>
+            </div>
           </div>
+          <div class="form-group">
+            <div class="card bg-gradient-default shadow pt-2 pb-3 pl-4 pr-4">
+              <canvas id="lineChartSmall" ></canvas>
+            </div>
+          </div>
+          
         </div>
       </div>
 
@@ -170,11 +178,11 @@
 
     {% for entry in attribute_data %}
       x_data.push('{{entry.date}}'.slice(0,7));
-      y_data.push({{entry.parameterValue}});
+      y_data.push({{entry.parameterValue}}.toFixed(2));
     {% endfor %}
 
     {% for entry in average_net_profit %}
-      other_data.push({{entry.parameterValue__avg}});
+      other_data.push({{entry.parameterValue__avg}}.toFixed(2));
     {% endfor %}
 
     var ctx = document.getElementById('lineChart').getContext('2d');
@@ -223,13 +231,17 @@
                   }
               }]
           },
+          legend: {
+            display: true, 
+            position: 'top',
+          },
           title: {
             display: true,
             text: '{{graph_title}}',
             fontSize: 16
           },
-      }
-  });
+        }
+    });
   </script>
   <script>
     var ctx = document.getElementById('pieChart').getContext('2d');
@@ -240,7 +252,7 @@
           datasets: [{
               fill: false,
               label: '',
-              data: [{{other_market_share}}, {{team_market_share}}],
+              data: [{{other_market_share}}.toFixed(2), {{team_market_share}}.toFixed(2)],
               backgroundColor: [
                   'rgba(165, 55, 253, 0.2)',
                   'rgba(255, 99, 132, 0.2)',
@@ -255,11 +267,70 @@
       options: {
           title: {
             display: true,
-            text: 'Market Share',
+            text: 'Market Share %',
             fontSize: 16
+          },
+          legend: {
+            display: true, 
+            position: 'top',
           },
       }
   });
+  </script>
+  <script>
+
+    var x_data_small = []; 
+    var y_data_small = [];
+    var other_data_small = [];
+
+    {% for entry in attribute_data_small %}
+      x_data_small.push('{{entry.date}}'.slice(0,7));
+      y_data_small.push({{entry.parameterValue}}.toFixed(0));
+    {% endfor %}
+
+    {% for entry in average_sales %}
+      other_data_small.push({{entry.parameterValue__avg}}.toFixed(0));
+    {% endfor %}
+
+    var ctx = document.getElementById('lineChartSmall').getContext('2d');
+    var myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: x_data_small,
+          datasets: [{
+              fill: false,
+              label: '{{team_obj.team_name}} {{graph_title_small}}',
+              data: y_data_small,
+              backgroundColor: [
+                  'rgba(255, 99, 132, 0.2)',
+              ],
+              borderColor: [
+                  'rgba(255, 99, 132, 1)',
+              ],
+              borderWidth: 2
+          },
+          {
+              fill: false,
+              label: 'Market Average {{graph_title_small}}',
+              data: other_data_small,
+              backgroundColor: [
+                  'rgba(165, 55, 253, 0.2)',
+              ],
+              borderColor: [
+                  'rgba(165, 55, 253, 1)',
+              ],
+              borderWidth: 2
+          }]
+      },
+      options: {
+          
+          title: {
+            display: true,
+            text: '{{graph_title_small}}',
+            fontSize: 16
+          },
+        }
+    });
   </script>
 {% endif %}
 

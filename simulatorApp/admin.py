@@ -18,7 +18,7 @@ admin.site.register(Team)
 #admin.site.register(MarketEntry)
 #admin.site.register(MarketAttributeType)
 #admin.site.register(MarketAttributeTypeData)
-#admin.site.register(Policy)
+admin.site.register(Policy)
 #admin.site.register(Price)
 admin.site.register(PolicyStrategy)
 

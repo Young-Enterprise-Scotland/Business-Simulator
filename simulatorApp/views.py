@@ -57,14 +57,18 @@ class Index(View):
         elif request.user.has_perm('simulatorApp.is_team'):
             context_dict['team_obj'] = Team.objects.get(user=request.user)
             # MARKET_ATTRIBUTE_TYPES defines the attribute being displayed in graph.
+            #get net profit data
             context_dict['attribute_data'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[6])
             context_dict['graph_title'] = MARKET_ATTRIBUTE_TYPES[6]
-
-            # get average net profit of other teams
             context_dict['average_net_profit'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[6]).get_average_value()
+            #get market share data
             team_share = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[8])
             context_dict['team_market_share'] = team_share[len(team_share)-1].parameterValue
             context_dict['other_market_share'] = 100 - context_dict['team_market_share']
+            #get sales data 
+            context_dict['attribute_data_small'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[4])
+            context_dict['graph_title_small'] = MARKET_ATTRIBUTE_TYPES[4]
+            context_dict['average_sales'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[4]).get_average_value()
 
 
         # display market events as 'news articles'

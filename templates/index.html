@@ -107,25 +107,12 @@
       <div class="row">
         <div class="col-xl-8 mb-5 mb-xl-0">
           <div class="card bg-gradient-default shadow pt-2">
-            <canvas id="myChart" width="350" height="160"></canvas>
+            <canvas id="lineChart" width="350" height="180"></canvas>
           </div>
         </div>
         <div class="col-xl-4">
-          <div class="card shadow">
-            <div class="card-header bg-transparent">
-              <div class="row align-items-center">
-                <div class="col">
-                  <h6 class="text-uppercase text-muted ls-1 mb-1">Performance</h6>
-                  <h2 class="mb-0">Total orders</h2>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <!-- Chart -->
-              <div class="chart">
-                <canvas id="chart-orders" class="chart-canvas"></canvas>
-              </div>
-            </div>
+          <div class="card bg-gradient-default shadow pt-2 pb-2 pl-4 pr-4">
+            <canvas id="pieChart" width="150" height="173"></canvas>
           </div>
         </div>
       </div>
@@ -296,36 +283,43 @@
   <script>
     var x_data = []; 
     var y_data = [];
+    var other_data = [];
 
     {% for entry in attribute_data %}
       x_data.push('{{entry.date}}'.slice(0,7));
       y_data.push({{entry.parameterValue}});
     {% endfor %}
 
-    var ctx = document.getElementById('myChart').getContext('2d');
+    {% for entry in average_net_profit %}
+      other_data.push({{entry.parameterValue__avg}});
+    {% endfor %}
+
+    var ctx = document.getElementById('lineChart').getContext('2d');
     var myChart = new Chart(ctx, {
       type: 'line',
       data: {
           labels: x_data,
           datasets: [{
               fill: false,
-              label: '# of Votes',
+              label: '{{team_obj.team_name}} {{graph_title}}',
               data: y_data,
               backgroundColor: [
                   'rgba(255, 99, 132, 0.2)',
-                  'rgba(54, 162, 235, 0.2)',
-                  'rgba(255, 206, 86, 0.2)',
-                  'rgba(75, 192, 192, 0.2)',
-                  'rgba(153, 102, 255, 0.2)',
-                  'rgba(255, 159, 64, 0.2)'
               ],
               borderColor: [
                   'rgba(255, 99, 132, 1)',
-                  'rgba(54, 162, 235, 1)',
-                  'rgba(255, 206, 86, 1)',
-                  'rgba(75, 192, 192, 1)',
-                  'rgba(153, 102, 255, 1)',
-                  'rgba(255, 159, 64, 1)'
+              ],
+              borderWidth: 2
+          },
+          {
+              fill: false,
+              label: 'Other {{graph_title}}',
+              data: other_data,
+              backgroundColor: [
+                  'rgba(165, 55, 253, 0.2)',
+              ],
+              borderColor: [
+                  'rgba(165, 55, 253, 1)',
               ],
               borderWidth: 2
           }]
@@ -334,13 +328,51 @@
           scales: {
               yAxes: [{
                   ticks: {
-                      beginAtZero: true
+                      beginAtZero: true,
+                      callback: function(value, index, values) {
+                        if(value >= 0) {
+                          return '£' + value;
+                        } else {
+                          return '-£' + value*-1;
+                        }
+                        
+                      }
                   }
               }]
           },
           title: {
             display: true,
             text: '{{graph_title}}',
+            fontSize: 16
+          },
+      }
+  });
+  </script>
+  <script>
+    var ctx = document.getElementById('pieChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+          labels: ['Other Teams','{{team_obj.team_name}}'],
+          datasets: [{
+              fill: false,
+              label: '',
+              data: [{{other_market_share}}, {{team_market_share}}],
+              backgroundColor: [
+                  'rgba(165, 55, 253, 0.2)',
+                  'rgba(255, 99, 132, 0.2)',
+              ],
+              borderColor: [
+                  'rgba(165, 55, 253, 1)',
+                  'rgba(255, 99, 132, 1)',
+              ],
+              borderWidth: 2
+          }]
+      },
+      options: {
+          title: {
+            display: true,
+            text: 'Market Share',
             fontSize: 16
           },
       }

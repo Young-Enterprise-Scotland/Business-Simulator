@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils import timezone 
 from django.views import View
 from .models import AcknowledgedEvent, Strategy, YES, School, Team, PolicyStrategy, Price, Simulator, MarketEvent, PopupEvent
+from .globals import MARKET_ATTRIBUTE_TYPES
 
 
 # Create your views here.
@@ -53,6 +54,9 @@ class Index(View):
             context_dict['school_obj'] = School.objects.get(user=request.user)
         elif request.user.has_perm('simulatorApp.is_team'):
             context_dict['team_obj'] = Team.objects.get(user=request.user)
+            # MARKET_ATTRIBUTE_TYPES defines the attribute being displayed in graph.
+            context_dict['attribute_data'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[6])
+            context_dict['graph_title'] = MARKET_ATTRIBUTE_TYPES[6]
 
         # display market events as 'news articles'
         context_dict['news_articles'] = MarketEvent.objects.filter(valid_from__lte=timezone.now()).order_by("-id")

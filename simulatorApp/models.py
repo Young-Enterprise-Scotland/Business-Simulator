@@ -256,6 +256,10 @@ class Team(models.Model):
     def get_all_teams():
         return Team.objects.all()
 
+    def get_team_attribute(self, attribute_name):
+        marketEntry = MarketEntry.objects.get(strategyid = self.strategyid, simulator = Simulator.objects.all()[0])
+        return MarketAttributeTypeData.objects.filter(marketEntryId = marketEntry, marketAttributeType = MarketAttributeType.objects.get(label=attribute_name))
+
 class MarketEntry(models.Model):
     strategyid = models.ForeignKey(Strategy, on_delete=models.CASCADE)
     simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)

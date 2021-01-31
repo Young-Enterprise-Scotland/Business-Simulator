@@ -694,3 +694,4 @@ class EditStrategy(View):
             notify['type'] = 'success'
             
         return self.get(request, notify=notify)
+ 

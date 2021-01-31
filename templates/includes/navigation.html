@@ -45,6 +45,10 @@
                   <i class="ni ni-single-02"></i>
                   <span>My profile</span>
                 </a>
+                <a href="" class="dropdown-item">
+                  <i class="ni ni-settings-gear-65"></i>
+                  <span>Settings</span>
+                </a>
               {% elif perms.simulatorApp.is_school %}
                 <a href="{% url 'simulatorApp:viewSchoolAccount' %}?profile_id={{ request.user.id }}" class="dropdown-item">
                   <i class="ni ni-single-02"></i>
@@ -56,13 +60,10 @@
                   <span>My profile</span>
                 </a>
               {% endif %}
-              <a href="" class="dropdown-item">
-                <i class="ni ni-settings-gear-65"></i>
-                <span>Settings</span>
-              </a>
-              <a href="" target="_blank" class="dropdown-item">
+
+              <a href = "mailto:example_email@example.com?subject=Bug Found&body=Replace me with a description of the bug" target="_blank" class="dropdown-item">
                 <i class="ni ni-support-16"></i>
-                <span>Support</span>
+                <span>Report Bug</span>
               </a>
               <div class="dropdown-divider"></div>
               <a href="{% url 'simulatorApp:logout' %}" class="dropdown-item">

@@ -1,9 +1,8 @@
 import decimal
+from simulatorApp.cronjobs import process_teams
 from django.test import TestCase
 from datetime import timedelta, datetime, time
 from django.utils import timezone
-
-# Create your tests here.
 from .models import *
 from .globals import POLICIES
 from .calculations import *
@@ -454,6 +453,42 @@ class TestSchedule(TestCase):
             noErr = False
         self.assertTrue(noErr==True)
 
+    def test_process_teams_with_no_teams_or_simulation(self):
+            self.failUnlessRaises(IndexError,process_teams)
+
+    def test_process_teams_with_no_teams(self):
+        simulator = Simulator.objects.create(
+                start=timezone.now(),
+                end=timezone.now()+ timedelta(1),
+                productName="Test Product",
+                maxPrice=10.00,
+                minPrice=1.00
+            )
+        try:
+            process_teams()
+        except Exception as e:
+            self.fail(msg=e)
+
+    def test_process_teams_with_teams_and_simulation(self):
+        simulator = Simulator.objects.create(
+                start=timezone.now(),
+                end=timezone.now()+ timedelta(1),
+                productName="Test Product",
+                maxPrice=10.00,
+                minPrice=1.00
+            )
+
+        School.objects.create(school_name="School 1", user=User.objects.create(username="School 1"))
+        School.objects.create(school_name="School 2", user=User.objects.create(username="School 2"))
+
+        Team.objects.create(team_name="Team 3", schoolid=School.objects.get(school_name="School 1"), user=User.objects.create(username="Team 3"))
+        Team.objects.create(team_name="Team 4", schoolid=School.objects.get(school_name="School 2"), user=User.objects.create(username="Team 4"))
+        
+        try:
+            process_teams()
+        except Exception as e:
+            self.fail(msg=e)
+
 class TestMarketEvent(TestCase):
 
     def setUp(self):
@@ -472,8 +507,7 @@ class TestMarketEvent(TestCase):
         School.objects.create(school_name="School 1", user=User.objects.create(username="School 1"))
         
         Team.objects.create(team_name="Team 1", schoolid=School.objects.get(school_name="School 1"), user=User.objects.create(username="Team 1"))
-    
-        
+           
     def market_event_create(self):
 
         (obj,created) = MarketEvent.objects.get_or_create(
@@ -482,6 +516,11 @@ class TestMarketEvent(TestCase):
             market_event_text = "Custom Text"
         )
         self.assertTrue(created)
+
+        try:
+            process_teams()
+        except Exception as e:
+            self.fail(msg=e)
 
     def policy_event_create(self):
 
@@ -543,4 +582,34 @@ class TestMarketEvent(TestCase):
         
         self.assertTrue(len(MarketEvent.get_current_events())==5)
 
-    
+    def test_market_event_creates_cronjob(self):
+        (obj,created) = MarketEvent.objects.get_or_create(
+            simulator = Simulator.objects.annotate(models.Max('id'))[0],
+            market_event_title = "Custom Title",
+            market_event_text = "Custom Text",
+            valid_from=timezone.now()+timedelta(days=1),
+            valid_to= timezone.now()+timedelta(days=2)
+        )
+
+        from .models import scheduler
+        self.assertEqual(len(scheduler.get_jobs()),2)
+        
+    def test_market_event_creates_popup(self):
+
+        (obj,created) = MarketEvent.objects.get_or_create(
+            simulator = Simulator.objects.annotate(models.Max('id'))[0],
+            market_event_title = "Custom Title",
+            market_event_text = "Custom Text",
+            valid_from=timezone.now()+timedelta(days=1),
+            valid_to= timezone.now()+timedelta(days=2)
+        )
+
+        from .cronjobs import trigger_market_event_popup
+        trigger_market_event_popup(obj.id)
+
+        self.assertEqual(
+            PopupEvent.objects.get(
+                title=obj.market_event_title
+            ).title, 
+            obj.market_event_title
+        )

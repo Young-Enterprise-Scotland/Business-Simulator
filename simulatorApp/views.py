@@ -34,6 +34,7 @@ def get_popup(request):
     popups = get_popups(request)
     return popups[0] if len(popups)>0 else popups
 
+
 class Index(View):
 
     '''
@@ -49,7 +50,8 @@ class Index(View):
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
-
+        if request.user.is_superuser:
+            return redirect(reverse('simulatorApp:logout'))
         if request.user.has_perm('simulatorApp.is_school'):
             context_dict['school_obj'] = School.objects.get(user=request.user)
         elif request.user.has_perm('simulatorApp.is_team'):
@@ -58,9 +60,8 @@ class Index(View):
             context_dict['attribute_data'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[6])
             context_dict['graph_title'] = MARKET_ATTRIBUTE_TYPES[6]
 
+            # get average net profit of other teams
             context_dict['average_net_profit'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[6]).get_average_value()
-            print(context_dict['average_net_profit'])
-
             team_share = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[8])
             context_dict['team_market_share'] = team_share[len(team_share)-1].parameterValue
             context_dict['other_market_share'] = 100 - context_dict['team_market_share']

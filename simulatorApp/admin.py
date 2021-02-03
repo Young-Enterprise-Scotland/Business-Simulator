@@ -21,7 +21,6 @@ admin.site.register(Team)
 admin.site.register(Policy)
 #admin.site.register(Price)
 admin.site.register(PolicyStrategy)
-
 admin.site.register(MarketEvent)
 admin.site.register(PolicyEvent)
 admin.site.register(PopupEvent)

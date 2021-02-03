@@ -50,12 +50,21 @@
                             </td>
                             <td>
                             <span class="badge badge-dot mr-4">
-                                <i class="bg-warning"></i> {{team.school_position}}
+                              {% if team.leaderboard_position > 3 %}
+                              <i class="bg-warning"></i> 
+                              {% else %}
+                              <i class="bg-success"></i>
+                              {% endif %} {{team.school_position}}
                             </span>
                             </td>
                             <td>
                                 <span class="badge badge-dot mr-4">
-                                    <i class="bg-warning"></i> {{team.leaderboard_position}}
+                                    {% if team.leaderboard_position > 3 %}
+                                    <i class="bg-warning"></i> 
+                                    {% else %}
+                                    <i class="bg-success"></i>
+                                    {% endif %}
+                                     {{team.leaderboard_position}}
                                 </span>
                             </td>
                             <td>

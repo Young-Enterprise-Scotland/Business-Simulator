@@ -51,7 +51,8 @@ def process_teams():
                                 numberOfProductsSold,  \
                                 dailyCost,productCost, \
                                 profit, netProfit,     \
-                                sizeOfMarket, marketShare    
+                                sizeOfMarket, marketShare,\
+                                assignLeaderboardPositions    
     from django.db import models
     from .models import Team, Simulator, Price, MarketEvent
 
@@ -76,6 +77,9 @@ def process_teams():
     # update attributes for each team
  
     size_of_market = sizeOfMarket()
+
+    leaderboard_ranking_data = []
+
     for team in teams:
 
         market_entry = MarketEntry.objects.get(strategyid=team.strategyid, simulator=simulation)
@@ -87,7 +91,7 @@ def process_teams():
         net_profit = netProfit(team)
         market_share = marketShare(team,sizeofmarket=size_of_market)
         price = Price.objects.get(team=team)
-
+        leaderboard_ranking_data.append([team,market_share])
         #add product cost entry
         MarketAttributeTypeData.objects.create(
             marketEntryId = market_entry,
@@ -143,6 +147,7 @@ def process_teams():
             date = timezone.now(),
             parameterValue = net_profit
         )
+        
 
         # add size of market entry
         MarketAttributeTypeData.objects.create(
@@ -162,6 +167,7 @@ def process_teams():
         if settings.DEBUG:
             print(f"\nTeam:{team.team_name}\n Product Cost: {product_cost}\n Daily Cost:{daily_cost}\n Price:{price.price}\n Number of Customers:{number_of_customers}\n Number of Products Sold:{num_of_products_sold}\n Profit:{team_profit}\n Net Profit:{net_profit}\n Size of Market:{size_of_market}\n Market Share:{market_share}\n")
 
+    assignLeaderboardPositions(leaderboard_ranking_data)
     simulation.marketOpen = True
     simulation.save()
 

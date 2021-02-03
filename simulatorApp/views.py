@@ -1,3 +1,4 @@
+import simulatorApp
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -63,7 +64,10 @@ class Index(View):
             context_dict['average_net_profit'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[6]).get_average_value()
             #get market share data
             team_share = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[8])
-            context_dict['team_market_share'] = team_share[len(team_share)-1].parameterValue
+            if len(team_share) > 0:
+                context_dict['team_market_share'] = team_share[len(team_share)-1].parameterValue
+            else:
+                context_dict['team_market_share'] = 0
             context_dict['other_market_share'] = 100 - context_dict['team_market_share']
             #get sales data 
             context_dict['attribute_data_small'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[4])
@@ -615,6 +619,30 @@ class ViewSchools(View):
 
         return self.get(request, notify=notify)
 
+class ViewLeaderboard(View):
+    def get(self, request, **kwargs):
+        context_dict = {}
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        # check user has the correct view permission
+        if(request.user.has_perm("simulatorApp.is_team")):
+            this_team = Team.objects.get(user = request.user) 
+            teams = Team.get_teams_by_school(School.objects.get(user=this_team.schoolid.user))
+            context_dict['teams'] = teams.order_by('-school_position')
+            return render(request, 'viewTeams.html', context=context_dict)
+        if(request.user.has_perm("simulatorApp.is_school")):
+            teams = Team.get_teams_by_school(School.objects.get(user = request.user))
+            context_dict['teams'] = teams.order_by('-school_position')
+            return render(request, 'viewTeams.html', context=context_dict)
+        if(request.user.has_perm("simulatorApp.is_yes_staff")):
+            teams = Team.objects.all()
+            if len(teams) < 10:
+                context_dict['teams'] = teams.order_by('-leaderboard_position')
+            else:
+                context_dict['teams'] = teams.order_by('-leaderboard_position')[:10]
+            return render(request, 'viewLeaderboard.html', context=context_dict)        
+        
 class EditStrategy(View):
     
     def get(self, request, **kwargs):

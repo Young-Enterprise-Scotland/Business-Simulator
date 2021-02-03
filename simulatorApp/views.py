@@ -696,19 +696,22 @@ class ViewLeaderboard(View):
         if(request.user.has_perm("simulatorApp.is_team")):
             this_team = Team.objects.get(user = request.user) 
             teams = Team.get_teams_by_school(School.objects.get(user=this_team.schoolid.user))
-            context_dict['teams'] = teams.order_by('-school_position')
-            return render(request, 'viewTeams.html', context=context_dict)
+            context_dict['teams'] = teams.order_by('school_position')
+            
+            
         if(request.user.has_perm("simulatorApp.is_school")):
             teams = Team.get_teams_by_school(School.objects.get(user = request.user))
-            context_dict['teams'] = teams.order_by('-school_position')
-            return render(request, 'viewTeams.html', context=context_dict)
+            context_dict['teams'] = teams.order_by('school_position')
+            
         if(request.user.has_perm("simulatorApp.is_yes_staff")):
             teams = Team.objects.all()
             if len(teams) < 10:
-                context_dict['teams'] = teams.order_by('-leaderboard_position')
+                context_dict['teams'] = teams.order_by('leaderboard_position')
             else:
-                context_dict['teams'] = teams.order_by('-leaderboard_position')[:10]
-            return render(request, 'viewLeaderboard.html', context=context_dict)        
+                context_dict['teams'] = teams.order_by('leaderboard_position')[:10]
+        
+        context_dict['teams_global'] = Team.objects.all().order_by("leaderboard_position")
+        return render(request, 'viewLeaderboard.html', context=context_dict)        
         
 class EditStrategy(View):
     

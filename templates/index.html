@@ -340,7 +340,9 @@
     $(document).ready(function(){
       Swal.fire({
         title: '{{ fullscreen_popup.title }}',
-        text: "{{ fullscreen_popup.body_text }}",
+        {% autoescape off %}
+        html: "{{ fullscreen_popup.body_text }}",
+        {% endautoescape %}
         icon: '{{ fullscreen_popup.icon_class }}',
         showCancelButton: true,
         confirmButtonText: 'Got It!'

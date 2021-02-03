@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-
+from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone 
 from django.views import View
@@ -465,7 +465,13 @@ class ViewTeams(View):
         if"notify" in kwargs:
             context_dict['notify'] = kwargs['notify']
 
-        context_dict['teams'] = teams 
+        context_dict['teams'] = teams
+
+        for i in range(len(teams)):
+            if teams[i].school_position ==-1:
+                teams[i].school_position = "Not Assigned"
+            if teams[i].leaderboard_position == -1:
+                teams[i].leaderboard_position = "Not Assigned"
         context_dict['schools'] = schools
 
         return render(request, 'viewTeams.html', context=context_dict)
@@ -481,7 +487,7 @@ class ViewTeams(View):
             return redirect(reverse('simulatorApp:index'))
 
         #check post request for add user
-        if request.POST.get('add_team'):
+        if request.POST.get('add_team', False):
             
             #retrieve and add new team account
             username = request.POST.get('username')
@@ -541,6 +547,34 @@ class ViewTeams(View):
             notify['title'] = "Team successfully created"
             notify['type'] = 'success'
 
+        elif request.POST.get('delete_team',False):
+            # this is an ajax request so the response must be json
+            resp = {}
+            team_user_id = request.POST.get('team_id',None)
+
+            if request.user.has_perm("simulatorApp.is_school"):
+                # schools can only delete their own teams
+                # check team belongs to school
+                school = School.objects.get(user=request.user)
+                if(school!= Team.objects.get(user=User.objects.get(id=team_user_id)).schoolid):
+                    resp['class'] = 'error'
+                    resp['msg'] = "You do not have permission to delete this team account. Try deleting one of your own teams!"
+                    resp['title'] = 'Uh oh'
+                    return JsonResponse(resp)
+            if team_user_id is None:
+                resp['class'] = 'error'
+                resp['msg'] = "Team could not be deleted"
+                resp['title'] = 'Uh oh'
+            try:
+                User.objects.get(id=team_user_id).delete()
+                resp['class'] = 'success'
+                resp['msg'] = "All associated data has also been deleted"
+                resp['title'] = 'Team Deleted'
+            except Exception as e:
+                resp['class'] = 'error'
+                resp['msg'] = "Team has already been deleted"
+                resp['title'] = 'Uh oh'
+            return JsonResponse(resp)
         return self.get(request, notify=notify)
     
 class ViewSchools(View):
@@ -612,6 +646,39 @@ class ViewSchools(View):
             
             notify['title'] = "School account successfully created"
             notify['type'] = 'success'
+
+        elif request.POST.get('delete_school',False):
+            # build a json response to deliver to the page
+            # regarding the result of their action
+            resp = {}
+
+            schooluser_id = request.POST.get('account_id',None)
+            if schooluser_id is None:
+                # no school account for that id
+                resp['class'] = 'error'
+                resp['msg'] = "School could not be deleted"
+                resp['title'] = 'Uh oh'
+            try: 
+                # attempt to delete school
+                school_user = User.objects.get(id=schooluser_id)
+                school = School.objects.get(user=school_user)
+                
+                teams = Team.objects.filter(schoolid=school) 
+                for team in teams:
+                    User.objects.get(id=team.user.id).delete() 
+                school.delete()
+                school_user.delete()
+
+                resp['class'] = 'success'
+                resp['msg'] = "All associated school accounts and their data has also been deleted"
+                resp['title'] = 'School Deleted'
+            except Exception as e:
+                print(e)
+                # school object has already been deleted
+                resp['class'] = 'error'
+                resp['msg'] = "School has already been deleted"
+                resp['title'] = 'Uh oh'
+            return JsonResponse(resp)
 
         return self.get(request, notify=notify)
 

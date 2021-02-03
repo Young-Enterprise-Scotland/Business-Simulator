@@ -1,4 +1,5 @@
 import decimal
+from collections import defaultdict
 from datetime import timedelta
 from django.utils import timezone
 from django.db import models
@@ -151,3 +152,33 @@ def marketShare(teamobject, sizeofmarket=None):
     if not sizeofmarket:
         sizeofmarket = sizeOfMarket()
     return (numberOfProductsSold(teamobject)/sizeofmarket)*100
+
+def assignLeaderboardPositions(team_net_profit_list):
+
+    schools_collection = defaultdict(lambda:[])
+
+    #sort teams by netprofit
+    team_net_profit_list = sorted(team_net_profit_list, key=lambda idx:idx[1])
+    for i in range(len(team_net_profit_list)):
+        team = team_net_profit_list[i][0]
+        team.leaderboard_position = i+1
+        team.save()
+
+        schools_collection[team.schoolid].append(team)
+
+    count = 0
+    for school, team_arr in schools_collection.items():
+        team_arr = sorted(team_arr, key=lambda team:team.leaderboard_position)
+        for i,team in enumerate(team_arr):
+            team.school_position = i+1
+            team.save()
+    return
+
+
+
+    
+
+
+
+
+    

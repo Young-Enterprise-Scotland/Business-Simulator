@@ -42,6 +42,9 @@ class Simulator(models.Model):
     lengthOfTradingDay = models.DurationField(default=timedelta(days=1))
     productName = models.CharField(max_length=100)
     image = models.ImageField(blank = True)
+    
+    startQuizUrl = models.URLField(blank=True, default="")
+    endQuizUrl = models.URLField(blank=True)
 
     # price is of the format xxxxxxx.xxxx
     # allow for more than 2dp to help with roundoff errors
@@ -80,19 +83,42 @@ class Simulator(models.Model):
             (object,created) = MarketAttributeType.objects.get_or_create(label=attribute_type)  
 
     def __setup_price_effects(self):
-        
         for i in range(1,4):
             PriceEffects.objects.get_or_create(boundary=i)
         return
+
+    def __setup_start_and_end_quiz(self):
+        from .cronjobs import trigger_end_of_game_quiz
+
+        # create popup for initial quiz 
+        PopupEvent.objects.create(
+            simulator=self, 
+            title="Quiz", 
+            body_text=f"Please answer <a href='{self.startQuizUrl}'>this</a> quiz before continuing."
+        )
+
+        #create popup for end of game quiz
+        scheduler.add_job(trigger_end_of_game_quiz,
+            'date',
+            run_date=self.end,
+            args=[self]
+        )
+
+        return
+
     def save(self, *args, **kwargs):
         
         # setup game related models
         self.__setup_policies()
         self.__setup_market_attribute_types()
         self.__setup_price_effects()
-
-        super(Simulator, self).save(*args, **kwargs)
         
+        no_simulators = len(Simulator.objects.all())
+        
+        super(Simulator, self).save(*args, **kwargs)   
+
+        if no_simulators==0:
+            self.__setup_start_and_end_quiz()
         from . import cronjobs
         cronjobs.start()
         

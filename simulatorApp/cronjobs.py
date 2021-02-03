@@ -208,3 +208,11 @@ def add_market_event_job(marketevent):
         run_date=trigger_time,
         args=[marketevent.id]
     )
+
+def trigger_end_of_game_quiz(simulator):
+    PopupEvent.objects.create(
+        simulator = Simulator.objects.all()[0],
+        title = "End of game quiz",
+        body_text = "Thank you for taking part in this competition. We would appreciate it if you could complete <a href='{simulator.endQuizUrl}'>this</a> quiz."
+    )
+    return

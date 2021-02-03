@@ -94,7 +94,9 @@ class Simulator(models.Model):
         PopupEvent.objects.create(
             simulator=self, 
             title="Quiz", 
-            body_text=f"Please answer <a href='{self.startQuizUrl}'>this</a> quiz before continuing."
+            body_text="Please answer the quiz before continuing.",
+            is_quiz = True,
+            url = self.startQuizUrl
         )
 
         #create popup for end of game quiz
@@ -512,6 +514,10 @@ class PopupEvent(models.Model):
     simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
     title = models.CharField(max_length=256, default="Alert")
     body_text = models.CharField(max_length=2048, default="")
+    
+    # only required for the start and end of game popups
+    is_quiz = models.BooleanField(default=False)
+    url = models.URLField(blank=True)
 
     # force the popup icon to be from the sweetalert icon library
     icon_class = models.CharField(max_length=32, choices=[

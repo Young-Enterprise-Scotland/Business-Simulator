@@ -592,7 +592,7 @@ class TestMarketEvent(TestCase):
         )
 
         from .models import scheduler
-        self.assertEqual(len(scheduler.get_jobs()),2)
+        self.assertEqual(len(scheduler.get_jobs()),4)
         
     def test_market_event_creates_popup(self):
 

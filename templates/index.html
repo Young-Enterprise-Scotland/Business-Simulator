@@ -341,11 +341,17 @@
       Swal.fire({
         title: '{{ fullscreen_popup.title }}',
         {% autoescape off %}
+        {% if fullscreen_popup.is_quiz %}
+        confirmButtonText: 'Take Quiz',
+        {% else %}
+        showCancelButton: true,
+        confirmButtonText: 'Got It!',
+        {% endif %}
         html: "{{ fullscreen_popup.body_text }}",
         {% endautoescape %}
         icon: '{{ fullscreen_popup.icon_class }}',
-        showCancelButton: true,
-        confirmButtonText: 'Got It!'
+        
+        
       }).then((result) => {
         if (result.isConfirmed) {
 
@@ -369,6 +375,14 @@
                 console.log(error);
             }
           });
+
+          {% if fullscreen_popup.is_quiz %}
+           // open an empty window
+          const tab = window.open('about:blank');
+          // redirect user to quiz
+          tab.location = '{{fullscreen_popup.url}}';
+          tab.focus();
+          {% endif %}
         }
       })
     });

@@ -213,6 +213,8 @@ def trigger_end_of_game_quiz(simulator):
     PopupEvent.objects.create(
         simulator = Simulator.objects.all()[0],
         title = "End of game quiz",
-        body_text = "Thank you for taking part in this competition. We would appreciate it if you could complete <a href='{simulator.endQuizUrl}'>this</a> quiz."
+        body_text = "Thank you for taking part in this competition. We would appreciate it if you could complete this quiz.",
+        is_quiz=True,
+        url = simulator.endQuizUrl
     )
     return

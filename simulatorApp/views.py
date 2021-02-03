@@ -551,6 +551,16 @@ class ViewTeams(View):
             # this is an ajax request so the response must be json
             resp = {}
             team_user_id = request.POST.get('team_id',None)
+
+            if request.user.has_perm("simulatorApp.is_school"):
+                # schools can only delete their own teams
+                # check team belongs to school
+                school = School.objects.get(user=request.user)
+                if(school!= Team.objects.get(user=User.objects.get(id=team_user_id)).schoolid):
+                    resp['class'] = 'error'
+                    resp['msg'] = "You do not have permission to delete this team account. Try deleting one of your own teams!"
+                    resp['title'] = 'Uh oh'
+                    return JsonResponse(resp)
             if team_user_id is None:
                 resp['class'] = 'error'
                 resp['msg'] = "Team could not be deleted"

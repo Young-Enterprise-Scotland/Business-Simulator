@@ -320,8 +320,9 @@ class MarketAttributeType(models.Model):
                 most_events = market_filter
 
         average_value = []
-        for event in most_events:
-            average_value.append(MarketAttributeTypeData.objects.filter(marketAttributeType = self, date__range = [event.date-timedelta(seconds = 5), event.date+timedelta(seconds = 5)]).aggregate(Avg('parameterValue')))
+        if most_events != None:
+            for event in most_events:
+                average_value.append(MarketAttributeTypeData.objects.filter(marketAttributeType = self, date__range = [event.date-timedelta(seconds = 5), event.date+timedelta(seconds = 5)]).aggregate(Avg('parameterValue')))
 
         return average_value
 

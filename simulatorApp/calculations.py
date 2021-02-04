@@ -158,7 +158,7 @@ def assignLeaderboardPositions(team_net_profit_list):
     schools_collection = defaultdict(lambda:[])
 
     #sort teams by netprofit
-    team_net_profit_list = sorted(team_net_profit_list, key=lambda idx:idx[1])
+    team_net_profit_list = sorted(team_net_profit_list, key=lambda idx:idx[1],reverse=True)
     for i in range(len(team_net_profit_list)):
         team = team_net_profit_list[i][0]
         team.leaderboard_position = i+1
@@ -168,7 +168,7 @@ def assignLeaderboardPositions(team_net_profit_list):
 
     count = 0
     for school, team_arr in schools_collection.items():
-        team_arr = sorted(team_arr, key=lambda team:team.leaderboard_position)
+        team_arr = sorted(team_arr, key=lambda team:team.leaderboard_position, reverse=True)
         for i,team in enumerate(team_arr):
             team.school_position = i+1
             team.save()

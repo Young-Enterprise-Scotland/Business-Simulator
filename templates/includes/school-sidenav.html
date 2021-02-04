@@ -38,13 +38,9 @@
               <i class="ni ni-single-02"></i>
               <span>My profile</span>
             </a>
-            <a href="" class="dropdown-item">
-              <i class="ni ni-settings-gear-65"></i>
-              <span>Settings</span>
-            </a>
-            <a href="" class="dropdown-item">
-              <i class="ni ni-calendar-grid-58"></i>
-              <span>Activity</span>
+            <a href="{% url 'simulatorApp:viewLeaderboard' %}" class="dropdown-item">
+              <i class="ni ni-trophy"></i>
+              <span>Leaderboard</span>
             </a>
             <a href="" class="dropdown-item">
               <i class="ni ni-support-16"></i>
@@ -94,7 +90,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link " href="/icons.html">
+            <a class="nav-link " href="{% url 'simulatorApp:viewLeaderboard' %}">
               <i class="ni ni-trophy text-info"></i> Leaderboards
             </a>
           </li>

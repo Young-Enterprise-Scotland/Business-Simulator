@@ -17,6 +17,7 @@ test:
     - apk --update add libxml2-dev libxslt-dev libffi-dev gcc musl-dev libgcc openssl-dev curl
     - apk add jpeg-dev zlib-dev freetype-dev lcms2-dev openjpeg-dev tiff-dev tk-dev tcl-dev
     - pip3 install -r requirements.txt --ignore-installed six --user
+    - python3 manage.py migrate simulatorApp
     - python3 manage.py test
 
 staging:

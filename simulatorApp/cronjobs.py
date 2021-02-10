@@ -1,33 +1,15 @@
-import time
-from datetime import timedelta
 from django.db import models
 from django.utils import timezone
-from apscheduler.schedulers.background import BackgroundScheduler
 from django.conf import settings
-from simulatorApp.calculations import marketShare, profit, sizeOfMarket
-from simulatorApp.models import Team
-from .models import MarketAttributeType, MarketAttributeTypeData, MarketEntry, PopupEvent, Price,MarketEvent, Simulator, scheduler
-from .globals import MARKET_ATTRIBUTE_TYPES
+from .models import CalculationCronJobs, MarketAttributeType, \
+                    MarketAttributeTypeData, \
+                    MarketEntry, \
+                    PopupEvent, \
+                    MarketEvent, \
+                    Simulator, \
+                    scheduler
+from .globals import MARKET_ATTRIBUTE_TYPES, secondsToDHMS
 
-def secondsToDHMS(n: int)-> tuple: 
-    '''
-    Turn seconds into days hours minutes and seconds
-    @return tuple of integers (day, hour, minute, second)
-    Source:
-    https://www.geeksforgeeks.org/converting-seconds-into-days-hours-minutes-and-seconds/
-    Accessed 13/01/2021
-    '''
-    day = n // (24 * 3600) 
-  
-    n %= (24 * 3600) 
-    hour = n // 3600
-  
-    n %= 3600
-    minutes = n // 60
-  
-    n %= 60
-    seconds = n 
-    return (int(day),int(hour),int(minutes),int(seconds))
 
 def trigger_market_event_popup(marketid):
     'create fullscreen popup displaying M.E. info'
@@ -41,7 +23,7 @@ def trigger_market_event_popup(marketid):
         body_text = market_event.market_event_text
     )
 
-def process_teams():
+def process_teams(simulation):
 
     # move import to method to solve circular imports issue
     # not elegent however a suggested solution to this issue.
@@ -53,8 +35,7 @@ def process_teams():
                                 profit, netProfit,     \
                                 sizeOfMarket, marketShare,\
                                 assignLeaderboardPositions    
-    from django.db import models
-    from .models import Team, Simulator, Price, MarketEvent
+    from .models import Team, Price, MarketEvent
 
     market_events = MarketEvent.get_current_events() 
     if settings.DEBUG:
@@ -62,7 +43,6 @@ def process_teams():
             print(event)
 
 
-    simulation = Simulator.objects.all()[0]
     start = simulation.start
     end = simulation.end
     length = simulation.lengthOfTradingDay
@@ -81,7 +61,6 @@ def process_teams():
     leaderboard_ranking_data = []
 
     for team in teams:
-
         market_entry = MarketEntry.objects.get(strategyid=team.strategyid, simulator=simulation)
         num_of_products_sold = numberOfProductsSold(team)
         number_of_customers = numCustomers(team)
@@ -92,6 +71,7 @@ def process_teams():
         market_share = marketShare(team,sizeofmarket=size_of_market)
         price = Price.objects.get(team=team)
         leaderboard_ranking_data.append([team,market_share])
+        
         #add product cost entry
         MarketAttributeTypeData.objects.create(
             marketEntryId = market_entry,
@@ -178,42 +158,44 @@ def start(simulation=None):
     'setup autocalculations when simulator is created/updated'
     
     # avoid circular imports
-    from .models import Simulator
+    from .models import Simulator, MarketEventCronJobs
 
     if simulation is None:
-        simulation = Simulator.objects.annotate(models.Max('id'))[0]
+        simulation = Simulator.objects.annotate(models.Max('id'))
+        # no simulators exist return
+        if len(simulation)==0:
+            return
+        simulation = simulation[0]
     
     start = simulation.start
     end = simulation.end
     length = simulation.lengthOfTradingDay.total_seconds()
-    days, hours, minutes, seconds = secondsToDHMS(length)
-    
-    if settings.DEBUG:
-        print(f"Setting up cronjob,{days}days {hours}hours {minutes}minutes {seconds}seconds.")
-    scheduler.add_job(
-        process_teams,
-        'interval', 
-        start_date=start, 
-        end_date=end, 
-        id="calculate", 
-        replace_existing=True, 
-        days=days, 
-        hours=hours, 
-        minutes=minutes, 
-        seconds=seconds
-    )
-    
+    (days, hours, minutes, seconds,) = secondsToDHMS(length)
 
-def add_market_event_job(marketevent):    
-
-    trigger_time = marketevent.valid_from
-    if(trigger_time <= timezone.now()):
-        trigger_time = timezone.now()+ timedelta(seconds=5)
-    scheduler.add_job(trigger_market_event_popup,
-        'date',
-        run_date=trigger_time,
-        args=[marketevent.id]
-    )
+    calculation_cron_jobs = CalculationCronJobs.objects.filter(
+        cronjobid = simulation.__str__(),
+        simulation = simulation,)
+    if len(calculation_cron_jobs) == 0:
+        CalculationCronJobs.objects.create(
+            cronjobid = simulation.__str__(),
+            simulation = simulation,
+            start_date = start,
+            end_date = end,
+            days = days,
+            hours = hours,
+            minutes = minutes,
+            seconds = seconds
+        )
+    else:
+        for job in calculation_cron_jobs:
+            job.start_date = start
+            job.end_date = end
+            job.days = days
+            job.hours = hours
+            job.minutes = minutes
+            job.seconds = seconds
+            job.save()
+    return
 
 def trigger_end_of_game_quiz(simulator):
     PopupEvent.objects.create(

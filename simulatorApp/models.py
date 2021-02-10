@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Avg
 from django.dispatch import receiver
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
@@ -98,12 +99,9 @@ class Simulator(models.Model):
             is_quiz = True,
             url = self.startQuizUrl
         )
-
-        #create popup for end of game quiz
-        scheduler.add_job(trigger_end_of_game_quiz,
-            'date',
-            run_date=self.end,
-            args=[self]
+        SimulatorEndCronJobs.objects.get_or_create(
+            cronjobid = self.__str__(),
+            simulator = self,
         )
 
         return
@@ -122,7 +120,7 @@ class Simulator(models.Model):
         if no_simulators==0:
             self.__setup_start_and_end_quiz()
         from . import cronjobs
-        cronjobs.start()
+        cronjobs.start(self)
         
     def __str__(self):
         return self.productName+"("+str(self.id)+")"
@@ -357,6 +355,7 @@ class PriceEffects(models.Model):
     high_customers = models.IntegerField(default=1)
     high_sales = models.IntegerField(default=1)
 
+
 class Price(models.Model):
     
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
@@ -477,10 +476,18 @@ class MarketEvent(models.Model):
         return self.simulator.__str__()+"__"+self.market_event_title
 
     def save(self, *args, **kwargs):
-        from .cronjobs import add_market_event_job
 
         return_vals = super().save(*args, **kwargs) 
-        add_market_event_job(self)
+
+        # update scheduler 
+        jobs= MarketEventCronJobs.objects.filter(market_event=self)
+        if(len(jobs)>0):
+            job = jobs[0]
+            job.run_date = self.valid_from
+            job.save()
+        else:
+            MarketEventCronJobs.objects.create(market_event=self, run_date=self.valid_from)  
+        
         return return_vals
 
     @staticmethod
@@ -536,6 +543,89 @@ class AcknowledgedEvent(models.Model):
     event = models.ForeignKey(PopupEvent, on_delete=models.CASCADE)
     has_acknowledged = models.BooleanField(default=False)
 
+class CronJobs(models.Model):
+    'simple model to keep track of cronjobs across server reloads'
+
+    cronjobid = models.CharField(max_length=128)
+    replace_existing = models.BooleanField(default=True)
+
+class DateCronJobs(CronJobs):
+    run_date = models.DateTimeField(blank=False)
+
+class SimulatorEndCronJobs(DateCronJobs):
+    'Cron job model to allow for persistance of \'end of game quiz\' job'
+
+    simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE) 
+
+    def save(self,*args, **kwargs):
+        from .cronjobs import trigger_end_of_game_quiz
+
+        self.run_date = self.simulator.end
+        trigger_time = self.run_date
+        self.cronjobid = "end_date_"+self.simulator.__str__()
+        if(trigger_time <= timezone.now()):
+            trigger_time = timezone.now()+ timedelta(seconds=5)
+
+        scheduler.add_job(trigger_end_of_game_quiz,
+            'date',
+            id=self.cronjobid,
+            replace_existing=self.replace_existing,
+            run_date=trigger_time,
+            args=[self.simulator]
+        )
+        return super().save(*args, **kwargs)
+
+class MarketEventCronJobs(DateCronJobs):
+
+    market_event = models.ForeignKey(MarketEvent, on_delete=models.CASCADE)
+
+    def save(self,*args, **kwargs):
+        from .cronjobs import trigger_market_event_popup
+        vals = super().save(*args, **kwargs)
+
+        # if start time has already past then reschedule 
+        # for immediate (~next few seconds) start
+        trigger_time = self.run_date
+        if(trigger_time <= timezone.now()):
+            trigger_time = timezone.now()+ timedelta(seconds=5)
+
+        # add market event popup to scheduler
+        scheduler.add_job(trigger_market_event_popup,
+            'date',
+            id=self.cronjobid,
+            replace_existing=self.replace_existing,
+            run_date=trigger_time,
+            args=[self.market_event.id]
+        )
+        return vals
+
+class CalculationCronJobs(CronJobs):
+
+    simulation = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    days = models.IntegerField(default=0)
+    hours = models.IntegerField(default=0)
+    minutes = models.IntegerField(default=0)
+    seconds = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        from .cronjobs import process_teams
+
+        scheduler.add_job(
+            process_teams,
+            trigger='interval', 
+            start_date=self.start_date, 
+            end_date=self.end_date, 
+            id='calculation_'+self.cronjobid, 
+            replace_existing=self.replace_existing, 
+            days=self.days, 
+            hours=self.hours, 
+            minutes=self.minutes, 
+            seconds=self.seconds,
+            args=[self.simulation]
+        )
+        return super().save(*args, **kwargs)
 
 @receiver(models.signals.post_delete, sender=Team)
 def delete_related_team_objects(sender, instance, **kwargs):
@@ -551,11 +641,21 @@ def delete_related_team_objects(sender, instance, **kwargs):
 @receiver(models.signals.pre_delete, sender=Simulator)
 def delete_old_simulation(sender,instance, **kwargs):
 
+    scheduler.pause()
     # remove all simulation data
     PopupEvent.objects.all().delete()
     MarketEvent.objects.all().delete()
     PriceEffects.objects.all().delete()
-    
+
+    #remove related cron job objects
+    MarketEventCronJobs.objects.all().delete()
+    SimulatorEndCronJobs.objects.all().delete()
+    CalculationCronJobs.objects.all().delete()
+
+    # remove cronjobs
+    for job in scheduler.get_jobs():
+        job.remove()
+
     for team in Team.objects.all():
         User.objects.get(username=team.user).delete()
 
@@ -563,7 +663,15 @@ def delete_old_simulation(sender,instance, **kwargs):
     for school in School.objects.all():
         User.objects.get(username=school.user).delete()
     
+    if settings.DEBUG:
+        scheduler.print_jobs()
+    scheduler.resume()
 
 # start scheduler when server loads app
+if settings.DEBUG:
+    print("Starting scheduler")
 scheduler = BackgroundScheduler()
 scheduler.start() 
+if settings.DEBUG:
+    print("Scheduler started")
+

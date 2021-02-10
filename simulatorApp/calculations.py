@@ -151,6 +151,8 @@ def marketShare(teamobject, sizeofmarket=None):
     'allow size of market to be passed in so it is not recalculated many times'
     if not sizeofmarket:
         sizeofmarket = sizeOfMarket()
+    if sizeofmarket == 0:
+        return 0
     return (numberOfProductsSold(teamobject)/sizeofmarket)*100
 
 def assignLeaderboardPositions(team_net_profit_list):

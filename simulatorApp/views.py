@@ -253,7 +253,6 @@ class YesProfile(View):
             user_profile.user.set_password(new_password)
             user_profile.user.save()
             user_profile.save()
-
         
         return self.get(request, notify=notify)
 
@@ -696,8 +695,7 @@ class ViewLeaderboard(View):
         if(request.user.has_perm("simulatorApp.is_team")):
             this_team = Team.objects.get(user = request.user) 
             teams = Team.get_teams_by_school(School.objects.get(user=this_team.schoolid.user))
-            context_dict['teams'] = teams.order_by('school_position')
-            
+            context_dict['teams'] = teams.order_by('school_position')      
             
         if(request.user.has_perm("simulatorApp.is_school")):
             teams = Team.get_teams_by_school(School.objects.get(user = request.user))

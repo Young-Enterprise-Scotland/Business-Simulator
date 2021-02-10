@@ -35,6 +35,6 @@ staging:
     - gem install dpl --pre
     - gem install dpl-heroku
     - gem install bundler
-    - dpl --provider=heroku --app=yescotland-staging --api-key=$HEROKU_STAGING_API_KEY
+    - dpl --provider=heroku --app=yescot --api-key=$HEROKU_STAGING_API_KEY
   only:
     - master

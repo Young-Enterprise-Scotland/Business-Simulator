@@ -9,7 +9,7 @@ test:
   script:
     # this configures Django application to use attached postgres database that is run on `postgres` host
     - export DJANGO_SETTINGS_MODULE=BusinessSimulator.testing_settings
-    - export DATABASE="postgres://rravnbmftiazvd:cf6e0133e17846863bda128248a5c7996e2288906b717473fb69b620a373181d@ec2-52-208-138-246.eu-west-1.compute.amazonaws.com:5432/d58iuktotpk364"
+    - export DATABASE="postgres://uqlezddabigfjl:a7ca37526b7c369d2add23649cc852200b856cfa3047a2d867529ddd7ae37945@ec2-34-252-251-16.eu-west-1.compute.amazonaws.com:5432/d19omnqd3p1tpc"
     - apk add --no-cache curl jq python3 py3-pip
     - pip install -U pip setuptools
     - pip install wheel

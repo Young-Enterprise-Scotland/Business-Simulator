@@ -835,10 +835,10 @@ class GameSettings(View):
         if len(sims) >0:
             context_dict['simulator']=sims
             context_dict['start'] = sims[0].start.strftime("%d-%m-%Y")
-            context_dict['start_time'] = sims[0].start.strftime("%I:%M:%S")
+            context_dict['start_time'] = sims[0].start.strftime("%I:%M")
 
             context_dict['end'] = sims[0].end.strftime("%d-%m-%Y")
-            context_dict['end_time'] = sims[0].end.strftime("%I:%M:%S")
+            context_dict['end_time'] = sims[0].end.strftime("%I:%M")
             
             # Show days and time (hours,minutes,seconds)
             length = sims[0].lengthOfTradingDay.total_seconds()
@@ -893,9 +893,8 @@ class GameSettings(View):
                 marketOpen = False
             
             # Convert strings into datetime objects
-            start_dt = datetime.strptime(start+" "+start_time, '%d-%m-%Y %H:%M:%S')
-            print(start_dt)
-            end_dt = datetime.strptime(end+" "+end_time,'%d-%m-%Y %H:%M:%S')
+            start_dt = datetime.strptime(start+" "+start_time, '%d-%m-%Y %H:%M')
+            end_dt = datetime.strptime(end+" "+end_time,'%d-%m-%Y %H:%M')
             start_t = make_aware(start_dt)
             end_t = make_aware(end_dt)
             s = str(days)
@@ -1014,7 +1013,11 @@ class viewMarketEvents(View):
                 notify['type'] = 'error' 
                 return self.get(request, notify=notify)
 
-            MarketEvent.objects.create(simulator=simulators[0])
+            MarketEvent.objects.create(
+                simulator=simulators[0], 
+                # add 1 day day to stop popup from being sent 
+                # out before the event is properly configured
+                valid_from=timezone.now()+timedelta(days=1)) 
 
             notify['title'] = "Event Added"
             notify['type'] = 'success'

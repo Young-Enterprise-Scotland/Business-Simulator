@@ -1,0 +1,194 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Game Settings {% endblock title %}
+
+{% block content %}
+
+    <!-- Header -->
+    <div class="header bg-gradient-primary pb-8 pt-5 pt-md-8">
+      <div class="container-fluid">
+        <div class="header-body">
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid mt--7">
+
+
+      <div class="row mt-2">
+        <div class="col-lg-12">
+          <div class="card shadow border-0">
+            <div class="card-header border-0">
+              <h3 class="mb-0">Game Settings</h3>
+            </div>
+            <div class="card-body py-4">
+              <form action="" method="POST" target="_self" id="game_form">
+                {% csrf_token %}
+                <div class="row">
+                  <div class="col-lg-12">
+                    <div class="pl-lg-4">
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="start">Start Date</label>
+                            <input type="datetime-local" id="start" name="start" class="form-control" required value="{{start}}.000">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="end">End Date</label>
+                            <input type="datetime-local" min="{{start}}" id="end" name="end" class="form-control" required value="{{end}}.000">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group">
+                            <label class="form-control-label" >Length of Trading Day</label>
+                            <div class="form-inline">
+                              
+                              <input type="number" min="0" class="form-control mb-2 mr-sm-2" id="days" required name="days" value="{{days}}">
+                              
+                              <div class="input-group mb-2 mr-sm-2">
+                                <input type="time" step="1" class="form-control" id="time" required name="time" value="{{time}}">
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-productName">Product Name</label>
+                            <input type="text" id="productName" name="productName" class="form-control" required value="{{productName}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="image">Image</label>
+                            <input type="image" id="image" name="image" class="form-control">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input_price">Max Price</label>
+                            <input type="number" step="0.0001" id="maxPrice" name="maxPrice" required min=0 class="form-control" value="{{maxPrice}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input_price">Min Price</label>
+                            <input type="number" step="0.0001" id="minPrice" name="minPrice" required min=0 class="form-control" value="{{minPrice}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-price">Price Boundary 1</label>
+                            <input type="number" step="0.0001" id="priceBoundary1" name="priceBoundary1" required min=0 class="form-control" value="{{priceBoundary1}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-price">Price Boundary 2</label>
+                            <input type="number" step="0.0001" id="priceBoundary2" name="priceBoundary2" required min=0 class="form-control" value="{{priceBoundary2}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="marketOpen">Market Open</label>
+                            <input type="checkbox" id="marketOpen" name="marketOpen" class="form-control" value="1">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-12">
+                          <div class="form-group">
+                            <button type="submit" class="btn btn-primary" name="add_market" value="true">Save</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+          {% include "includes/footer.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+<script>
+  /**
+   * This is jQuery not reactJS
+  */
+  $(document).ready(function(){
+
+    $("#game_form").validate(
+      {
+        rules:{
+          start:{
+            required:true,
+            
+          },
+        end:{
+          required:true,
+          
+          },
+        
+        lengthOfTradingDay:{
+          required:true,
+        },
+        productName:{
+          required:true,
+        },
+        maxPrice:{
+          required:true,
+          min:$('#priceBoundary2').val(),
+        },
+        minPrice:{
+          required:true,
+          
+        },
+        priceBoundary1:{
+          required:true,
+          min:$("#minPrice").val(),
+          
+        },
+        priceBoundary2:{
+          required:true,
+          min:$("#priceBoundary1").val(),
+          
+        },
+
+        submitHandler: function(form) {
+          form.submit();
+        }
+        }
+      });
+
+  });
+
+
+</script>{% endblock javascripts %}
+

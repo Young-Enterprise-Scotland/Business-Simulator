@@ -20,6 +20,7 @@ urlpatterns = [
     path('viewTeams', views.ViewTeams.as_view(), name="viewTeams"),
     path('viewSchools', views.ViewSchools.as_view(), name="viewSchools"),
     path('editStrategy', views.EditStrategy.as_view(), name="editStrategy"),
+    path('gameSettings', views.GameSettings.as_view(), name="gameSettings"),
     path('viewLeaderboard', views.ViewLeaderboard.as_view(), name="viewLeaderboard"),
     path('viewMarketEvents', views.viewMarketEvents.as_view(), name="viewMarketEvents"),
     path('editMarketEvent', views.editMarketEvent.as_view(), name="editMarketEvent"),

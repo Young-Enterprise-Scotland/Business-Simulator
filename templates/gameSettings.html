@@ -1,7 +1,7 @@
 {% extends 'layouts/base.html' %}
 
 {% block title %} Game Settings {% endblock title %}
-
+{% block stylesheets %}{% endblock stylesheets %}
 {% block content %}
 
     <!-- Header -->
@@ -28,32 +28,51 @@
                   <div class="col-lg-12">
                     <div class="pl-lg-4">
                       <div class="row">
-                        <div class="col-lg-4">
+                        <div class="col-lg-2">
                           <div class="form-group">
                             <label class="form-control-label" for="start">Start Date</label>
-                            <input type="datetime-local" id="start" name="start" class="form-control" required value="{{start}}.000">
+                            <input type="text" id="start" name="start" class="form-control date" required value="{{start}}">
+                          </div>
+                        </div>
+                        <div class="col-lg-2">
+                          <div class="form-group">
+                            <label class="form-control-label" for="start_time">Start Time</label>
+                            <input type="time" id="start_time" name="start_time" class="form-control" step="1" required value="{{start_time}}">
                           </div>
                         </div>
                       </div>
                       <div class="row">
-                        <div class="col-lg-4">
+                        <div class="col-lg-2">
                           <div class="form-group">
                             <label class="form-control-label" for="end">End Date</label>
-                            <input type="datetime-local" min="{{start}}" id="end" name="end" class="form-control" required value="{{end}}.000">
+                            <input type="text" id="end" name="end" class="form-control"  required value="{{end}}">
+                          </div>
+                        </div>
+                        <div class="col-lg-2">
+                          <div class="form-group">
+                            <label class="form-control-label" for="end_time">End Time</label>
+                            <input type="time" id="end_time" name="end_time" class="form-control" step="1" required value="{{end_time}}">
                           </div>
                         </div>
                       </div>
                       <div class="row">
-                        <div class="col-lg-6">
-                          <div class="form-group">
-                            <label class="form-control-label" >Length of Trading Day</label>
-                            <div class="form-inline">
-                              
-                              <input type="number" min="0" class="form-control mb-2 mr-sm-2" id="days" required name="days" value="{{days}}">
-                              
-                              <div class="input-group mb-2 mr-sm-2">
-                                <input type="time" step="1" class="form-control" id="time" required name="time" value="{{time}}">
-                              </div>
+                        <div class="form-group mb-0 col-lg-12">
+                          <label class="form-control-label" >Length of Trading Day</label>
+                        </div>
+                        <div class="form-group col-lg-2">
+                          
+                          <div class="input-group mb-2">
+                            <input type="number" min="0" max="365" class="form-control" id="days" required name="days" value="{{days}}">
+                            <div class="input-group-append">
+                              <div class="input-group-text">days</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="form-group col-lg-2">
+                          <div class="input-group mb-2 mr-sm-2">
+                            <input type="time" step="1" class="form-control" id="time" required name="time" value="{{time}}">
+                            <div class="input-group-append">
+                              <div class="input-group-text">hh:mm:ss</div>
                             </div>
                           </div>
                         </div>
@@ -70,7 +89,7 @@
                         <div class="col-lg-4">
                           <div class="form-group">
                             <label class="form-control-label" for="image">Image</label>
-                            <input type="image" id="image" name="image" class="form-control">
+                            <input type="file" id="image" name="image" class="form-control">
                           </div>
                         </div>
                       </div>
@@ -107,10 +126,16 @@
                         </div>
                       </div>
                       <div class="row">
-                        <div class="col-lg-4">
-                          <div class="form-group">
+                        <div class="col-lg-12">
+                          <div class="form-group mb-0">
                             <label class="form-control-label" for="marketOpen">Market Open</label>
-                            <input type="checkbox" id="marketOpen" name="marketOpen" class="form-control" value="1">
+                            <!-- <input type="checkbox" id="marketOpen" name="marketOpen" class="form-control" value="1"> -->
+                          </div>
+                          <div class="form-group">
+                            <label class="custom-toggle">
+                              <input type="checkbox" name="marketOpen" id="marketOpen" value="1" checked>
+                              <span class="custom-toggle-slider rounded-circle" data-label-off="Closed" data-label-on="Open"></span>
+                            </label>
                           </div>
                         </div>
                       </div>
@@ -187,6 +212,22 @@
         }
       });
 
+    // $('#start').datetimepicker({
+    //   format: 'dd-mm-yyyy hh:mm:ss',
+    // });
+    // $('#end').datetimepicker({
+    //   format: 'dd-mm-yyyy hh:mm:ss',
+    // });
+  });
+
+  $(function () {
+    $('#start').datepicker({
+      format:"dd-mm-yyyy"
+    });
+
+    $('#end').datepicker({
+      format:"dd-mm-yyyy"
+    });
   });
 
 

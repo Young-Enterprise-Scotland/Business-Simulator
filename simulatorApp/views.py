@@ -10,8 +10,7 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
 from .models import AcknowledgedEvent, Strategy, YES, School, Team, PolicyStrategy, Price, Simulator, MarketEvent, PopupEvent, MarketAttributeType, PolicyEvent, Policy
-from .globals import MARKET_ATTRIBUTE_TYPES
-#from .globals import secondsToDHMS
+from .globals import MARKET_ATTRIBUTE_TYPES, secondsToDHMS
 
 # Create your views here.
 
@@ -809,6 +808,12 @@ class EditStrategy(View):
 
 
 class GameSettings(View):
+    
+    @staticmethod
+    def format_timedelta(unit:int)->str:
+        if int(unit)<10:
+            return "0"+str(unit)
+        return str(unit)
 
     def get(self, request, **kwargs):
 
@@ -829,15 +834,19 @@ class GameSettings(View):
         sims = Simulator.objects.all()
         if len(sims) >0:
             context_dict['simulator']=sims
-            context_dict['start'] = sims[0].start.strftime("%Y-%m-%dT%I:%M:%S")
-      
-            context_dict['end'] = sims[0].end.strftime("%Y-%m-%dT%I:%M:%S")
-            context_dict['lengthOfTradingDay'] = sims[0].lengthOfTradingDay
+            context_dict['start'] = sims[0].start.strftime("%d-%m-%Y")
+            context_dict['start_time'] = sims[0].start.strftime("%I:%M:%S")
+
+            context_dict['end'] = sims[0].end.strftime("%d-%m-%Y")
+            context_dict['end_time'] = sims[0].end.strftime("%I:%M:%S")
+            
             # Show days and time (hours,minutes,seconds)
-            #length = simulation.lengthOfTradingDay.total_seconds()
-            #(days, hours, minutes, seconds,) = secondsToDHMS(length)
-            #context_dict['days'] = days
-            #context_dict['time'] = (hours,minutes,seconds)
+            length = sims[0].lengthOfTradingDay.total_seconds()
+            (days, hours, minutes, seconds,) = secondsToDHMS(length)
+            
+            context_dict['days'] = days
+            context_dict['time'] = f"{GameSettings.format_timedelta(hours)}:{GameSettings.format_timedelta(minutes)}:{GameSettings.format_timedelta(seconds)}"
+            print(context_dict['time'])
             context_dict['productName'] = sims[0].productName
             context_dict['image'] = sims[0].image
             context_dict['maxPrice'] = sims[0].maxPrice
@@ -861,12 +870,15 @@ class GameSettings(View):
             return redirect(reverse('simulatorApp:index'))
 
         notify = {}
-         # if user has requested to add a market
+
+         # if user has requested to add a simulation
         if(request.POST.get("add_market")):
             
             
             start = request.POST.get('start')
+            start_time = request.POST.get('start_time')
             end = request.POST.get('end')
+            end_time = request.POST.get("end_time")
             days = request.POST.get('days')
             time = request.POST.get('time')
             image = request.POST.get('image')
@@ -876,12 +888,14 @@ class GameSettings(View):
             priceBoundary1 = request.POST.get('priceBoundary1')
             priceBoundary2 = request.POST.get('priceBoundary2')
             marketOpen = request.POST.get('marketOpen')
+
             if marketOpen == None:
                 marketOpen = False
             
             # Convert strings into datetime objects
-            start_dt = parse_datetime(start)
-            end_dt = parse_datetime(end)
+            start_dt = datetime.strptime(start+" "+start_time, '%d-%m-%Y %H:%M:%S')
+            print(start_dt)
+            end_dt = datetime.strptime(end+" "+end_time,'%d-%m-%Y %H:%M:%S')
             start_t = make_aware(start_dt)
             end_t = make_aware(end_dt)
             s = str(days)
@@ -929,7 +943,6 @@ class GameSettings(View):
                 simulation.priceBoundary1 = priceBoundary1
                 simulation.priceBoundary2 = priceBoundary2
                 simulation.marketOpen=marketOpen
-                
                 
                 simulation.save()
                 notify['title'] = "Simulator created"
@@ -1215,4 +1228,3 @@ class editPolicyEvent(View):
             notify['type'] = 'success'
             
         return self.get(request, notify=notify)
-

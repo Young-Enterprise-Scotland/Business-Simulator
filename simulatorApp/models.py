@@ -347,13 +347,13 @@ class PriceEffects(models.Model):
     boundary = models.SmallIntegerField(choices=[(1,'Low'),(2,'Medium'),(3,'High')], default=1)
 
     low_customers = models.IntegerField(default=1)
-    low_sales = models.IntegerField(default=1)
+    low_sales = models.DecimalField(default=1, decimal_places=4, max_digits=12)
 
     med_customers = models.IntegerField(default=1)
-    med_sales = models.IntegerField(default=1)
+    med_sales = models.DecimalField(default=1, decimal_places=4, max_digits=12)
 
     high_customers = models.IntegerField(default=1)
-    high_sales = models.IntegerField(default=1)
+    high_sales = models.DecimalField(default=1, decimal_places=4, max_digits=12)
 
 
 class Price(models.Model):

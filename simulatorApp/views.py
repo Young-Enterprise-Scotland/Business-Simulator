@@ -1,4 +1,4 @@
-import simulatorApp
+from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -1277,22 +1277,22 @@ class ViewPolicies(View):
             return self.get(request, notify=notify)
         policy = policies[0]
 
-        policy.low_label = request.POST.get("low_label",policy.low_label)
-        policy.low_cost = request.POST.get("low_cost", policy.low_cost)
-        policy.low_customer = request.POST.get("low_customer", policy.low_customer)
-        policy.low_sales = request.POST.get("low_sales", policy.low_sales)
+        policy.low_label =     request.POST.get("low_label",policy.low_label)
+        policy.low_cost =      Decimal(request.POST.get("low_cost", policy.low_cost))
+        policy.low_customer =  Decimal(request.POST.get("low_customer", policy.low_customer))
+        policy.low_sales =     Decimal(request.POST.get("low_sales", policy.low_sales))
 
-        policy.med_label = request.POST.get("med_label",policy.med_label)
-        policy.med_cost =  request.POST.get("med_cost", policy.med_cost)
-        policy.med_customer = request.POST.get("med_customer", policy.med_customer)
-        policy.med_sales = request.POST.get("med_sales", policy.med_sales)
+        policy.med_label =    request.POST.get("med_label",policy.med_label)
+        policy.med_cost =     Decimal(request.POST.get("med_cost", policy.med_cost))
+        policy.med_customer = Decimal(request.POST.get("med_customer", policy.med_customer))
+        policy.med_sales =    Decimal(request.POST.get("med_sales", policy.med_sales))
 
-        policy.high_label = request.POST.get("high_label",policy.high_label)
-        policy.high_cost = request.POST.get("high_cost", policy.high_cost)
-        policy.high_customer = request.POST.get("high_customer", policy.high_customer)
-        policy.high_sales = request.POST.get("high_sales", policy.high_sales)
+        policy.high_label =     request.POST.get("high_label",policy.high_label)
+        policy.high_cost =      Decimal(request.POST.get("high_cost", policy.high_cost))
+        policy.high_customer =  Decimal(request.POST.get("high_customer", policy.high_customer))
+        policy.high_sales =     Decimal(request.POST.get("high_sales", policy.high_sales))
 
         policy.save()
-        notify['type'] = "success"
+        notify['type'] = "success" 
         notify['title'] = policy.name+" updated"
         return self.get(request, notify=notify)

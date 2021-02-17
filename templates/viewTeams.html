@@ -21,8 +21,8 @@
             <div class="card-header border-0">
               <h3 class="mb-0">Teams</h3>
             </div>
-            <div class="table-responsive">
-              <table class="table align-items-center table-flush">
+            <div class="card-body">
+              <table class="table align-items-center table-flush w-100" id="teams">
                 <thead class="thead-light">
                   <tr>
                     <th scope="col">Team Name</th>
@@ -37,7 +37,7 @@
                         <tr>
                             <th scope="row">
                             <div class="media align-items-center">
-                                <a href="#" class="avatar rounded-circle mr-3">
+                                <a href="{% url 'simulatorApp:viewTeamAccount' %}?profile_id={{ team.user.id }}" class="avatar rounded-circle mr-3">
                                 <img alt="Image placeholder" src="/static/assets/img/brand/favicon.png">
                                 </a>
                                 <div class="media-body">
@@ -50,12 +50,21 @@
                             </td>
                             <td>
                             <span class="badge badge-dot mr-4">
-                                <i class="bg-warning"></i> 3rd
+                              {% if team.school_position > 3 %}
+                              <i class="bg-warning"></i> 
+                              {% else %}
+                              <i class="bg-success"></i>
+                              {% endif %} {{team.school_position}}
                             </span>
                             </td>
                             <td>
                                 <span class="badge badge-dot mr-4">
-                                    <i class="bg-warning"></i> 7th
+                                    {% if team.leaderboard_position > 3 %}
+                                    <i class="bg-warning"></i> 
+                                    {% else %}
+                                    <i class="bg-success"></i>
+                                    {% endif %}
+                                     {{team.leaderboard_position}}
                                 </span>
                             </td>
                             <td>
@@ -65,7 +74,7 @@
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-arrow">
                                       <a class="dropdown-item" href="{% url 'simulatorApp:viewTeamAccount' %}?profile_id={{ team.user.id }}">Edit Account</a>
-                                      <a class="dropdown-item" href="">Delete Account</a>
+                                      <a class="dropdown-item" href="javascript:void(0)" onclick="delete_account({{team.user.id}})">Delete Account</a>
                                     </div>
                                   
                                 </div>
@@ -75,7 +84,7 @@
                 </tbody>
               </table>
             </div>
-            <div class="card-footer py-4">
+            <!-- <div class="card-footer py-4">
               <nav aria-label="...">
                 <ul class="pagination justify-content-end mb-0">
                   <li class="page-item disabled">
@@ -99,7 +108,7 @@
                   </li>
                 </ul>
               </nav>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -223,6 +232,56 @@
 
   });
 
+  $(document).ready(function() {
+    // init datatable plugin  
+    $('#teams').DataTable({
+      "scrollX": true
+    });
+  });
+
+  function delete_account(id){
+    let cookie = document.cookie;
+    let csrfToken = cookie.substring(cookie.indexOf('=') + 1);
+
+    Swal.fire({
+      title: 'Delete Team?',
+      text: "This Team and its accociated data will be permanently deleted!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      focusCancel:true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.ajax({
+          url: "{% url 'simulatorApp:viewTeams' %}",
+          type: "POST",
+          dataType: 'json',
+          data: {
+              delete_team: "true",
+              team_id:id
+          },
+          beforeSend: function (xhr) {
+              xhr.setRequestHeader("X-CSRFToken", csrfToken);
+          },
+          success: function (data) {
+            Swal.fire({
+              icon: data['class'],
+              title: data['title'],
+              text: data['msg']
+            });
+            if (data['class'] == 'success'){
+              setTimeout(function(){window.location.reload(false)}, 1500);
+            }
+          },
+          error: function (error) {
+              console.log(error);
+          }
+        });
+      }
+    })
+  }
 </script>
 
 

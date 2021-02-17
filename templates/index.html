@@ -13,49 +13,60 @@
         <div class="header-body">
           <!-- Card stats -->
           <div class="row">
-            <div class="col-xl-3 col-lg-6">
+            {% if perms.simulatorApp.is_team  %}
+            <div class="col-xl-4 col-lg-6">
               <div class="card card-stats mb-4 mb-xl-0">
                 <div class="card-body">
                   <div class="row">
+                    
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">Traffic</h5>
-                      <span class="h2 font-weight-bold mb-0">350,897</span>
+                      <h5 class="card-title text-uppercase text-muted mb-0">Leaderboard Position</h5>
+                      <span class="h2 font-weight-bold mb-0">{{team_obj.leaderboard_position}}</span>
                     </div>
                     <div class="col-auto">
-                      <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
+                      {% if team_obj.leaderboard_position > 10 %}
+                      <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
+                      {% else %}
+                      <div class="icon icon-shape bg-success text-white rounded-circle shadow">
+                      {% endif %}
                         <i class="fas fa-chart-bar"></i>
                       </div>
                     </div>
                   </div>
-                  <p class="mt-3 mb-0 text-muted text-sm">
+                  <!-- <p class="mt-3 mb-0 text-muted text-sm">
                     <span class="text-success mr-2"><i class="fa fa-arrow-up"></i> 3.48%</span>
                     <span class="text-nowrap">Since last month</span>
-                  </p>
+                  </p> -->
                 </div>
               </div>
             </div>
-            <div class="col-xl-3 col-lg-6">
+            <div class="col-xl-4 col-lg-6">
               <div class="card card-stats mb-4 mb-xl-0">
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">New users</h5>
-                      <span class="h2 font-weight-bold mb-0">2,356</span>
+                      <h5 class="card-title text-uppercase text-muted mb-0">Position Within School</h5>
+                      <span class="h2 font-weight-bold mb-0">{{team_obj.school_position}}</span>
                     </div>
                     <div class="col-auto">
+                      {% if team_obj.school_position > 10 %}
                       <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
-                        <i class="fas fa-chart-pie"></i>
+                      {% else %}
+                      <div class="icon icon-shape bg-success text-white rounded-circle shadow">
+                      {% endif %}
+                        <i class="fas fa-chart-bar"></i>
                       </div>
                     </div>
                   </div>
-                  <p class="mt-3 mb-0 text-muted text-sm">
+                  <!-- <p class="mt-3 mb-0 text-muted text-sm">
                     <span class="text-danger mr-2"><i class="fas fa-arrow-down"></i> 3.48%</span>
                     <span class="text-nowrap">Since last week</span>
-                  </p>
+                  </p> -->
                 </div>
               </div>
             </div>
-            <div class="col-xl-3 col-lg-6">
+            {% endif %}
+            <!-- <div class="col-xl-3 col-lg-6">
               <div class="card card-stats mb-4 mb-xl-0">
                 <div class="card-body">
                   <div class="row">
@@ -96,7 +107,7 @@
                   </p>
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -106,273 +117,54 @@
 
       <div class="row">
         <div class="col-xl-8 mb-5 mb-xl-0">
-          <div class="card bg-gradient-default shadow">
-            <div class="card-header bg-transparent">
-              <div class="row align-items-center">
-                <div class="col">
-                  <h6 class="text-uppercase text-light ls-1 mb-1">Overview</h6>
-                  <h2 class="text-white mb-0">Sales value</h2>
-                </div>
-                <div class="col">
-                  <ul class="nav nav-pills justify-content-end">
-                    <li class="nav-item mr-2 mr-md-0" data-toggle="chart" data-target="#chart-sales" data-update='{"data":{"datasets":[{"data":[0, 20, 10, 30, 15, 40, 20, 60, 60]}]}}' data-prefix="$" data-suffix="k">
-                      <a href="#" class="nav-link py-2 px-3 active" data-toggle="tab">
-                        <span class="d-none d-md-block">Month</span>
-                        <span class="d-md-none">M</span>
-                      </a>
-                    </li>
-                    <li class="nav-item" data-toggle="chart" data-target="#chart-sales" data-update='{"data":{"datasets":[{"data":[0, 20, 5, 25, 10, 30, 15, 40, 40]}]}}' data-prefix="$" data-suffix="k">
-                      <a href="#" class="nav-link py-2 px-3" data-toggle="tab">
-                        <span class="d-none d-md-block">Week</span>
-                        <span class="d-md-none">W</span>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <!-- Chart -->
-              <div class="chart">
-                <!-- Chart wrapper -->
-                <canvas id="chart-sales" class="chart-canvas"></canvas>
-              </div>
-            </div>
+          <div class="card bg-gradient-default shadow pt-2">
+            <canvas id="lineChart" ></canvas>
           </div>
         </div>
         <div class="col-xl-4">
-          <div class="card shadow">
-            <div class="card-header bg-transparent">
-              <div class="row align-items-center">
-                <div class="col">
-                  <h6 class="text-uppercase text-muted ls-1 mb-1">Performance</h6>
-                  <h2 class="mb-0">Total orders</h2>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <!-- Chart -->
-              <div class="chart">
-                <canvas id="chart-orders" class="chart-canvas"></canvas>
-              </div>
+          <div class="form-group">
+            <div class="card bg-gradient-default shadow pt-2 pb-3 pl-4 pr-4">
+              <canvas id="pieChart" ></canvas>
             </div>
           </div>
+          <div class="form-group">
+            <div class="card bg-gradient-default shadow pt-2 pb-3 pl-4 pr-4">
+              <canvas id="lineChartSmall" ></canvas>
+            </div>
+          </div>
+          
         </div>
       </div>
 
       <div class="row mt-5">
-        <div class="col-xl-8 mb-5 mb-xl-0">
+        <div class="col-12">
           <div class="card shadow">
             <div class="card-header border-0">
               <div class="row align-items-center">
                 <div class="col">
-                  <h3 class="mb-0">Page visits</h3>
+                  <h3 class="mb-0">News</h3>
                 </div>
-                <div class="col text-right">
+                <!-- <div class="col text-right">
                   <a href="#!" class="btn btn-sm btn-primary">See all</a>
-                </div>
+                </div> -->
               </div>
             </div>
             <div class="table-responsive">
               <!-- Projects table -->
-              <table class="table align-items-center table-flush">
+              <table class="table align-items-center table-flush" id="news_table">
                 <thead class="thead-light">
                   <tr>
-                    <th scope="col">Page name</th>
-                    <th scope="col">Visitors</th>
-                    <th scope="col">Unique users</th>
-                    <th scope="col">Bounce rate</th>
+                    <th scope="col">Article Title</th>
+                    <th scope="col">Contents</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <th scope="row">
-                      /argon/
-                    </th>
-                    <td>
-                      4,569
-                    </td>
-                    <td>
-                      340
-                    </td>
-                    <td>
-                      <i class="fas fa-arrow-up text-success mr-3"></i> 46,53%
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      /argon/index.html
-                    </th>
-                    <td>
-                      3,985
-                    </td>
-                    <td>
-                      319
-                    </td>
-                    <td>
-                      <i class="fas fa-arrow-down text-warning mr-3"></i> 46,53%
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      /argon/charts.html
-                    </th>
-                    <td>
-                      3,513
-                    </td>
-                    <td>
-                      294
-                    </td>
-                    <td>
-                      <i class="fas fa-arrow-down text-warning mr-3"></i> 36,49%
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      /argon/tables.html
-                    </th>
-                    <td>
-                      2,050
-                    </td>
-                    <td>
-                      147
-                    </td>
-                    <td>
-                      <i class="fas fa-arrow-up text-success mr-3"></i> 50,87%
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      /argon/profile.html
-                    </th>
-                    <td>
-                      1,795
-                    </td>
-                    <td>
-                      190
-                    </td>
-                    <td>
-                      <i class="fas fa-arrow-down text-danger mr-3"></i> 46,53%
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-4">
-          <div class="card shadow">
-            <div class="card-header border-0">
-              <div class="row align-items-center">
-                <div class="col">
-                  <h3 class="mb-0">Social traffic</h3>
-                </div>
-                <div class="col text-right">
-                  <a href="#!" class="btn btn-sm btn-primary">See all</a>
-                </div>
-              </div>
-            </div>
-            <div class="table-responsive">
-              <!-- Projects table -->
-              <table class="table align-items-center table-flush">
-                <thead class="thead-light">
-                  <tr>
-                    <th scope="col">Referral</th>
-                    <th scope="col">Visitors</th>
-                    <th scope="col"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row">
-                      Facebook
-                    </th>
-                    <td>
-                      1,480
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <span class="mr-2">60%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-danger" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      Facebook
-                    </th>
-                    <td>
-                      5,480
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <span class="mr-2">70%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-success" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width: 70%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      Google
-                    </th>
-                    <td>
-                      4,807
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <span class="mr-2">80%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-primary" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" style="width: 80%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      Instagram
-                    </th>
-                    <td>
-                      3,678
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <span class="mr-2">75%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-info" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      twitter
-                    </th>
-                    <td>
-                      2,645
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <span class="mr-2">30%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-warning" role="progressbar" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" style="width: 30%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
+                  {% for article in news_articles %}
+                    <tr>
+                      <th scope="row" width="40%">{{ article.market_event_title }} </th>
+                      <td width="60%">{{ article.market_event_text }}</td>
+                    </tr>
+                  {% endfor %}
                 </tbody>
               </table>
             </div>
@@ -387,4 +179,229 @@
 {% endblock content %}
 
 <!-- Specific JS goes HERE --> 
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+  
+{% if perms.simulatorApp.is_team %}
+  <script>
+    var x_data = []; 
+    var y_data = [];
+    var other_data = [];
+
+    {% for entry in attribute_data %}
+      x_data.push('{{entry.date}}'.slice(0,7));
+      y_data.push({{entry.parameterValue}}.toFixed(2));
+    {% endfor %}
+
+    {% for entry in average_net_profit %}
+      other_data.push({{entry.parameterValue__avg}}.toFixed(2));
+    {% endfor %}
+
+    var ctx = document.getElementById('lineChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: x_data,
+          datasets: [{
+              fill: false,
+              label: '{{team_obj.team_name}} {{graph_title}}',
+              data: y_data,
+              backgroundColor: [
+                  'rgba(255, 99, 132, 0.2)',
+              ],
+              borderColor: [
+                  'rgba(255, 99, 132, 1)',
+              ],
+              borderWidth: 2
+          },
+          {
+              fill: false,
+              label: 'Other {{graph_title}}',
+              data: other_data,
+              backgroundColor: [
+                  'rgba(165, 55, 253, 0.2)',
+              ],
+              borderColor: [
+                  'rgba(165, 55, 253, 1)',
+              ],
+              borderWidth: 2
+          }]
+      },
+      options: {
+          scales: {
+              yAxes: [{
+                  ticks: {
+                      beginAtZero: true,
+                      callback: function(value, index, values) {
+                        if(value >= 0) {
+                          return '£' + value;
+                        } else {
+                          return '-£' + value*-1;
+                        }
+                        
+                      }
+                  }
+              }]
+          },
+          legend: {
+            display: true, 
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: '{{graph_title}}',
+            fontSize: 16
+          },
+        }
+    });
+  </script>
+  <script>
+    var ctx = document.getElementById('pieChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+          labels: ['Other Teams','{{team_obj.team_name}}'],
+          datasets: [{
+              fill: false,
+              label: '',
+              data: [{{other_market_share}}.toFixed(2), {{team_market_share}}.toFixed(2)],
+              backgroundColor: [
+                  'rgba(165, 55, 253, 0.2)',
+                  'rgba(255, 99, 132, 0.2)',
+              ],
+              borderColor: [
+                  'rgba(165, 55, 253, 1)',
+                  'rgba(255, 99, 132, 1)',
+              ],
+              borderWidth: 2
+          }]
+      },
+      options: {
+          title: {
+            display: true,
+            text: 'Market Share %',
+            fontSize: 16
+          },
+          legend: {
+            display: true, 
+            position: 'top',
+          },
+      }
+  });
+  </script>
+  <script>
+
+    var x_data_small = []; 
+    var y_data_small = [];
+    var other_data_small = [];
+
+    {% for entry in attribute_data_small %}
+      x_data_small.push('{{entry.date}}'.slice(0,7));
+      y_data_small.push({{entry.parameterValue}}.toFixed(0));
+    {% endfor %}
+
+    {% for entry in average_sales %}
+      other_data_small.push({{entry.parameterValue__avg}}.toFixed(0));
+    {% endfor %}
+
+    var ctx = document.getElementById('lineChartSmall').getContext('2d');
+    var myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: x_data_small,
+          datasets: [{
+              fill: false,
+              label: '{{team_obj.team_name}} {{graph_title_small}}',
+              data: y_data_small,
+              backgroundColor: [
+                  'rgba(255, 99, 132, 0.2)',
+              ],
+              borderColor: [
+                  'rgba(255, 99, 132, 1)',
+              ],
+              borderWidth: 2
+          },
+          {
+              fill: false,
+              label: 'Market Average {{graph_title_small}}',
+              data: other_data_small,
+              backgroundColor: [
+                  'rgba(165, 55, 253, 0.2)',
+              ],
+              borderColor: [
+                  'rgba(165, 55, 253, 1)',
+              ],
+              borderWidth: 2
+          }]
+      },
+      options: {
+          
+          title: {
+            display: true,
+            text: '{{graph_title_small}}',
+            fontSize: 16
+          },
+        }
+    });
+  </script>
+{% endif %}
+
+  {% if fullscreen_popup %}
+  <script>
+    
+    $(document).ready(function(){
+      Swal.fire({
+        title: '{{ fullscreen_popup.title }}',
+        {% autoescape off %}
+        {% if fullscreen_popup.is_quiz %}
+        confirmButtonText: 'Take Quiz',
+        {% else %}
+        showCancelButton: true,
+        confirmButtonText: 'Got It!',
+        {% endif %}
+        html: "{{ fullscreen_popup.body_text }}",
+        {% endautoescape %}
+        icon: '{{ fullscreen_popup.icon_class }}',
+        
+        
+      }).then((result) => {
+        if (result.isConfirmed) {
+
+          let cookie = document.cookie
+          let csrfToken = cookie.substring(cookie.indexOf('=') + 1)
+
+          $.ajax({
+            url: "{% url 'simulatorApp:index' %}",
+            type: "POST",
+            data: {
+                mark_popup_as_read: "true",
+                popup_id: "{{fullscreen_popup.id}}",
+            },
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            },
+            success: function (data) {
+                console.log(data);
+            },
+            error: function (error) {
+                console.log(error);
+            }
+          });
+
+          {% if fullscreen_popup.is_quiz %}
+           // open an empty window
+          const tab = window.open('about:blank');
+          // redirect user to quiz
+          tab.location = '{{fullscreen_popup.url}}';
+          tab.focus();
+          {% endif %}
+        }
+      })
+    });
+    
+  </script>
+  {% endif %}
+  <script>
+    // refresh page every 5 minutes to check for market events
+    setTimeout("location.reload(true);", 60000*5)
+  </script>
+{% endblock javascripts %}

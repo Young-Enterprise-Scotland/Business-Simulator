@@ -1,15 +1,42 @@
+import simulatorApp
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.utils import timezone 
 from django.utils.dateparse import parse_duration, parse_datetime
 from django.utils.timezone import make_aware
-from django.urls import reverse 
-from django.views import View
-from .models import Strategy, YES, School, Team, PolicyStrategy, Price, Simulator
 from datetime import datetime, timedelta
+from django.http import JsonResponse
+from django.urls import reverse
+from django.views import View
+from .models import AcknowledgedEvent, Strategy, YES, School, Team, PolicyStrategy, Price, Simulator, MarketEvent, PopupEvent, MarketAttributeType, PolicyEvent, Policy
+from .globals import MARKET_ATTRIBUTE_TYPES
 #from .globals import secondsToDHMS
 
 # Create your views here.
+
+def get_popups(request):
+    'gets the most recent popup notifications for a team'
+
+    if not request.user.is_authenticated:
+        return []
+    if not request.user.has_perm('simulatorApp.is_team'):
+        return []
+
+    return  PopupEvent.objects.filter(
+        simulator=Simulator.objects.all()[0]
+        ).exclude(
+            id__in=[
+                x.event.id for x in AcknowledgedEvent.objects.filter(
+                    team=Team.objects.get(user=request.user)
+                    )
+                ]
+        )
+
+def get_popup(request):
+    'get one popup to display'
+    popups = get_popups(request)
+    return popups[0] if len(popups)>0 else popups
 
 
 class Index(View):
@@ -27,15 +54,56 @@ class Index(View):
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
-
+        if request.user.is_superuser:
+            return redirect(reverse('simulatorApp:logout'))
         if request.user.has_perm('simulatorApp.is_school'):
             context_dict['school_obj'] = School.objects.get(user=request.user)
         elif request.user.has_perm('simulatorApp.is_team'):
             context_dict['team_obj'] = Team.objects.get(user=request.user)
+            # MARKET_ATTRIBUTE_TYPES defines the attribute being displayed in graph.
+            #get net profit data
+            context_dict['attribute_data'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[6])
+            context_dict['graph_title'] = MARKET_ATTRIBUTE_TYPES[6]
+            context_dict['average_net_profit'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[6]).get_average_value()
+            #get market share data
+            team_share = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[8])
+            if len(team_share) > 0:
+                context_dict['team_market_share'] = team_share[len(team_share)-1].parameterValue
+            else:
+                context_dict['team_market_share'] = 0
+            context_dict['other_market_share'] = 100 - context_dict['team_market_share']
+            #get sales data 
+            context_dict['attribute_data_small'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[4])
+            context_dict['graph_title_small'] = MARKET_ATTRIBUTE_TYPES[4]
+            context_dict['average_sales'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[4]).get_average_value()
 
+
+        # display market events as 'news articles'
+        context_dict['news_articles'] = MarketEvent.objects.filter(valid_from__lte=timezone.now()).order_by("-id")
+        
+        # load any fullscreen notifications for the user
+        context_dict['fullscreen_popup'] = get_popup(request)
         return render(request, 'index.html', context=context_dict)
 
     def post(self,request):
+        team=None
+
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+
+        if request.user.has_perm('simulatorApp.is_school'):
+            return self.get(request)
+        if request.user.has_perm('sumilator.is_yes_staff'):
+            return self.get(request)
+        
+        elif request.user.has_perm('simulatorApp.is_team'):
+            team = Team.objects.get(user=request.user)
+        if(request.POST.get('mark_popup_as_read', False)=='true'):
+            AcknowledgedEvent.objects.get_or_create(
+                team=team,
+                event= PopupEvent.objects.get(id=request.POST.get("popup_id",0)),
+                has_acknowledged = True
+            )
         return self.get(request)
 
 class Logout(View):
@@ -104,8 +172,6 @@ class Login(View):
             # messages.error(request, "Invalid username or password.")
         
         return self.get(request)
-
-
 
 class YesProfile(View):
 
@@ -190,7 +256,6 @@ class YesProfile(View):
             user_profile.user.set_password(new_password)
             user_profile.user.save()
             user_profile.save()
-
         
         return self.get(request, notify=notify)
 
@@ -383,7 +448,6 @@ class TeamProfile(View):
 
 class ViewTeams(View):
 
-
     def get(self, request, **kwargs):
         context_dict = {}
         teams = None
@@ -407,7 +471,13 @@ class ViewTeams(View):
         if"notify" in kwargs:
             context_dict['notify'] = kwargs['notify']
 
-        context_dict['teams'] = teams 
+        context_dict['teams'] = teams
+
+        for i in range(len(teams)):
+            if teams[i].school_position ==-1:
+                teams[i].school_position = "Not Assigned"
+            if teams[i].leaderboard_position == -1:
+                teams[i].leaderboard_position = "Not Assigned"
         context_dict['schools'] = schools
 
         return render(request, 'viewTeams.html', context=context_dict)
@@ -423,7 +493,7 @@ class ViewTeams(View):
             return redirect(reverse('simulatorApp:index'))
 
         #check post request for add user
-        if request.POST.get('add_team'):
+        if request.POST.get('add_team', False):
             
             #retrieve and add new team account
             username = request.POST.get('username')
@@ -483,11 +553,36 @@ class ViewTeams(View):
             notify['title'] = "Team successfully created"
             notify['type'] = 'success'
 
+        elif request.POST.get('delete_team',False):
+            # this is an ajax request so the response must be json
+            resp = {}
+            team_user_id = request.POST.get('team_id',None)
+
+            if request.user.has_perm("simulatorApp.is_school"):
+                # schools can only delete their own teams
+                # check team belongs to school
+                school = School.objects.get(user=request.user)
+                if(school!= Team.objects.get(user=User.objects.get(id=team_user_id)).schoolid):
+                    resp['class'] = 'error'
+                    resp['msg'] = "You do not have permission to delete this team account. Try deleting one of your own teams!"
+                    resp['title'] = 'Uh oh'
+                    return JsonResponse(resp)
+            if team_user_id is None:
+                resp['class'] = 'error'
+                resp['msg'] = "Team could not be deleted"
+                resp['title'] = 'Uh oh'
+            try:
+                User.objects.get(id=team_user_id).delete()
+                resp['class'] = 'success'
+                resp['msg'] = "All associated data has also been deleted"
+                resp['title'] = 'Team Deleted'
+            except Exception as e:
+                resp['class'] = 'error'
+                resp['msg'] = "Team has already been deleted"
+                resp['title'] = 'Uh oh'
+            return JsonResponse(resp)
         return self.get(request, notify=notify)
     
-    
-
-
 class ViewSchools(View):
 
     def get(self, request, **kwargs):
@@ -558,8 +653,67 @@ class ViewSchools(View):
             notify['title'] = "School account successfully created"
             notify['type'] = 'success'
 
+        elif request.POST.get('delete_school',False):
+            # build a json response to deliver to the page
+            # regarding the result of their action
+            resp = {}
+
+            schooluser_id = request.POST.get('account_id',None)
+            if schooluser_id is None:
+                # no school account for that id
+                resp['class'] = 'error'
+                resp['msg'] = "School could not be deleted"
+                resp['title'] = 'Uh oh'
+            try: 
+                # attempt to delete school
+                school_user = User.objects.get(id=schooluser_id)
+                school = School.objects.get(user=school_user)
+                
+                teams = Team.objects.filter(schoolid=school) 
+                for team in teams:
+                    User.objects.get(id=team.user.id).delete() 
+                school.delete()
+                school_user.delete()
+
+                resp['class'] = 'success'
+                resp['msg'] = "All associated school accounts and their data has also been deleted"
+                resp['title'] = 'School Deleted'
+            except Exception as e:
+                print(e)
+                # school object has already been deleted
+                resp['class'] = 'error'
+                resp['msg'] = "School has already been deleted"
+                resp['title'] = 'Uh oh'
+            return JsonResponse(resp)
+
         return self.get(request, notify=notify)
 
+class ViewLeaderboard(View):
+    def get(self, request, **kwargs):
+        context_dict = {}
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        # check user has the correct view permission
+        if(request.user.has_perm("simulatorApp.is_team")):
+            this_team = Team.objects.get(user = request.user) 
+            teams = Team.get_teams_by_school(School.objects.get(user=this_team.schoolid.user))
+            context_dict['teams'] = teams.order_by('school_position')      
+            
+        if(request.user.has_perm("simulatorApp.is_school")):
+            teams = Team.get_teams_by_school(School.objects.get(user = request.user))
+            context_dict['teams'] = teams.order_by('school_position')
+            
+        if(request.user.has_perm("simulatorApp.is_yes_staff")):
+            teams = Team.objects.all()
+            if len(teams) < 10:
+                context_dict['teams'] = teams.order_by('leaderboard_position')
+            else:
+                context_dict['teams'] = teams.order_by('leaderboard_position')[:10]
+        
+        context_dict['teams_global'] = Team.objects.all().order_by("leaderboard_position")
+        return render(request, 'viewLeaderboard.html', context=context_dict)        
+        
 class EditStrategy(View):
     
     def get(self, request, **kwargs):
@@ -599,7 +753,7 @@ class EditStrategy(View):
         price = Price.objects.get(team=user_profile)
         maxPrice = float(price.simulator.maxPrice)-0.01
 
-        context_dict['maxPrice']=maxPrice
+        context_dict['maxPrice'] = maxPrice
         context_dict['price'] = price
         context_dict['policies'] = policies
         context_dict['user_profile'] = user_profile
@@ -659,8 +813,8 @@ class GameSettings(View):
     def get(self, request, **kwargs):
 
         context_dict = {}
- 
-        # check user is logged in
+        
+         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
@@ -671,7 +825,7 @@ class GameSettings(View):
         # Pass on any notification message to sweetalert plugin
         if"notify" in kwargs:
             context_dict['notify'] = kwargs['notify']
-        
+            
         sims = Simulator.objects.all()
         if len(sims) >0:
             context_dict['simulator']=sims
@@ -707,8 +861,7 @@ class GameSettings(View):
             return redirect(reverse('simulatorApp:index'))
 
         notify = {}
-
-        # if user has requested to add a market
+         # if user has requested to add a market
         if(request.POST.get("add_market")):
             
             
@@ -798,5 +951,268 @@ class GameSettings(View):
                 simulation.save()
                 notify['title'] = "Simulator updated"
                 notify['type'] = 'success'
-                return self.get(request, notify=notify)
+        return self.get(request, notify=notify)
+        
+class viewMarketEvents(View):
+    def get(self, request, **kwargs):
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+
+        # check user has the correct view permission
+        if(not (
+            request.user.has_perm("simulatorApp.is_yes_staff")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
+
+        context_dict = {}
+        # Pass on any notification message to sweetalert plugin
+        if "notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+
+
+        # Retrieve all market event objects        
+        context_dict["events"] = MarketEvent.objects.all()
+
+        return render(request, 'viewMarketEvents.html', context=context_dict)
+
+    def post(self, request, **kwargs):
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        
+        # check user has the correct view permission
+        if(not (
+            request.user.has_perm("simulatorApp.is_yes_staff")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
+
+        notify = {}
+
+        # if user has requested to add an event
+        if(request.POST.get("addEvent")):
+
+            # Creates a market event object
+            MarketEvent.objects.create(simulator= Simulator.objects.get(id=1))
+
+            notify['title'] = "Event Added"
+            notify['type'] = 'success'
+
+        # if the user has requested to delete an event
+        if(request.POST.get("delEvent")):
+
+            # Retrieves the event and its policies
+            event = MarketEvent.objects.get(id = int(request.POST.get('delevent')))
+            policies = PolicyEvent.objects.filter(market_event = event)
+
+            # Deletes all policies
+            for pol in policies:
+                pol.delete()
+
+            # Deletes the event
+            event.delete()
+
+            notify['title'] = "Event Deleted"
+            notify['type'] = 'success'            
+                        
+        return self.get(request, notify=notify)
+
+
+class editMarketEvent(View):
+    def get(self, request, **kwargs):
+        context_dict = {}
+        
+        if(not (
+            request.user.has_perm("simulatorApp.is_yes_staff")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
             
+        # check user has the correct view permission
+        if(not (
+            request.user.has_perm("simulatorApp.is_yes_staff")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
+
+        # retrieve the event from the GET request
+        event_id = request.GET.get("event_id",False)
+
+        # check event_id was passed in or return to index page
+        if not event_id:
+            return redirect(reverse('simulatorApp:index'))
+
+        try: # Try to retrieve the event object
+            event = MarketEvent.objects.get(id=event_id)
+        except Exception as e:
+            # No event exists for this id return to index
+            return redirect(reverse('simulatorApp:index'))
+
+        # Split date and time in order to display it on form
+        datefrom, timefrom = str(event.valid_from).split(" ")
+        dateto, timeto = str(event.valid_to).split(" ")
+
+        context_dict['poltypes'] = Policy.objects.all()
+        context_dict['policies'] = PolicyEvent.objects.filter(market_event=event)
+        context_dict['simulators'] = Simulator.objects.all()    
+        context_dict['eventObj'] = event
+        context_dict['datefrom'] = datefrom
+        context_dict['timefrom'] = timefrom[:5]
+        context_dict['dateto'] = dateto
+        context_dict['timeto'] = timeto[:5]
+        context_dict['can_edit'] = True
+        return render(request, 'editMarketEvent.html', context=context_dict)
+
+    def post(self, request, **kwargs):
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        
+        # check user has the correct view permission
+        if(not (
+            request.user.has_perm("simulatorApp.is_yes_staff")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
+
+        notify = {}
+
+        # if user has requested to edit event
+        if(request.POST.get("editEvent")):
+            # Retrieve the event object
+            iden = request.GET.get("event_id").strip()
+            event = MarketEvent.objects.get(id=int(iden))
+
+            # Set simulator field
+            event.simulator = Simulator.objects.get(id=int(request.POST.get("Simulator").strip()))
+
+            # Read in the date and time
+            fromdate = request.POST.get("fromdate").strip()
+            fromtime = request.POST.get("fromtime").strip()
+
+            # Convert date and time to datetime
+            fromd = datetime.strptime(fromdate + " " + fromtime + ":00", '%Y-%m-%d %H:%M:%S')
+            event.valid_from = fromd.replace(tzinfo=timezone.utc)
+            
+            todate = request.POST.get("todate").strip()
+            totime = request.POST.get("totime").strip()
+
+            tod = datetime.strptime(todate + " " + totime + ":00", '%Y-%m-%d %H:%M:%S')
+            event.valid_to = tod.replace(tzinfo=timezone.utc)
+
+            # Update the title and description
+            event.market_event_title = request.POST.get("title").strip()
+            event.market_event_text = request.POST.get("desc").strip()
+
+            # If the dates given are valid then save
+            if (event.valid_from < event.valid_to):
+                event.save()
+                notify['title'] = "Event Updated"
+                notify['type'] = 'success'
+            else:
+                notify['title'] = "Time Invalid"
+                notify['type'] = 'fail'
+
+        # If user has requested to add policy
+        if(request.POST.get("addPolicy")):
+            # Retrieve the market event and the policy this PolicyEvent redefines
+            iden = request.GET.get("event_id").strip()
+            event = MarketEvent.objects.get(id=int(iden))
+            pol = Policy.objects.get(id = request.POST.get("poltype"))
+
+            # If the policy does not already exist, create it
+            if PolicyEvent.objects.filter(market_event=event, policy=pol).exists():
+                notify['title'] = "Policy Already Exists"
+                notify['type'] = 'fail'
+            else:
+                PolicyEvent.objects.create(market_event=event, policy = pol)
+
+                notify['title'] = "Event Policy Added"
+                notify['type'] = 'success'
+
+        # If user has requested to delete policy
+        if(request.POST.get("delPolicy")):
+            # Retrieve the policy and delete it
+            policy = PolicyEvent.objects.get(id = int(request.POST.get('delpol')))
+            policy.delete()
+            notify['title'] = "Event Policy Deleted"
+            notify['type'] = 'success'
+            
+        return self.get(request, notify=notify)
+
+class editPolicyEvent(View):
+    def get(self, request, **kwargs):
+        context_dict = {}
+
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+
+        # check user has the correct view permission
+        if(not (
+            request.user.has_perm("simulatorApp.is_yes_staff")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
+
+        # retrieve the PolicyEvent from the GET request
+        pol_id = request.GET.get("pol_id",False)
+
+        # check pol_id was passed in or return to index page
+        if not pol_id:
+            return redirect(reverse('simulatorApp:index'))
+
+        try: # Try to retrieve the PolicyEvent object
+            policy = PolicyEvent.objects.get(id=pol_id)
+        except Exception as e:
+            # No profile object exists for this id return to index
+            return redirect(reverse('simulatorApp:index'))
+
+        # Pass on any notification message to sweetalert plugin
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+
+        context_dict['polObj'] = policy
+        context_dict['can_edit'] = True
+        return render(request, 'editPolicyEvent.html', context=context_dict)
+
+    def post(self, request, **kwargs):
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        
+        # check user has the correct view permission
+        if(not (
+            request.user.has_perm("simulatorApp.is_yes_staff")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
+
+        notify = {}
+
+        # if user has requested to edit policy
+        if(request.POST.get("editPolicy")):
+            # Retrieve the PolicyEvent object
+            iden = request.GET.get("pol_id").strip()
+            policy = PolicyEvent.objects.get(id=int(iden))
+
+            # Set the values and save
+            policy.low_cost = float(request.POST.get('lowcost').strip())
+            policy.low_customer = float(request.POST.get('lowcustomers').strip())
+            policy.low_sales = float(request.POST.get('lowsales').strip())
+            policy.med_cost = float(request.POST.get('medcost').strip())
+            policy.med_customer = float(request.POST.get('medcustomers').strip())
+            policy.med_sales = float(request.POST.get('medsales').strip())
+            policy.high_cost = float(request.POST.get('highcost').strip())
+            policy.high_customer = float(request.POST.get('highcustomers').strip())
+            policy.high_sales = float(request.POST.get('highsales').strip())
+                    
+
+            policy.save()
+            notify['title'] = "Event Updated"
+            notify['type'] = 'success'
+            
+        return self.get(request, notify=notify)
+

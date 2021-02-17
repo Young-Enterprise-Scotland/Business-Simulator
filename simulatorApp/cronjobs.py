@@ -1,38 +1,29 @@
-from datetime import timedelta
-from simulatorApp.calculations import marketShare, profit, sizeOfMarket
-from simulatorApp.models import Team
-import time
 from django.db import models
-
 from django.utils import timezone
-from apscheduler.schedulers.background import BackgroundScheduler
-from .models import MarketAttributeType, MarketAttributeTypeData, MarketEntry, Price, scheduler
-from .globals import MARKET_ATTRIBUTE_TYPES
-
-scheduler_global = None
-
-def secondsToDHMS(n: int)-> tuple: 
-    '''
-    Turn seconds into days hours minutes and seconds
-    @return tuple of integers (day, hour, minute, second)
-    Source:
-    https://www.geeksforgeeks.org/converting-seconds-into-days-hours-minutes-and-seconds/
-    Accessed 13/01/2021
-    '''
-    day = n // (24 * 3600) 
-  
-    n %= (24 * 3600) 
-    hour = n // 3600
-  
-    n %= 3600
-    minutes = n // 60
-  
-    n %= 60
-    seconds = n 
-    return (int(day),int(hour),int(minutes),int(seconds))
+from django.conf import settings
+from .models import CalculationCronJobs, MarketAttributeType, \
+                    MarketAttributeTypeData, \
+                    MarketEntry, \
+                    PopupEvent, \
+                    MarketEvent, \
+                    Simulator, \
+                    scheduler
+from .globals import MARKET_ATTRIBUTE_TYPES, secondsToDHMS
 
 
-def process_teams():
+def trigger_market_event_popup(marketid):
+    'create fullscreen popup displaying M.E. info'
+
+    market_event = MarketEvent.objects.get(id=marketid)
+    if settings.DEBUG:
+        print(f"Creating market Event Popup for {market_event.market_event_title}")
+    PopupEvent.objects.create(
+        simulator = Simulator.objects.all()[0],
+        title = market_event.market_event_title,
+        body_text = market_event.market_event_text
+    )
+
+def process_teams(simulation):
 
     # move import to method to solve circular imports issue
     # not elegent however a suggested solution to this issue.
@@ -42,15 +33,22 @@ def process_teams():
                                 numberOfProductsSold,  \
                                 dailyCost,productCost, \
                                 profit, netProfit,     \
-                                sizeOfMarket, marketShare    
-    from django.db import models
-    from .models import Team, Simulator, Price 
+                                sizeOfMarket, marketShare,\
+                                assignLeaderboardPositions    
+    from .models import Team, Price, MarketEvent
 
-    simulation = Simulator.objects.annotate(models.Max('id'))[0]
+    market_events = MarketEvent.get_current_events() 
+    if settings.DEBUG:
+        for event in market_events:
+            print(event)
+
+
     start = simulation.start
     end = simulation.end
     length = simulation.lengthOfTradingDay
-    print(f"Closing Market {timezone.now()}")
+
+    if settings.DEBUG:
+        print(f"Closing Market {timezone.now()}")
     simulation.marketOpen = False
     simulation.save()
 
@@ -59,8 +57,10 @@ def process_teams():
     # update attributes for each team
  
     size_of_market = sizeOfMarket()
-    for team in teams:
 
+    leaderboard_ranking_data = []
+
+    for team in teams:
         market_entry = MarketEntry.objects.get(strategyid=team.strategyid, simulator=simulation)
         num_of_products_sold = numberOfProductsSold(team)
         number_of_customers = numCustomers(team)
@@ -70,7 +70,8 @@ def process_teams():
         net_profit = netProfit(team)
         market_share = marketShare(team,sizeofmarket=size_of_market)
         price = Price.objects.get(team=team)
-
+        leaderboard_ranking_data.append([team,market_share])
+        
         #add product cost entry
         MarketAttributeTypeData.objects.create(
             marketEntryId = market_entry,
@@ -126,6 +127,7 @@ def process_teams():
             date = timezone.now(),
             parameterValue = net_profit
         )
+        
 
         # add size of market entry
         MarketAttributeTypeData.objects.create(
@@ -142,50 +144,65 @@ def process_teams():
             date = timezone.now(),
             parameterValue = market_share
         )
+        if settings.DEBUG:
+            print(f"\nTeam:{team.team_name}\n Product Cost: {product_cost}\n Daily Cost:{daily_cost}\n Price:{price.price}\n Number of Customers:{number_of_customers}\n Number of Products Sold:{num_of_products_sold}\n Profit:{team_profit}\n Net Profit:{net_profit}\n Size of Market:{size_of_market}\n Market Share:{market_share}\n")
 
-        print(f"\nTeam:{team.team_name}\n Product Cost: {product_cost}\n Daily Cost:{daily_cost}\n Price:{price.price}\n Number of Customers:{number_of_customers}\n Number of Products Sold:{num_of_products_sold}\n Profit:{team_profit}\n Net Profit:{net_profit}\n Size of Market:{size_of_market}\n Market Share:{market_share}\n")
-
+    assignLeaderboardPositions(leaderboard_ranking_data)
     simulation.marketOpen = True
     simulation.save()
-    print(f"Market Re-opened {timezone.now()}")
+
+    if settings.DEBUG:
+        print(f"Market Re-opened {timezone.now()}")
     
-
-
 def start(simulation=None):
-    # start scheduler when simulator is created/updated
-
+    'setup autocalculations when simulator is created/updated'
+    
     # avoid circular imports
-    from .models import Simulator
-    global scheduler_global
+    from .models import Simulator, MarketEventCronJobs
 
     if simulation is None:
-        simulation = Simulator.objects.annotate(models.Max('id'))[0]
+        simulation = Simulator.objects.annotate(models.Max('id'))
+        # no simulators exist return
+        if len(simulation)==0:
+            return
+        simulation = simulation[0]
     
     start = simulation.start
     end = simulation.end
     length = simulation.lengthOfTradingDay.total_seconds()
-    days, hours, minutes, seconds = secondsToDHMS(length)
-    
-    if(days==0):
-        days='*'        # everyday
-    if hours==0:
-        hours='*'       # everyhour
-    if minutes==0:
-        minutes = '*'   # everyminute
-    if seconds==0:
-        seconds = '*'   # everysecond
+    (days, hours, minutes, seconds,) = secondsToDHMS(length)
 
-    scheduler.add_job(process_teams, 'cron', start_date=start, end_date=end, id="calculate", replace_existing=True, day=days, hour=hours, minute=minutes, second=seconds)
-    scheduler_global = scheduler 
-    
+    calculation_cron_jobs = CalculationCronJobs.objects.filter(
+        cronjobid = simulation.__str__(),
+        simulation = simulation,)
+    if len(calculation_cron_jobs) == 0:
+        CalculationCronJobs.objects.create(
+            cronjobid = simulation.__str__(),
+            simulation = simulation,
+            start_date = start,
+            end_date = end,
+            days = days,
+            hours = hours,
+            minutes = minutes,
+            seconds = seconds
+        )
+    else:
+        for job in calculation_cron_jobs:
+            job.start_date = start
+            job.end_date = end
+            job.days = days
+            job.hours = hours
+            job.minutes = minutes
+            job.seconds = seconds
+            job.save()
+    return
 
-
-def update():
-
-    global scheduler_global
-    
-    # Update sheduler when simulator is updated
-    if scheduler_global is not None:
-        scheduler_global.remove_job("calculate")
-    start()
-    
+def trigger_end_of_game_quiz(simulator):
+    PopupEvent.objects.create(
+        simulator = Simulator.objects.all()[0],
+        title = "End of game quiz",
+        body_text = "Thank you for taking part in this competition. We would appreciate it if you could complete this quiz.",
+        is_quiz=True,
+        url = simulator.endQuizUrl
+    )
+    return

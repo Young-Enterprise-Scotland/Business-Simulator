@@ -1,0 +1,289 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Edit Market Event {% endblock title %}
+
+{% block content %}
+
+<!-- Header -->
+    <div class="header pb-8 pt-5 pt-lg-8 d-flex align-items-center" 
+         style="min-height: 600px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
+      <!-- Mask -->
+      <span class="mask bg-gradient-default opacity-8"></span>
+      <!-- Header container -->
+      <div class="container-fluid d-flex align-items-center">
+        <div class="row">
+          <div class="col-lg-7 col-md-10">
+            <h1 class="display-2 text-white">{{ eventObj.market_event_title }}</h1>
+            <p class="text-white mt-0 mb-5">This is the market event page. Here you can edit the parameters of this market event.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid mt--7">
+
+      <div class="row">
+        <div class="col-xl-12 order-xl-1">
+          <div class="card bg-secondary shadow">
+            <div class="card-header bg-white border-0">
+              <div class="row align-items-center">
+                <div class="col-8">
+                  <h3 class="mb-0">Event Info</h3>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+		<form method="POST" action="" id="event_form">
+                {% csrf_token %}
+                <h6 class="heading-small text-muted mb-4">Market Event Info</h6>
+                <div class="pl-lg-4">
+
+		<div class="row">
+			<div class="col-lg-6">
+				<label class="form-control-label" for="input-polOption">Variable</label>
+			</div>
+			<div class="col-lg-6">
+				<label class="form-control-label" for="input-polOption">Value</label>
+			</div>
+		</div>
+			
+		<div class="row">
+      		    <div class="col-lg-6">
+        		<div class="form-group">
+          		    <input type="text" id="input-simulator" class="form-control-plaintext" readonly placeholder="Simulator" 
+                  	value="Simulator:">
+        		</div>
+      		    </div>
+		    <div class="col-lg-6">
+			<div class="form-group">
+                            <select name="Simulator" class="form-control" id="simulator">
+                              {% for sim in simulators %}
+                                <option value="{{sim.id}}">{{sim.productName}}</option>
+                              {% endfor %}
+                            </select>
+        		</div>
+      		    </div>
+		</div>
+
+		<div class="row">
+		    <div class="col-lg-6">
+			<div class="form-group">
+          		    <input type="text" id="input-fromdate" class="form-control-plaintext" readonly placeholder="From Date" 
+                  	value="From Date:">
+        		</div>
+		    </div>
+		    <div class="col-lg-6">
+			<div class="form-group">
+			<input type="date" id="fromdate" name="fromdate" value="{{datefrom}}">
+			</div>
+		    </div>	
+		</div>
+
+		<div class="row">
+		    <div class="col-lg-6">
+			<div class="form-group">
+          		    <input type="text" id="input-fromtime" class="form-control-plaintext" readonly placeholder="From Time" 
+                  	value="From Time:">
+        		</div>
+		    </div>
+		    <div class="col-lg-6">
+			<div class="form-group">
+			    <input type="time" id="fromtime" name="fromtime" value="{{timefrom}}">
+			</div>
+		    </div>	
+		</div>
+
+		<div class="row">
+		    <div class="col-lg-6">
+			<div class="form-group">
+          		    <input type="text" id="input-todate" class="form-control-plaintext" readonly placeholder="To Date" 
+                  	value="To Date:">
+        		</div>
+		    </div>
+		    <div class="col-lg-6">
+		    	<div class="form-group">
+			    <input type="date" id="todate" name="todate" value="{{dateto}}">
+			</div>
+	 	    </div>	
+		</div>
+
+		<div class="row">	
+		    <div class="col-lg-6">
+			<div class="form-group">
+          		    <input type="text" id="input-totime" class="form-control-plaintext" readonly placeholder="To Time" 
+                  	value="To Time:">
+        		</div>
+		    </div>
+		    <div class="col-lg-6">
+			<div class="form-group">
+			    <input type="time" id="totime" name="totime" value="{{timeto}}">
+			</div> 
+		    </div>	
+		</div>
+
+		<div class="row">
+		    <div class="col-lg-6">
+			<div class="form-group">
+          		    <input type="text" id="input-title" class="form-control-plaintext" readonly placeholder="title" 
+                  	value="Market Event Title:">
+        		</div>
+		    </div>
+		    <div class="col-lg-6">
+			<div class="form-group">
+			    <input type="text" id="title" name="title" value="{{eventObj.market_event_title}}">
+			</div>
+		    </div>	
+		</div>
+
+		<div class="row">	
+		    <div class="col-lg-6">
+			<div class="form-group">
+          		    <input type="text" id="input-desc" class="form-control-plaintext" readonly placeholder="desc" 
+                  	value="Market Event Description:">
+        		</div>
+		    </div>
+		    <div class="col-lg-6">
+			<div class="form-group">
+		       	    <textarea id="desc" name="desc" rows="6" cols="40">{{eventObj.market_event_text}}</textarea>
+			</div>
+	 	    </div>	
+		</div>
+
+            
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="form-group">
+          <button type="submit" class="btn btn-primary" name="editEvent" value="true">Save</button>
+        </div>
+      </div>
+    </div>
+
+	
+
+  </div>
+  </form>
+
+                <hr class="my-4" />
+                <!-- Description -->
+                
+            </div>
+          </div>
+        </div>
+      </div>
+
+	<!-- Table -->
+      	<div class="row">
+        <div class="col">
+          <div class="card shadow">
+            <div class="card-header border-0">
+              <h3 class="mb-0">Manage Policies for this Event</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="table align-items-center table-flush">
+                <thead class="thead-light">
+                  <tr>
+                    <th scope="col">Policy</th>
+                    <th scope="col">Edit Policy</th>
+                  </tr>
+                </thead>
+                <tbody>
+		    {% for pol in policies %}
+                        <tr>
+                            <th scope="row">
+                                <div class="media align-items-center">
+                                    <a href="#" class="avatar rounded-circle mr-3">
+                                    <img alt="Image placeholder" src="/static/assets/img/brand/favicon.png">
+                                    </a>
+                                    <div class="media-body">
+                                    <span class="mb-0 text-sm">{{pol.policy.name}}</span>
+                                    </div>
+                                </div>
+                            </th>
+                            <td>
+                                <div class="dropdown">
+                                    <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="ni ni-settings-gear-65 text-blue"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-arrow">
+                                      <a class="dropdown-item" href="{% url 'simulatorApp:editPolicyEvent' %}?pol_id={{ pol.id }}">Edit Policy</a>
+                                      
+					<form method="POST" action="" id="delPolicy">
+		    			{% csrf_token %}
+					<input type="hidden" id="delpol" name="delpol" value="{{pol.id}}">
+					<div class="form-group">
+					<button type="submit" class="btn btn-primary" name="delPolicy" value="true">Delete Policy</button>
+					</div> 
+					</form> 
+					
+				    </div>
+                                  
+                                </div>
+                            </td>
+                        </tr>
+                   {% endfor %}
+                   
+                </tbody>
+              </table>
+            </div>
+            <div class="card-footer py-4">
+              <nav aria-label="...">
+                <ul class="pagination justify-content-end mb-0">
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">
+                      <i class="fas fa-angle-left"></i>
+                      <span class="sr-only">Previous</span>
+                    </a>
+                  </li>
+                  <li class="page-item active">
+                    <a class="page-link" href="#">1</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="#">2 <span class="sr-only">(current)</span></a>
+                  </li>
+                  <li class="page-item"><a class="page-link" href="#">3</a></li>
+                  <li class="page-item">
+                    <a class="page-link" href="#">
+                      <i class="fas fa-angle-right"></i>
+                      <span class="sr-only">Next</span>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+		<div class="card-body py-4">
+		<form method="POST" action="" id="add_policy">
+		    {% csrf_token %}
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-username">Policy</label>
+                            <select name="poltype" class="form-control" id="poltype">
+                              {% for p in poltypes %}
+                                <option value="{{p.id}}">{{p.name}}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                        </div>
+      	    		<div class="col-lg-6">
+      	    	      </div>
+		    </div>
+		    <div class="row">
+			<div class="form-group">
+          	    	    <button type="submit" class="btn btn-primary" name="addPolicy" value="true">Add Policy</button>
+        		</div>
+		    </div>
+		</form>
+		</div>
+          </div>
+        </div>
+      </div>
+
+      {% include "includes/footer.html" %}
+
+    </div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+{% endblock javascripts %}

@@ -1,0 +1,131 @@
+{% extends 'layouts/base.html' %}
+{% load sass_tags %}
+
+{% block title %} Leaderboard {% endblock title %}
+{% block stylesheets %}{% endblock stylesheets %}
+{% block content %}
+
+    <!-- Header -->
+    <div class="header bg-gradient-primary pb-8 pt-5 pt-md-8">
+      <div class="container-fluid">
+
+      </div>
+    </div>
+
+    <div class="container-fluid mt--7">
+
+      <!-- Table -->
+      <div class="row">
+        <div class="{% if perms.simulatorApp.is_yes_staff %}col-12{% else %}col-6{% endif %}">
+          <div class="card shadow">
+            <div class="card-header border-0">
+              <h3 class="mb-0">Leaderboard</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="table align-items-center table-flush">
+                <thead class="thead-light">
+                  <tr>
+                    <th scope="col">Team Name</th>
+                    <th scope="col">School</th>
+                    <th scope="col">Leaderboard Position</th>
+                  </tr>
+                </thead>
+                <tbody>
+                   {% for team in teams_global %}
+                        <tr>
+                            <th scope="row">
+                            <div class="media align-items-center">
+                                <a href="#" class="avatar rounded-circle mr-3">
+                                <img alt="Image placeholder" src="/static/assets/img/brand/favicon.png">
+                                </a>
+                                <div class="media-body">
+                                <span class="mb-0 text-sm">{{team.team_name}}</span>
+                                </div>
+                            </div>
+                            </th>
+                            <td>
+                            {{team.schoolid.school_name}}
+                            </td>
+                            <td>
+                                <span class="badge badge-dot mr-4">
+                                    {% if team.leaderboard_position > 3 %}
+                                    <i class="bg-warning"></i> 
+                                    {% else %}
+                                    <i class="bg-success"></i>
+                                    {% endif %}
+                                      {{team.leaderboard_position}}
+                                </span>
+                            </td>
+                        </tr>
+                   {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {% if not perms.simulatorApp.is_yes_staff  %}
+        <div class="col-6">
+          <div class="card shadow">
+            <div class="card-header border-0">
+              <h3 class="mb-0">School Leaderboard</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="table align-items-center table-flush">
+                <thead class="thead-light">
+                  <tr>
+                    <th scope="col">Team Name</th>
+                    <th scope="col">Position within school</th>
+                  </tr>
+                </thead>
+                <tbody>
+                   {% for team in teams %}
+                        <tr>
+                            <th scope="row">
+                              <div class="media align-items-center">
+                                  <a href="#" class="avatar rounded-circle mr-3">
+                                  <img alt="Image placeholder" src="/static/assets/img/brand/favicon.png">
+                                  </a>
+                                  <div class="media-body">
+                                  <span class="mb-0 text-sm">{{team.team_name}}</span>
+                                  </div>
+                              </div>
+                            </th>
+                            <td>
+                              <span class="badge badge-dot mr-4">
+                                {% if team.school_position > 3 %}
+                                <i class="bg-warning"></i> 
+                                {% else %}
+                                <i class="bg-success"></i>
+                                {% endif %} {{team.school_position}}
+                              </span>
+                            </td>
+                        </tr>
+                   {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% include "includes/footer.html" %}
+
+    </div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+<script>
+
+  $(document).ready(function(){
+
+    
+
+  });
+
+</script>
+
+
+{% endblock javascripts %}

@@ -1,5 +1,7 @@
 from django.db import models
+from django.db.models import Avg
 from django.dispatch import receiver
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
@@ -41,6 +43,9 @@ class Simulator(models.Model):
     lengthOfTradingDay = models.DurationField(default=timedelta(days=1))
     productName = models.CharField(max_length=100)
     image = models.ImageField(blank = True)
+    
+    startQuizUrl = models.URLField(blank=True, default="")
+    endQuizUrl = models.URLField(blank=True)
 
     # price is of the format xxxxxxx.xxxx
     # allow for more than 2dp to help with roundoff errors
@@ -78,23 +83,47 @@ class Simulator(models.Model):
         for attribute_type in MARKET_ATTRIBUTE_TYPES:
             (object,created) = MarketAttributeType.objects.get_or_create(label=attribute_type)  
 
+    def __setup_price_effects(self):
+        for i in range(1,4):
+            PriceEffects.objects.get_or_create(boundary=i)
+        return
+
+    def __setup_start_and_end_quiz(self):
+        from .cronjobs import trigger_end_of_game_quiz
+
+        # create popup for initial quiz 
+        PopupEvent.objects.create(
+            simulator=self, 
+            title="Quiz", 
+            body_text="Please answer the quiz before continuing.",
+            is_quiz = True,
+            url = self.startQuizUrl
+        )
+        SimulatorEndCronJobs.objects.get_or_create(
+            cronjobid = self.__str__(),
+            simulator = self,
+        )
+
+        return
+
     def save(self, *args, **kwargs):
         
-        #setup policies if they do not already exist
+        # setup game related models
         self.__setup_policies()
         self.__setup_market_attribute_types()
+        self.__setup_price_effects()
         
-        super(Simulator, self).save(*args, **kwargs)
+        no_simulators = len(Simulator.objects.all())
+        
+        super(Simulator, self).save(*args, **kwargs)   
+
+        if no_simulators==0:
+            self.__setup_start_and_end_quiz()
         from . import cronjobs
-        # if self._state.adding: # if not already saved
-        #     cronjobs.start(self)
-        # else:
-        #     cronjobs.update()
-        cronjobs.update()
+        cronjobs.start(self)
         
     def __str__(self):
         return self.productName+"("+str(self.id)+")"
-
 
 class YES(models.Model):
     
@@ -254,6 +283,10 @@ class Team(models.Model):
     def get_all_teams():
         return Team.objects.all()
 
+    def get_team_attribute(self, attribute_name):
+        marketEntry = MarketEntry.objects.get(strategyid = self.strategyid, simulator = Simulator.objects.all()[0])
+        return MarketAttributeTypeData.objects.filter(marketEntryId = marketEntry, marketAttributeType = MarketAttributeType.objects.get(label=attribute_name))
+
 class MarketEntry(models.Model):
     strategyid = models.ForeignKey(Strategy, on_delete=models.CASCADE)
     simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
@@ -273,6 +306,24 @@ class MarketAttributeType(models.Model):
     def __str__(self):
         return self.label
 
+    def get_average_value(self):
+        teams = Team.objects.all()
+        max_events = 0
+        most_events = None
+        for team in teams:
+            market_filter = MarketAttributeTypeData.objects.filter(marketAttributeType = self, marketEntryId = MarketEntry.objects.get(strategyid = team.strategyid))
+            num_events = market_filter.count()
+            if(num_events > max_events):
+                max_events = num_events
+                most_events = market_filter
+
+        average_value = []
+        if most_events != None:
+            for event in most_events:
+                average_value.append(MarketAttributeTypeData.objects.filter(marketAttributeType = self, date__range = [event.date-timedelta(seconds = 5), event.date+timedelta(seconds = 5)]).aggregate(Avg('parameterValue')))
+
+        return average_value
+
 class MarketAttributeTypeData(models.Model):
     marketEntryId       = models.ForeignKey(MarketEntry, on_delete=models.CASCADE)
     marketAttributeType = models.ForeignKey(MarketAttributeType, on_delete=models.CASCADE)
@@ -280,7 +331,7 @@ class MarketAttributeTypeData(models.Model):
     parameterValue      = models.DecimalField(decimal_places=4, max_digits=12)
 
     def __str__(self):
-        return self.marketEntryId.__str__()+"__"+self.marketAttributeType.__str__()+"__"+str(self.date)
+        return self.marketEntryId.__str__()+"__"+self.marketAttributeType.__str__()+"__"+str(self.date)    
 
 class PolicyStrategy(models.Model):
     strategy = models.ForeignKey(Strategy, on_delete=models.CASCADE)
@@ -291,7 +342,22 @@ class PolicyStrategy(models.Model):
     def __str__(self):
         return self.strategy.__str__()+"__"+self.policy.__str__()+"__"+str(self.id)
 
+class PriceEffects(models.Model):
+
+    boundary = models.SmallIntegerField(choices=[(1,'Low'),(2,'Medium'),(3,'High')], default=1)
+
+    low_customers = models.IntegerField(default=1)
+    low_sales = models.DecimalField(default=1, decimal_places=4, max_digits=12)
+
+    med_customers = models.IntegerField(default=1)
+    med_sales = models.DecimalField(default=1, decimal_places=4, max_digits=12)
+
+    high_customers = models.IntegerField(default=1)
+    high_sales = models.DecimalField(default=1, decimal_places=4, max_digits=12)
+
+
 class Price(models.Model):
+    
     team = models.OneToOneField(Team, on_delete=models.CASCADE)
     qual = models.ForeignKey(PolicyStrategy, on_delete=models.CASCADE)
     simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
@@ -335,36 +401,58 @@ class Price(models.Model):
         price = self.price
         bound1 = self.simulator.priceBoundary1
         bound2 = self.simulator.priceBoundary2
+        
+        # low quality, low price
         if qual == 1 and (price <= bound1 and price >= self.simulator.minPrice):
-            self.efctOnSales = 1
-            self.customers = 2
+            price_effect = PriceEffects.objects.get(boundary=1)
+            self.efctOnSales = price_effect.low_sales
+            self.customers = price_effect.low_customers
+
+        # low quality med price
         elif qual == 1 and (price <= bound2 and price >= bound1):
-            self.efctOnSales = 0.9
-            self.customers = 1
+            price_effect = PriceEffects.objects.get(boundary=1)
+            self.efctOnSales = price_effect.med_sales
+            self.customers = price_effect.med_customers
+
+        #low quality high price
         elif qual == 1 and (price <= self.simulator.maxPrice and price >= bound2):
-            self.efctOnSales = 0.8
-            self.customers = 0
+            price_effect = PriceEffects.objects.get(boundary=1)
+            self.efctOnSales = price_effect.high_sales
+            self.customers = price_effect.high_customers
+
+        #med quality low price
         elif qual == 2 and (price <= bound1 and price >= self.simulator.minPrice):
-            self.efctOnSales = 0.85
-            self.customers = 1
+            price_effect = PriceEffects.objects.get(boundary=2)
+            self.efctOnSales = price_effect.low_sales
+            self.customers = price_effect.low_customers
+
         elif qual == 2 and (price <= bound2 and price >= bound1):
-            self.efctOnSales = 1
-            self.customers = 2
+            price_effect = PriceEffects.objects.get(boundary=2)
+            self.efctOnSales = price_effect.med_sales
+            self.customers = price_effect.med_customers
+
         elif qual == 2 and (price <= self.simulator.maxPrice and price >= bound2):
-            self.efctOnSales = 0.85
-            self.customers = 1
+            price_effect = PriceEffects.objects.get(boundary=2)
+            self.efctOnSales = price_effect.high_sales
+            self.customers = price_effect.high_customers
+
         elif qual == 3 and (price <= bound1 and price >= self.simulator.minPrice):
-            self.efctOnSales = 0.8
-            self.customers = 0
+            price_effect = PriceEffects.objects.get(boundary=3)
+            self.efctOnSales = price_effect.low_sales
+            self.customers = price_effect.low_customers
+
         elif qual == 3 and (price <= bound2 and price >= bound1):
-            self.efctOnSales = 0.9
-            self.customers = 1
+            price_effect = PriceEffects.objects.get(boundary=3)
+            self.efctOnSales = price_effect.med_sales
+            self.customers = price_effect.med_customers
+
         elif qual == 3 and (price <= self.simulator.maxPrice and price >= bound2):
-            self.efctOnSales = 1
-            self.customers = 2
+            price_effect = PriceEffects.objects.get(boundary=3)
+            self.efctOnSales = price_effect.high_sales
+            self.customers = price_effect.high_customers
         
         #save changes
-      #  self.save()
+        #self.save()
     
         return self.customers, self.efctOnSales
 
@@ -376,19 +464,214 @@ class Price(models.Model):
     def __str__(self):
         return self.team.__str__()+" Price"
 
+class MarketEvent(models.Model):
+
+    simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+    valid_from = models.DateTimeField(default= timezone.now)
+    valid_to   = models.DateTimeField(default= timezone.now)
+    market_event_title = models.CharField(max_length=256, default="Market Event")
+    market_event_text = models.CharField(max_length=5096, default="The market has changed, this means that consumer habits may also have changed.")
+
+    def __str__(self):
+        return self.simulator.__str__()+"__"+self.market_event_title
+
+    def save(self, *args, **kwargs):
+
+        return_vals = super().save(*args, **kwargs) 
+
+        # update scheduler 
+        jobs= MarketEventCronJobs.objects.filter(market_event=self)
+        if(len(jobs)>0):
+            job = jobs[0]
+            job.run_date = self.valid_from
+            job.save()
+        else:
+            MarketEventCronJobs.objects.create(market_event=self, run_date=self.valid_from)  
+        
+        return return_vals
+
+    @staticmethod
+    def get_current_events():
+        return MarketEvent.objects.filter(valid_from__lte=timezone.now(), valid_to__gte=timezone.now())
+
+    def get_new_policies(self):
+        return PolicyEvent.objects.filter(market_event=self)
+
+class PolicyEvent(models.Model):
+
+    market_event = models.ForeignKey(MarketEvent, on_delete=models.CASCADE)
+    policy       = models.ForeignKey(Policy, on_delete=models.CASCADE)
+    
+    low_cost = models.DecimalField(decimal_places=4, max_digits=12, default=0.5)
+    low_customer = models.DecimalField(decimal_places=4, max_digits=12, default=1)
+    low_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.75)
+    
+    med_cost = models.DecimalField(decimal_places=4, max_digits=12, default=1.00)
+    med_customer = models.DecimalField(decimal_places=4, max_digits=12, default=3)
+    med_sales = models.DecimalField(decimal_places=4, max_digits=12, default=1.00)
+
+    high_cost = models.DecimalField(decimal_places=4, max_digits=12,default=1.5)
+    high_customer = models.DecimalField(decimal_places=4, max_digits=12, default=2)
+    high_sales = models.DecimalField(decimal_places=4, max_digits=12, default=0.75)
+
+    def __str__(self):
+        return self.market_event.__str__()+"--"+self.policy.__str__()
+
+class PopupEvent(models.Model):
+    
+    simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+    title = models.CharField(max_length=256, default="Alert")
+    body_text = models.CharField(max_length=2048, default="")
+    
+    # only required for the start and end of game popups
+    is_quiz = models.BooleanField(default=False)
+    url = models.URLField(blank=True)
+
+    # force the popup icon to be from the sweetalert icon library
+    icon_class = models.CharField(max_length=32, choices=[
+        ("success","Green Tick"),
+        ("info","Blue Info"),
+        ("error", "Red Cross"),
+        ("question", "Grey Question Mark"),
+        ("warning", "Yellow Warning"),
+        ],
+         default="info")
+
+class AcknowledgedEvent(models.Model):
+    
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    event = models.ForeignKey(PopupEvent, on_delete=models.CASCADE)
+    has_acknowledged = models.BooleanField(default=False)
+
+class CronJobs(models.Model):
+    'simple model to keep track of cronjobs across server reloads'
+
+    cronjobid = models.CharField(max_length=128)
+    replace_existing = models.BooleanField(default=True)
+
+class DateCronJobs(CronJobs):
+    run_date = models.DateTimeField(blank=False)
+
+class SimulatorEndCronJobs(DateCronJobs):
+    'Cron job model to allow for persistance of \'end of game quiz\' job'
+
+    simulator = models.ForeignKey(Simulator, on_delete=models.CASCADE) 
+
+    def save(self,*args, **kwargs):
+        from .cronjobs import trigger_end_of_game_quiz
+
+        self.run_date = self.simulator.end
+        trigger_time = self.run_date
+        self.cronjobid = "end_date_"+self.simulator.__str__()
+        if(trigger_time <= timezone.now()):
+            trigger_time = timezone.now()+ timedelta(seconds=5)
+
+        scheduler.add_job(trigger_end_of_game_quiz,
+            'date',
+            id=self.cronjobid,
+            replace_existing=self.replace_existing,
+            run_date=trigger_time,
+            args=[self.simulator]
+        )
+        return super().save(*args, **kwargs)
+
+class MarketEventCronJobs(DateCronJobs):
+
+    market_event = models.ForeignKey(MarketEvent, on_delete=models.CASCADE)
+
+    def save(self,*args, **kwargs):
+        from .cronjobs import trigger_market_event_popup
+        vals = super().save(*args, **kwargs)
+
+        # if start time has already past then reschedule 
+        # for immediate (~next few seconds) start
+        trigger_time = self.run_date
+        if(trigger_time <= timezone.now()):
+            trigger_time = timezone.now()+ timedelta(seconds=5)
+
+        # add market event popup to scheduler
+        scheduler.add_job(trigger_market_event_popup,
+            'date',
+            id=self.cronjobid,
+            replace_existing=self.replace_existing,
+            run_date=trigger_time,
+            args=[self.market_event.id]
+        )
+        return vals
+
+class CalculationCronJobs(CronJobs):
+
+    simulation = models.ForeignKey(Simulator, on_delete=models.CASCADE)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    days = models.IntegerField(default=0)
+    hours = models.IntegerField(default=0)
+    minutes = models.IntegerField(default=0)
+    seconds = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        from .cronjobs import process_teams
+
+        scheduler.add_job(
+            process_teams,
+            trigger='interval', 
+            start_date=self.start_date, 
+            end_date=self.end_date, 
+            id='calculation_'+self.cronjobid, 
+            replace_existing=self.replace_existing, 
+            days=self.days, 
+            hours=self.hours, 
+            minutes=self.minutes, 
+            seconds=self.seconds,
+            args=[self.simulation]
+        )
+        return super().save(*args, **kwargs)
 
 @receiver(models.signals.post_delete, sender=Team)
 def delete_related_team_objects(sender, instance, **kwargs):
     """
         Strategy is linked to Team however deleting team does not 
-        automatically delete the strategy, however the reverse is true. 
+        automatically delete the strategy, the reverse is true. 
         
-        This method deletes all strategy and Market Entry instances when
-        Team.delete() is called     
+        This method deletes all strategy instances when
+        Team.delete() is called
     """
     instance.strategyid.delete()
 
+@receiver(models.signals.pre_delete, sender=Simulator)
+def delete_old_simulation(sender,instance, **kwargs):
+
+    scheduler.pause()
+    # remove all simulation data
+    PopupEvent.objects.all().delete()
+    MarketEvent.objects.all().delete()
+    PriceEffects.objects.all().delete()
+
+    #remove related cron job objects
+    MarketEventCronJobs.objects.all().delete()
+    SimulatorEndCronJobs.objects.all().delete()
+    CalculationCronJobs.objects.all().delete()
+
+    # remove cronjobs
+    for job in scheduler.get_jobs():
+        job.remove()
+
+    for team in Team.objects.all():
+        User.objects.get(username=team.user).delete()
+
+    Strategy.objects.all().delete()
+    for school in School.objects.all():
+        User.objects.get(username=school.user).delete()
+    
+    if settings.DEBUG:
+        scheduler.print_jobs()
+    scheduler.resume()
 
 # start scheduler when server loads app
+if settings.DEBUG:
+    print("Starting scheduler")
 scheduler = BackgroundScheduler()
-scheduler.start()
+scheduler.start() 
+if settings.DEBUG:
+    print("Scheduler started")
+

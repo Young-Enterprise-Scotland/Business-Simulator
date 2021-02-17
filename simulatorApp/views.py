@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-
+from django.utils.dateparse import parse_duration, parse_datetime
+from django.utils.timezone import make_aware
 from django.urls import reverse 
 from django.views import View
 from .models import Strategy, YES, School, Team, PolicyStrategy, Price, Simulator
-
+from datetime import datetime, timedelta
 
 # Create your views here.
 
@@ -655,7 +656,7 @@ class EditStrategy(View):
 class GameSettings(View):
 
     def get(self, request, **kwargs):
-        
+
         context_dict = {}
  
         # check user is logged in
@@ -666,7 +667,135 @@ class GameSettings(View):
         if(not request.user.has_perm("simulatorApp.is_yes_staff")):
             return redirect(reverse('simulatorApp:index'))
 
+        # Pass on any notification message to sweetalert plugin
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+        
+        sims = Simulator.objects.all()
+        print("SIMS:", sims)
+        if len(sims) >0:
+            print("start ",sims[0].start)
+            context_dict['simulator']=sims
+            context_dict['start'] = sims[0].start.strftime("%Y-%m-%dT%I:%M:%S")
+            print(sims[0].start.strftime("%Y-%m-%dT%I:%M:%S"))
+            context_dict['end'] = sims[0].end.strftime("%Y-%m-%dT%I:%M:%S")
+            context_dict['lengthOfTradingDay'] = sims[0].lengthOfTradingDay
+
+            context_dict['productName'] = sims[0].productName
+            context_dict['image'] = sims[0].image
+            context_dict['maxPrice'] = sims[0].maxPrice
+            context_dict['minPrice'] = sims[0].minPrice
+            context_dict['marketOpen'] = sims[0].marketOpen
         return render(request, 'maps.html', context=context_dict)
+        
     
-    def post(self, request):
-        return self.get(request)
+    
+    def post(self, request, **kwargs):
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        
+        # check user has the correct view permission
+        if(not (
+            request.user.has_perm("simulatorApp.is_yes_staff")
+            )
+        ):
+            return redirect(reverse('simulatorApp:index'))
+
+        notify = {}
+        print("get: ",request.GET)
+        print("post: ",request.POST)
+
+        # if user has requested to add a market
+        if(request.POST.get("add_market")):
+            
+            
+            start = request.POST.get('start')
+            end = request.POST.get('end')
+            days = request.POST.get('days')
+            time = request.POST.get('time')
+        
+            productName = request.POST.get('productName')
+            maxPrice = request.POST.get('maxPrice')
+            minPrice = request.POST.get('minPrice')
+            marketOpen = request.POST.get('marketOpen')
+            if marketOpen == None:
+                marketOpen = False
+            
+            # Convert strings into datetime objects
+            start_dt = parse_datetime(start)
+            end_dt = parse_datetime(end)
+            start_t = make_aware(start_dt)
+            end_t = make_aware(end_dt)
+            s = str(days)
+            ss = str(time)
+            length = parse_duration(s+" "+ss)
+            
+            # create new Simulator
+           
+            sim = Simulator.objects.all()
+            if len(sim) ==0:
+                simulation = Simulator.objects.create(start=start_t)
+                simulation.end=end_t
+                simulation.lengthOfTradingDay=length
+                simulation.productName=productName
+                simulation.maxPrice=maxPrice
+                simulation.minPrice=minPrice
+                simulation.marketOpen=marketOpen
+                
+                simulation.clean()
+                simulation.save()
+                notify['title'] = "Simulator created"
+                notify['type'] = 'success'
+                return self.get(request, notify=notify)
+            else:
+                simulation = sim[0]
+                simulation.start= start_t
+                simulation.end=end_t
+                simulation.lengthOfTradingDay=length
+                simulation.productName=productName
+                simulation.maxPrice=maxPrice
+                simulation.minPrice=minPrice
+                simulation.marketOpen=marketOpen
+                
+                simulation.save()
+                notify['title'] = "Simulator updated"
+                notify['type'] = 'success'
+                return self.get(request, notify=notify)
+                """
+            if not created:
+                simulation.productName=productName
+                simulation.start=start_t
+                simulation.end=end_t
+                simulation.lengthOfTradingDay=length
+                simulation.maxPrice=maxPrice
+                simulation.minPrice=minPrice
+                simulation.marketOpen=marketOpen
+                
+                try:
+                    simulation.clean()
+                except Exception:
+                    redirect(reverse('simulatorApp:gameSettings'))
+                    
+                simulation.save()
+                notify['title'] = "Simulator updated"
+                notify['type'] = 'success'
+                return self.get(request, notify=notify)
+            
+            simulation.productName=productName
+            simulation.start=start_t
+            simulation.end=end_t
+            simulation.lengthOfTradingDay=length
+            simulation.maxPrice=maxPrice
+            simulation.minPrice=minPrice
+            simulation.marketOpen=marketOpen
+            try:
+                simulation.clean()
+            except Exception:
+                redirect(reverse('simulatorApp:gameSettings'))
+            
+            simulation.save()
+
+            notify['title'] = "Simulator created"
+            notify['type'] = 'success'
+
+        return self.get(request, notify=notify)"""

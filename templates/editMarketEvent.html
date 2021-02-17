@@ -5,16 +5,14 @@
 {% block content %}
 
 <!-- Header -->
-    <div class="header pb-8 pt-5 pt-lg-8 d-flex align-items-center" 
-         style="min-height: 600px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
-      <!-- Mask -->
+    <div class="header pb-8 pt-5 pt-lg-8 d-flex align-items-center" >
       <span class="mask bg-gradient-default opacity-8"></span>
       <!-- Header container -->
       <div class="container-fluid d-flex align-items-center">
         <div class="row">
           <div class="col-lg-7 col-md-10">
             <h1 class="display-2 text-white">{{ eventObj.market_event_title }}</h1>
-            <p class="text-white mt-0 mb-5">This is the market event page. Here you can edit the parameters of this market event.</p>
+            <p class="text-white mt-0 mb-5">This is the market event page. Here you can edit the parameters of this market event. You can re-define as many policies as you choose (or none if you want to catch players out!). Each re-defined policy will be used in the end of trading day calculations for the duration of the event.</p>
           </div>
         </div>
       </div>
@@ -74,7 +72,7 @@
 		    </div>
 		    <div class="col-lg-6">
 			<div class="form-group">
-			<input type="date" id="fromdate" name="fromdate" value="{{datefrom}}">
+			<input type="date" id="fromdate" class="form-control" name="fromdate" value="{{datefrom}}">
 			</div>
 		    </div>	
 		</div>
@@ -88,7 +86,7 @@
 		    </div>
 		    <div class="col-lg-6">
 			<div class="form-group">
-			    <input type="time" id="fromtime" name="fromtime" value="{{timefrom}}">
+			    <input type="time" id="fromtime" class="form-control" name="fromtime" value="{{timefrom}}">
 			</div>
 		    </div>	
 		</div>
@@ -102,7 +100,7 @@
 		    </div>
 		    <div class="col-lg-6">
 		    	<div class="form-group">
-			    <input type="date" id="todate" name="todate" value="{{dateto}}">
+			    <input type="date" id="todate" class="form-control" name="todate" value="{{dateto}}">
 			</div>
 	 	    </div>	
 		</div>
@@ -116,7 +114,7 @@
 		    </div>
 		    <div class="col-lg-6">
 			<div class="form-group">
-			    <input type="time" id="totime" name="totime" value="{{timeto}}">
+			    <input type="time" id="totime" class="form-control" name="totime" value="{{timeto}}">
 			</div> 
 		    </div>	
 		</div>
@@ -130,7 +128,7 @@
 		    </div>
 		    <div class="col-lg-6">
 			<div class="form-group">
-			    <input type="text" id="title" name="title" value="{{eventObj.market_event_title}}">
+			    <input type="text" id="title" class="form-control" name="title" value="{{eventObj.market_event_title}}">
 			</div>
 		    </div>	
 		</div>
@@ -144,7 +142,7 @@
 		    </div>
 		    <div class="col-lg-6">
 			<div class="form-group">
-		       	    <textarea id="desc" name="desc" rows="6" cols="40">{{eventObj.market_event_text}}</textarea>
+		       	    <textarea id="desc" class="form-control" name="desc" rows="6" cols="40">{{eventObj.market_event_text}}</textarea>
 			</div>
 	 	    </div>	
 		</div>
@@ -172,7 +170,7 @@
       </div>
 
 	<!-- Table -->
-      	<div class="row">
+      	<div class="row mt-4">
         <div class="col">
           <div class="card shadow">
             <div class="card-header border-0">

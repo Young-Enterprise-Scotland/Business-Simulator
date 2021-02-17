@@ -1,0 +1,132 @@
+{% extends 'layouts/base.html' %}
+{% load sass_tags %}
+
+{% block title %} View Teams {% endblock title %}
+{% block stylesheets %}{% endblock stylesheets %}
+{% block content %}
+
+    <!-- Header -->
+    <div class="header bg-gradient-primary pb-8 pt-5 pt-md-8">
+        <div class="container-fluid d-flex align-items-center">
+            <div class="row">
+                <div class="col-lg-7 col-md-10">
+                <h1 class="display-2 text-white">Manage Policies</h1>
+                <p class="text-white mt-0 mb-5">The values assigned for policies will persist between games. This is mainly to speed up the setup time for a new simulation. You may adust the values and labels at any time. 
+                </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid mt--7">
+
+      <!-- Table -->
+      <div class="row">
+        <div class="col">
+          <div class="card shadow">
+            <div class="card-body">
+              {% for policy in policies %}
+              <form method="POST" action="{% url 'simulatorApp:viewPolicies' %}">
+                  <input type="hidden" name="policy_id" value="{{policy.id}}">
+                  {% csrf_token %}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h3>{{policy.name}}</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">Low Label</label>
+                            <input type="text" min="0" class="form-control" required value="{{policy.low_label}}" name="low_label">
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">Low Cost</label>
+                            <input type="number" step="0.01" min="0" class="form-control" required value="{{policy.low_cost}}" name="low_cost">
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">Low Customer</label>
+                            <input type="number" step="0.01" min="0" class="form-control" required value="{{policy.low_customer}}" name="low_customer">
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">Low sales</label>
+                            <input type="number" step="0.01"  class="form-control" required value="{{policy.low_sales}}" name="low_sales">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">Medium Label</label>
+                            <input type="text" min="0" class="form-control" required value="{{policy.med_label}}" name="med_label">
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">Medium Cost</label>
+                            <input type="number" step="0.01" min="0" class="form-control" required value="{{policy.med_cost}}" name="med_cost">
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">Medium Customer</label>
+                            <input type="number" step="0.01" min="0" class="form-control" required value="{{policy.med_customer}}" name="med_customer">
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">Med sales</label>
+                            <input type="number" step="0.01"  class="form-control" required value="{{policy.med_sales}}" name="med_sales">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">High Label</label>
+                            <input type="text" min="0" class="form-control" required value="{{policy.high_label}}" name="high_label">
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">High Cost</label>
+                            <input type="number" step="0.01" min="0" class="form-control" required value="{{policy.high_cost}}" name="med_cost">
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">High Customer</label>
+                            <input type="number" step="0.01" min="0" class="form-control" required value="{{policy.high_customer}}" name="high_customer">
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">High sales</label>
+                            <input type="number" step="0.01"  class="form-control" required value="{{policy.high_sales}}" name="high_sales">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+              </form>
+              <hr/>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% include "includes/footer.html" %}
+
+    </div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}{% endblock javascripts %}

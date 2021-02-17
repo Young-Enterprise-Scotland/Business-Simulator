@@ -24,5 +24,6 @@ urlpatterns = [
     path('viewLeaderboard', views.ViewLeaderboard.as_view(), name="viewLeaderboard"),
     path('viewMarketEvents', views.viewMarketEvents.as_view(), name="viewMarketEvents"),
     path('editMarketEvent', views.editMarketEvent.as_view(), name="editMarketEvent"),
-    path('editPolictEvent', views.editPolicyEvent.as_view(), name="editPolicyEvent")
+    path('editPolictEvent', views.editPolicyEvent.as_view(), name="editPolicyEvent"),
+    path('viewPolicies', views.ViewPolicies.as_view(), name="viewPolicies"),
 ]

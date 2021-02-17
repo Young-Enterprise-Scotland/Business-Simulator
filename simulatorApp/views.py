@@ -1008,7 +1008,13 @@ class viewMarketEvents(View):
         if(request.POST.get("addEvent")):
 
             # Creates a market event object
-            MarketEvent.objects.create(simulator= Simulator.objects.get(id=1))
+            simulators = Simulator.objects.all()
+            if(len(simulators)==0):
+                notify['title'] = "No simulators exist"
+                notify['type'] = 'error' 
+                return self.get(request, notify=notify)
+
+            MarketEvent.objects.create(simulator=simulators[0])
 
             notify['title'] = "Event Added"
             notify['type'] = 'success'
@@ -1031,7 +1037,6 @@ class viewMarketEvents(View):
             notify['type'] = 'success'            
                         
         return self.get(request, notify=notify)
-
 
 class editMarketEvent(View):
     def get(self, request, **kwargs):
@@ -1227,4 +1232,64 @@ class editPolicyEvent(View):
             notify['title'] = "Event Updated"
             notify['type'] = 'success'
             
+        return self.get(request, notify=notify)
+
+class ViewPolicies(View):
+    def get(self, request, **kwargs):
+        context_dict = {}
+
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        
+        # check user has the correct view permission
+        if( not request.user.has_perm("simulatorApp.is_yes_staff")):
+            return redirect(reverse('simulatorApp:index'))
+
+        # Pass on any notification message to sweetalert plugin
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+        
+        context_dict['policies'] = Policy.objects.all()
+        return render(request, 'viewPolicies.html', context=context_dict)
+
+    def post(self, request):
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+        
+        # check user has the correct view permission
+        if( not request.user.has_perm("simulatorApp.is_yes_staff")):
+            return redirect(reverse('simulatorApp:index'))
+
+        notify = {}
+        id = request.POST.get('policy_id')
+        if not id:
+            notify['class'] = "error"
+            notify['msg'] = "No policy provided" 
+            return self.get(request, notify=notify)
+        
+        policies = Policy.objects.filter(id=id)
+        if len(policies) != 1:
+            notify['class'] = "error"
+            notify['msg'] = "Policy does not exist" 
+            return self.get(request, notify=notify)
+        policy = policies[0]
+
+        policy.low_label = request.POST.get("low_label",policy.low_label)
+        policy.low_cost = request.POST.get("low_cost", policy.low_cost)
+        policy.low_customer = request.POST.get("low_customer", policy.low_customer)
+        policy.low_sales = request.POST.get("low_sales", policy.low_sales)
+
+        policy.med_label = request.POST.get("med_label",policy.med_label)
+        policy.med_cost =  request.POST.get("med_cost", policy.med_cost)
+        policy.med_customer = request.POST.get("med_customer", policy.med_customer)
+        policy.med_sales = request.POST.get("med_sales", policy.med_sales)
+
+        policy.high_label = request.POST.get("high_label",policy.high_label)
+        policy.high_cost = request.POST.get("high_cost", policy.high_cost)
+        policy.high_customer = request.POST.get("high_customer", policy.high_customer)
+        policy.high_sales = request.POST.get("high_sales", policy.high_sales)
+
+        policy.save()
+        notify['type'] = "success"
+        notify['title'] = policy.name+" updated"
         return self.get(request, notify=notify)

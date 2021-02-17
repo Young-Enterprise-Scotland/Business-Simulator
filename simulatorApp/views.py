@@ -677,7 +677,7 @@ class GameSettings(View):
             print("start ",sims[0].start)
             context_dict['simulator']=sims
             context_dict['start'] = sims[0].start.strftime("%Y-%m-%dT%I:%M:%S")
-            print(sims[0].start.strftime("%Y-%m-%dT%I:%M:%S"))
+      
             context_dict['end'] = sims[0].end.strftime("%Y-%m-%dT%I:%M:%S")
             context_dict['lengthOfTradingDay'] = sims[0].lengthOfTradingDay
 
@@ -685,6 +685,8 @@ class GameSettings(View):
             context_dict['image'] = sims[0].image
             context_dict['maxPrice'] = sims[0].maxPrice
             context_dict['minPrice'] = sims[0].minPrice
+            context_dict['priceBoundary1'] = sims[0].priceBoundary1
+            context_dict['priceBoundary2'] = sims[0].priceBoundary2
             context_dict['marketOpen'] = sims[0].marketOpen
         return render(request, 'maps.html', context=context_dict)
         
@@ -713,10 +715,12 @@ class GameSettings(View):
             end = request.POST.get('end')
             days = request.POST.get('days')
             time = request.POST.get('time')
-        
+            image = request.POST.get('image')
             productName = request.POST.get('productName')
             maxPrice = request.POST.get('maxPrice')
             minPrice = request.POST.get('minPrice')
+            priceBoundary1 = request.POST.get('priceBoundary1')
+            priceBoundary2 = request.POST.get('priceBoundary2')
             marketOpen = request.POST.get('marketOpen')
             if marketOpen == None:
                 marketOpen = False
@@ -738,8 +742,11 @@ class GameSettings(View):
                 simulation.end=end_t
                 simulation.lengthOfTradingDay=length
                 simulation.productName=productName
+                simulation.image = image
                 simulation.maxPrice=maxPrice
                 simulation.minPrice=minPrice
+                simulation.priceBoundary1 = priceBoundary1
+                simulation.priceBoundary2 = priceBoundary2
                 simulation.marketOpen=marketOpen
                 
                 simulation.clean()
@@ -753,8 +760,11 @@ class GameSettings(View):
                 simulation.end=end_t
                 simulation.lengthOfTradingDay=length
                 simulation.productName=productName
+                simulation.image = image
                 simulation.maxPrice=maxPrice
                 simulation.minPrice=minPrice
+                simulation.priceBoundary1 = priceBoundary1
+                simulation.priceBoundary2 = priceBoundary2
                 simulation.marketOpen=marketOpen
                 
                 simulation.save()

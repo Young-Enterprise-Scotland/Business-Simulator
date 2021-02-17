@@ -69,8 +69,8 @@
                       <div class="row">
                         <div class="col-lg-4">
                           <div class="form-group">
-                            <label class="form-control-label" for="prodImage">Image</label>
-                            <input type="image" id="image" name="prodImage" class="form-control">
+                            <label class="form-control-label" for="image">Image</label>
+                            <input type="image" id="image" name="image" class="form-control">
                           </div>
                         </div>
                       </div>
@@ -78,7 +78,7 @@
                         <div class="col-lg-4">
                           <div class="form-group">
                             <label class="form-control-label" for="input_price">Max Price</label>
-                            <input type="number" step="0.0001" id="maxPrice" name="maxPrice" required class="form-control" value="{{maxPrice}}">
+                            <input type="number" step="0.0001" id="maxPrice" name="maxPrice" required  class="form-control" value="{{maxPrice}}">
                           </div>
                         </div>
                       </div>
@@ -86,7 +86,23 @@
                         <div class="col-lg-4">
                           <div class="form-group">
                             <label class="form-control-label" for="input_price">Min Price</label>
-                            <input type="number" step="0.0001" id="minPrice" name="minPrice" required class="form-control" value="{{minPrice}}">
+                            <input type="number" step="0.0001" id="minPrice" name="minPrice" required  class="form-control" value="{{minPrice}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-price">Price Boundary 1</label>
+                            <input type="number" step="0.0001" id="priceBoundary1" name="priceBoundary1" required  class="form-control" value="{{priceBoundary1}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-price">Price Boundary 2</label>
+                            <input type="number" step="0.0001" id="priceBoundary2" name="priceBoundary2" required  class="form-control" value="{{priceBoundary2}}">
                           </div>
                         </div>
                       </div>
@@ -136,6 +152,7 @@
           },
         end:{
           required:true,
+          min:$('#start').val(),
           },
         
         lengthOfTradingDay:{
@@ -146,21 +163,30 @@
         },
         maxPrice:{
           required:true,
+          min:$('#priceBoundary2').val(),
         },
         minPrice:{
           required:true,
-        }
-        
-        
+          max:$('#priceBoundary1').val(),
+        },
+        priceBoundary1:{
+          required:true,
+          min:$("#minPrice").val(),
+          max:$("#priceBoundary2").val(),
+        },
+        priceBoundary2:{
+          required:true,
+          min:$("#priceBoundary1").val(),
+          max:$('#maxPrice').val(),
         },
 
         submitHandler: function(form) {
           form.submit();
         }
-      }
-    );
+        }
+      });
 
-    document.getElementById("start").value = parseFloat(document.getElementById("start").value).toFixed(2);
+    //document.getElementById("start").value = parseFloat(document.getElementById("start").value).toFixed(2);
 
   });
 

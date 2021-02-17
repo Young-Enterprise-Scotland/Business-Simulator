@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.views import View
 from .models import Strategy, YES, School, Team, PolicyStrategy, Price, Simulator
 from datetime import datetime, timedelta
+#from .globals import secondsToDHMS
 
 # Create your views here.
 
@@ -672,15 +673,17 @@ class GameSettings(View):
             context_dict['notify'] = kwargs['notify']
         
         sims = Simulator.objects.all()
-        print("SIMS:", sims)
         if len(sims) >0:
-            print("start ",sims[0].start)
             context_dict['simulator']=sims
             context_dict['start'] = sims[0].start.strftime("%Y-%m-%dT%I:%M:%S")
       
             context_dict['end'] = sims[0].end.strftime("%Y-%m-%dT%I:%M:%S")
             context_dict['lengthOfTradingDay'] = sims[0].lengthOfTradingDay
-
+            # Show days and time (hours,minutes,seconds)
+            #length = simulation.lengthOfTradingDay.total_seconds()
+            #(days, hours, minutes, seconds,) = secondsToDHMS(length)
+            #context_dict['days'] = days
+            #context_dict['time'] = (hours,minutes,seconds)
             context_dict['productName'] = sims[0].productName
             context_dict['image'] = sims[0].image
             context_dict['maxPrice'] = sims[0].maxPrice
@@ -688,7 +691,7 @@ class GameSettings(View):
             context_dict['priceBoundary1'] = sims[0].priceBoundary1
             context_dict['priceBoundary2'] = sims[0].priceBoundary2
             context_dict['marketOpen'] = sims[0].marketOpen
-        return render(request, 'maps.html', context=context_dict)
+        return render(request, 'gameSettings.html', context=context_dict)
         
     
     
@@ -704,8 +707,6 @@ class GameSettings(View):
             return redirect(reverse('simulatorApp:index'))
 
         notify = {}
-        print("get: ",request.GET)
-        print("post: ",request.POST)
 
         # if user has requested to add a market
         if(request.POST.get("add_market")):
@@ -734,11 +735,38 @@ class GameSettings(View):
             ss = str(time)
             length = parse_duration(s+" "+ss)
             
+            # Check values are in the correct ranges
+            
+            if minPrice > maxPrice:
+                notify['title'] = "Minimum price has to be lower than the maximum price "
+                notify['type'] = 'warning'
+                return self.get(request, notify=notify)
+
+            if priceBoundary1 > priceBoundary2:
+                notify['title'] ="Price boundary 1 has to be lower than price boundary 2"
+                notify['type'] = 'warning'
+                return self.get(request, notify=notify)
+                
+            if minPrice > priceBoundary1 or minPrice > priceBoundary2:
+                notify['title'] ="Price boundaries must to be larger than minimum price"
+                notify['type'] = 'warning'
+                return self.get(request, notify=notify)
+            if maxPrice < priceBoundary2 or maxPrice < priceBoundary1:
+                notify['title'] = "Price boundaries must to be smaller than maximum price"
+                notify['type'] = 'warning'
+                return self.get(request, notify=notify)
+            
+            if end_t < (start_t + length):
+                notify['title'] = "Overlapping dates "
+                notify['type'] = 'warning'
+                return self.get(request, notify=notify)
+
             # create new Simulator
            
             sim = Simulator.objects.all()
             if len(sim) ==0:
-                simulation = Simulator.objects.create(start=start_t)
+                simulation = Simulator()
+                simulation.start= start_t
                 simulation.end=end_t
                 simulation.lengthOfTradingDay=length
                 simulation.productName=productName
@@ -749,7 +777,7 @@ class GameSettings(View):
                 simulation.priceBoundary2 = priceBoundary2
                 simulation.marketOpen=marketOpen
                 
-                simulation.clean()
+                
                 simulation.save()
                 notify['title'] = "Simulator created"
                 notify['type'] = 'success'
@@ -771,41 +799,4 @@ class GameSettings(View):
                 notify['title'] = "Simulator updated"
                 notify['type'] = 'success'
                 return self.get(request, notify=notify)
-                """
-            if not created:
-                simulation.productName=productName
-                simulation.start=start_t
-                simulation.end=end_t
-                simulation.lengthOfTradingDay=length
-                simulation.maxPrice=maxPrice
-                simulation.minPrice=minPrice
-                simulation.marketOpen=marketOpen
-                
-                try:
-                    simulation.clean()
-                except Exception:
-                    redirect(reverse('simulatorApp:gameSettings'))
-                    
-                simulation.save()
-                notify['title'] = "Simulator updated"
-                notify['type'] = 'success'
-                return self.get(request, notify=notify)
             
-            simulation.productName=productName
-            simulation.start=start_t
-            simulation.end=end_t
-            simulation.lengthOfTradingDay=length
-            simulation.maxPrice=maxPrice
-            simulation.minPrice=minPrice
-            simulation.marketOpen=marketOpen
-            try:
-                simulation.clean()
-            except Exception:
-                redirect(reverse('simulatorApp:gameSettings'))
-            
-            simulation.save()
-
-            notify['title'] = "Simulator created"
-            notify['type'] = 'success'
-
-        return self.get(request, notify=notify)"""

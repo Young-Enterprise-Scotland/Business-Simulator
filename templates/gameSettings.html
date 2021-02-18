@@ -139,9 +139,31 @@
                         </div>
                       </div>
                       <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="startQuizUrl">Start Quiz url</label>
+                            <input type="url" id="startQuizUrl" name="startQuizUrl" required class="form-control" value="{{startQuizUrl}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-4">
+                          <div class="form-group">
+                            <label class="form-control-label" for="endQuizUrl">End Quiz url</label>
+                            <input type="url" id="endQuizUrl" name="endQuizUrl" required class="form-control" value="{{endQuizUrl}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
                         <div class="col-lg-12">
                           <div class="form-group">
                             <button type="submit" class="btn btn-primary" name="add_market" value="true">Save</button>
+                          
+                          </div>
+                        </div>
+                        <div class="col-lg-12">
+                          <div class="form-group">
+                            <button type="submit" class="btn btn-danger" name="delete_market" onclick="clicked(event)" value="true">Delete</button>
                           </div>
                         </div>
                       </div>
@@ -229,6 +251,11 @@
     });
   });
 
+  function clicked(e) {
+    if (!confirm('By pressing OK the simulator will be deleted, alongside all of its data.')){
+      e.preventDefault();
+    }
+  }
 
 </script>{% endblock javascripts %}
 

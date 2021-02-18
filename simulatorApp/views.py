@@ -853,6 +853,8 @@ class GameSettings(View):
             context_dict['minPrice'] = sims[0].minPrice
             context_dict['priceBoundary1'] = sims[0].priceBoundary1
             context_dict['priceBoundary2'] = sims[0].priceBoundary2
+            context_dict['startQuizUrl'] = sims[0].startQuizUrl
+            context_dict['endQuizUrl'] = sims[0].endQuizUrl
             context_dict['marketOpen'] = sims[0].marketOpen
         return render(request, 'gameSettings.html', context=context_dict)
         
@@ -871,6 +873,19 @@ class GameSettings(View):
 
         notify = {}
 
+        # if user requested to delete the simulation
+        if (request.POST.get("delete_market")):
+            simulators = Simulator.objects.all()
+            if len(simulators)==0:
+                notify['title'] = "No simulator to delete"
+                notify['type'] = 'error'
+                return self.get(request, notify=notify)
+            else:
+                simulators.delete()
+                notify['title'] = "Simulator deleted"
+                notify['type'] = 'success'
+                return self.get(request, notify=notify)
+
          # if user has requested to add a simulation
         if(request.POST.get("add_market")):
             
@@ -888,7 +903,8 @@ class GameSettings(View):
             priceBoundary1 = request.POST.get('priceBoundary1')
             priceBoundary2 = request.POST.get('priceBoundary2')
             marketOpen = request.POST.get('marketOpen')
-
+            startQuizUrl = request.POST.get('startQuizUrl')
+            endQuizUrl = request.POST.get('endQuizUrl')
             if marketOpen == None:
                 marketOpen = False
             
@@ -942,7 +958,8 @@ class GameSettings(View):
                 simulation.priceBoundary1 = priceBoundary1
                 simulation.priceBoundary2 = priceBoundary2
                 simulation.marketOpen=marketOpen
-                
+                simulation.startQuizUrl = startQuizUrl
+                simulation.endQuizUrl = endQuizUrl
                 simulation.save()
                 notify['title'] = "Simulator created"
                 notify['type'] = 'success'
@@ -959,7 +976,8 @@ class GameSettings(View):
                 simulation.priceBoundary1 = priceBoundary1
                 simulation.priceBoundary2 = priceBoundary2
                 simulation.marketOpen=marketOpen
-                
+                simulation.startQuizUrl = startQuizUrl
+                simulation.endQuizUrl = endQuizUrl
                 simulation.save()
                 notify['title'] = "Simulator updated"
                 notify['type'] = 'success'

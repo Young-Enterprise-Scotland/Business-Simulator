@@ -82,6 +82,13 @@ class Index(View):
         
         # load any fullscreen notifications for the user
         context_dict['fullscreen_popup'] = get_popup(request)
+
+        sims = Simulator.objects.all()
+        if len(sims)>0:
+            context_dict['refresh_rate'] = sims[0].lengthOfTradingDay.total_seconds() * 1000
+        else:
+            context_dict['refresh_rate'] = 60000*5
+
         return render(request, 'index.html', context=context_dict)
 
     def post(self,request):
@@ -1270,7 +1277,7 @@ class ViewPolicies(View):
         if"notify" in kwargs:
             context_dict['notify'] = kwargs['notify']
         
-        context_dict['policies'] = Policy.objects.all()
+        context_dict['policies'] = Policy.objects.all().order_by('-id')
         return render(request, 'viewPolicies.html', context=context_dict)
 
     def post(self, request):

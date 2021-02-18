@@ -164,13 +164,13 @@ class Login(View):
             #password=form.cleaned_data.get('password')
             
             
-            user=authenticate(username=request.POST.get("username","").strip(), password=request.POST.get("password","").strip())
+            user=authenticate(username=request.POST.get("username","").strip().lower(), password=request.POST.get("password","").strip())
             if user is not None:
                 login(request, user)
                 # messages.info(request, f"You are now logged in as {username}")
                 return redirect(reverse('simulatorApp:index'))
             else:
-                print("User login failed")
+                
                 return redirect(reverse('simulatorApp:login'))
                 # messages.error(request, "Invalid username or password.")
         else:
@@ -224,7 +224,6 @@ class YesProfile(View):
         
         # check user has the correct view permission
         if(not request.user.has_perm("simulatorApp.is_yes_staff")):
-            print("User does not have permission")
             return redirect(reverse('simulatorApp:index'))
 
         # retrieve the user account from the GET request
@@ -685,7 +684,6 @@ class ViewSchools(View):
                 resp['msg'] = "All associated school accounts and their data has also been deleted"
                 resp['title'] = 'School Deleted'
             except Exception as e:
-                print(e)
                 # school object has already been deleted
                 resp['class'] = 'error'
                 resp['msg'] = "School has already been deleted"
@@ -853,7 +851,6 @@ class GameSettings(View):
             
             context_dict['days'] = days
             context_dict['time'] = f"{GameSettings.format_timedelta(hours)}:{GameSettings.format_timedelta(minutes)}:{GameSettings.format_timedelta(seconds)}"
-            print(context_dict['time'])
             context_dict['productName'] = sims[0].productName
             context_dict['image'] = sims[0].image
             context_dict['maxPrice'] = sims[0].maxPrice

@@ -917,23 +917,29 @@ class GameSettings(View):
             ss = str(time)
             length = parse_duration(s+" "+ss)
             
-            # Check values are in the correct ranges
-            
-            if minPrice > maxPrice:
-                notify['title'] = "Minimum price has to be lower than the maximum price "
+            # Change from string to decimal
+            maxPrice=Decimal(maxPrice)
+            minPrice=Decimal(minPrice)
+            priceBoundary1=Decimal(priceBoundary1)
+            priceBoundary2=Decimal(priceBoundary2)
+           
+           # Check values are in the correct ranges
+            if (maxPrice < minPrice):
+                notify['title'] = "Minimum price has to be lower than the maximum price"
                 notify['type'] = 'warning'
                 return self.get(request, notify=notify)
 
-            if priceBoundary1 > priceBoundary2:
+            if (priceBoundary1 > priceBoundary2):
                 notify['title'] ="Price boundary 1 has to be lower than price boundary 2"
                 notify['type'] = 'warning'
                 return self.get(request, notify=notify)
                 
-            if minPrice > priceBoundary1 or minPrice > priceBoundary2:
-                notify['title'] ="Price boundaries must to be larger than minimum price"
+            if (minPrice > priceBoundary1) or (minPrice > priceBoundary2):
+                notify['title'] ="Minimum price has to be lower than the price boundaries"
                 notify['type'] = 'warning'
                 return self.get(request, notify=notify)
-            if maxPrice < priceBoundary2 or maxPrice < priceBoundary1:
+
+            if (maxPrice < priceBoundary1) or (maxPrice < priceBoundary2):
                 notify['title'] = "Price boundaries must to be smaller than maximum price"
                 notify['type'] = 'warning'
                 return self.get(request, notify=notify)

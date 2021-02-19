@@ -213,3 +213,6 @@ SASS_PROCESSOR_ROOT = STATIC_ROOT #os.path.join(, 'assets')
 SASS_OUTPUT_STYLE = 'compressed'
 
 django_heroku.settings(locals())
+
+#free up db connections after use
+DATABASES['default']['CONN_MAX_AGE'] = 0

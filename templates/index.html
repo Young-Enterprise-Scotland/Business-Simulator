@@ -401,7 +401,7 @@
   </script>
   {% endif %}
   <script>
-    // refresh page every 5 minutes to check for market events
-    setTimeout("location.reload(true);", 60000*5)
+    // refresh page every lengthoftradingday to check for market events
+    setInterval("location.reload(true);", {{refresh_rate}});
   </script>
 {% endblock javascripts %}

@@ -1218,7 +1218,7 @@ class editMarketEvent(View):
                 notify['type'] = 'success'
             else:
                 notify['title'] = "Time Invalid"
-                notify['type'] = 'fail'
+                notify['type'] = 'error'
 
         # If user has requested to add policy
         if(request.POST.get("addPolicy")):
@@ -1230,7 +1230,7 @@ class editMarketEvent(View):
             # If the policy does not already exist, create it
             if PolicyEvent.objects.filter(market_event=event, policy=pol).exists():
                 notify['title'] = "Policy Already Exists"
-                notify['type'] = 'fail'
+                notify['type'] = 'error'
             else:
                 PolicyEvent.objects.create(market_event=event, policy = pol)
 
@@ -1364,14 +1364,14 @@ class ViewPolicies(View):
         notify = {}
         id = request.POST.get('policy_id')
         if not id:
-            notify['class'] = "error"
-            notify['msg'] = "No policy provided" 
+            notify['type'] = "error"
+            notify['title'] = "No policy provided" 
             return self.get(request, notify=notify)
         
         policies = Policy.objects.filter(id=id)
         if len(policies) != 1:
-            notify['class'] = "error"
-            notify['msg'] = "Policy does not exist" 
+            notify['type'] = "error"
+            notify['title'] = "Policy does not exist" 
             return self.get(request, notify=notify)
         policy = policies[0]
 

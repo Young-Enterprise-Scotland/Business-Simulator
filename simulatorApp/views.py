@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone 
 from django.utils.dateparse import parse_duration, parse_datetime
 from django.utils.timezone import make_aware
+from django.db import connections
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.urls import reverse
@@ -48,8 +49,10 @@ class Index(View):
 
     def get(self,request):
 
-        context_dict = {}
+        # attempt to close stale connections
+        conections.close_all()
 
+        context_dict = {}
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
@@ -92,8 +95,8 @@ class Index(View):
         return render(request, 'index.html', context=context_dict)
 
     def post(self,request):
+        conections.close_all()
         team=None
-
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
@@ -121,22 +124,28 @@ class Logout(View):
 
         logout(request)
         # Take the user back to the homepage.
+
+        #attempt to close stale connections
+        conections.close_all()
+
         return redirect(reverse('simulatorApp:login'))
 
     def post(self, request):
-
+        #attempt to close stale connections
+        conections.close_all()
         if not request.user.is_authenticated:
             return redirect(reverse('simulatorApp:login'))
 
         logout(request)
         # Take the user back to the homepage.
+
+        conections.close_all()
         return redirect(reverse('simulatorApp:login'))
 
 class Login(View):
 
     
     def get(self,request):
-
         if request.user.is_authenticated:
             return redirect(reverse('simulatorApp:index'))
 
@@ -183,7 +192,7 @@ class YesProfile(View):
 
     
     def get(self, request, **kwargs):
-        
+        conections.close_all()
         context_dict = {}
  
         # check user is logged in
@@ -219,6 +228,7 @@ class YesProfile(View):
 
 
     def post(self, request):
+        conections.close_all()
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -262,12 +272,13 @@ class YesProfile(View):
             user_profile.user.save()
             user_profile.save()
         
+        conections.close_all()
         return self.get(request, notify=notify)
 
 class SchoolProfile(View):
 
     def get(self, request, **kwargs):
-
+        conections.close_all()
         context_dict = {}
  
         # check user is logged in
@@ -307,7 +318,7 @@ class SchoolProfile(View):
         return render(request, 'accounts/school_profile.html', context=context_dict)
 
     def post(self, request):
-
+        conections.close_all()
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -354,13 +365,14 @@ class SchoolProfile(View):
 
             notify['title'] = "Password Reset"
             notify['type'] = 'success'
-            
+        
+        conections.close_all()
         return self.get(request, notify=notify)
         
 class TeamProfile(View):
      
      def get(self, request, **kwargs):
-        
+        conections.close_all()
         context_dict = {}
  
         # check user is logged in
@@ -398,10 +410,11 @@ class TeamProfile(View):
             context_dict['notify'] = kwargs['notify']
         context_dict['user_profile'] = user_profile
 
+        conections.close_all()
         return render(request, 'accounts/team_profile.html', context=context_dict)
 
      def post(self, request):
-        
+        conections.close_all()
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
@@ -448,12 +461,14 @@ class TeamProfile(View):
 
             notify['title'] = "Password Reset"
             notify['type'] = 'success'
-            
+        
+        conections.close_all()
         return self.get(request, notify=notify)
 
 class ViewTeams(View):
 
     def get(self, request, **kwargs):
+        conections.close_all()
         context_dict = {}
         teams = None
         schools = None
@@ -485,10 +500,12 @@ class ViewTeams(View):
                 teams[i].leaderboard_position = "Not Assigned"
         context_dict['schools'] = schools
 
+        conections.close_all()
         return render(request, 'viewTeams.html', context=context_dict)
 
     
     def post(self, request):
+        conections.close_all()
         notify = {}
 
         # check permissions
@@ -586,11 +603,14 @@ class ViewTeams(View):
                 resp['msg'] = "Team has already been deleted"
                 resp['title'] = 'Uh oh'
             return JsonResponse(resp)
+        
+        conections.close_all()
         return self.get(request, notify=notify)
     
 class ViewSchools(View):
 
     def get(self, request, **kwargs):
+        conections.close_all()
         context_dict = {}
         schools = None
 
@@ -608,11 +628,12 @@ class ViewSchools(View):
             context_dict['notify'] = kwargs['notify']
 
         context_dict['schools'] = schools 
+        conections.close_all()
         return render(request, 'viewSchools.html', context=context_dict)
 
     def post(self, request, **kwargs):
         notify = {}
-
+        conections.close_all()
         # check permissions
         if not request.user.is_authenticated:
             return redirect(reverse('simulatorApp:login'))
@@ -637,6 +658,8 @@ class ViewSchools(View):
             if not created:
                 notify['title'] = "Username already exists, no new account was created"
                 notify['type'] = 'warning'
+
+                conections.close_all()
                 return self.get(request,notify=notify)
             
             user.set_password(password)
@@ -653,6 +676,8 @@ class ViewSchools(View):
                 # delete user we just setup as 
                 # no new team to assign to
                 User.objects.get(id=user.id).delete()
+
+                conections.close_all()
                 return self.get(request,notify=notify)
             
             notify['title'] = "School account successfully created"
@@ -694,6 +719,7 @@ class ViewSchools(View):
 
 class ViewLeaderboard(View):
     def get(self, request, **kwargs):
+        conections.close_all()
         context_dict = {}
         # check user is logged in
         if(not request.user.is_authenticated):
@@ -716,11 +742,13 @@ class ViewLeaderboard(View):
                 context_dict['teams'] = teams.order_by('leaderboard_position')[:10]
         
         context_dict['teams_global'] = Team.objects.all().order_by("leaderboard_position")
+        conections.close_all()
         return render(request, 'viewLeaderboard.html', context=context_dict)        
         
 class EditStrategy(View):
     
     def get(self, request, **kwargs):
+        conections.close_all()
         context_dict = {}
  
         # check user is logged in
@@ -732,6 +760,7 @@ class EditStrategy(View):
             request.user.has_perm("simulatorApp.is_team")
             )
         ):
+            conections.close_all()
             return redirect(reverse('simulatorApp:index'))
 
         # retrieve the user account from the GET request
@@ -739,6 +768,7 @@ class EditStrategy(View):
 
         # check profile_id was passed in or return to index page
         if not profile_id:
+            conections.close_all()
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the profile information
@@ -746,7 +776,7 @@ class EditStrategy(View):
             user_profile = Team.objects.get(user=user)
         except Exception as e:
             # No profile exists for this id return to index
-            
+            conections.close_all()
             return redirect(reverse('simulatorApp:index'))
 
         # Pass on any notification message to sweetalert plugin
@@ -762,9 +792,12 @@ class EditStrategy(View):
         context_dict['policies'] = policies
         context_dict['user_profile'] = user_profile
         context_dict['can_edit'] = True
+
+        conections.close_all()
         return render(request, 'editStrategy.html', context=context_dict)
 
     def post(self, request, **kwargs):
+        conections.close_all()
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -808,7 +841,7 @@ class EditStrategy(View):
 
             notify['title'] = "Policy Updated"
             notify['type'] = 'success'
-            
+        conections.close_all()
         return self.get(request, notify=notify)
 
 
@@ -821,7 +854,7 @@ class GameSettings(View):
         return str(unit)
 
     def get(self, request, **kwargs):
-
+        conections.close_all()
         context_dict = {}
         
          # check user is logged in
@@ -860,11 +893,13 @@ class GameSettings(View):
             context_dict['startQuizUrl'] = sims[0].startQuizUrl
             context_dict['endQuizUrl'] = sims[0].endQuizUrl
             context_dict['marketOpen'] = sims[0].marketOpen
+        conections.close_all()
         return render(request, 'gameSettings.html', context=context_dict)
         
     
     
     def post(self, request, **kwargs):
+        conections.close_all()
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -883,11 +918,14 @@ class GameSettings(View):
             if len(simulators)==0:
                 notify['title'] = "No simulator to delete"
                 notify['type'] = 'error'
+
+                conections.close_all()
                 return self.get(request, notify=notify)
             else:
                 simulators.delete()
                 notify['title'] = "Simulator deleted"
                 notify['type'] = 'success'
+                conections.close_all()
                 return self.get(request, notify=notify)
 
          # if user has requested to add a simulation
@@ -951,6 +989,8 @@ class GameSettings(View):
             if end_t < (start_t + length):
                 notify['title'] = "Overlapping dates "
                 notify['type'] = 'warning'
+
+                conections.close_all()
                 return self.get(request, notify=notify)
 
             # create new Simulator
@@ -973,6 +1013,8 @@ class GameSettings(View):
                 simulation.save()
                 notify['title'] = "Simulator created"
                 notify['type'] = 'success'
+
+                conections.close_all()
                 return self.get(request, notify=notify)
             else:
                 simulation = sim[0]
@@ -991,10 +1033,14 @@ class GameSettings(View):
                 simulation.save()
                 notify['title'] = "Simulator updated"
                 notify['type'] = 'success'
+
+        conections.close_all()
         return self.get(request, notify=notify)
         
 class viewMarketEvents(View):
     def get(self, request, **kwargs):
+        conections.close_all()
+
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
@@ -1015,9 +1061,11 @@ class viewMarketEvents(View):
         # Retrieve all market event objects        
         context_dict["events"] = MarketEvent.objects.all()
 
+        conections.close_all()
         return render(request, 'viewMarketEvents.html', context=context_dict)
 
     def post(self, request, **kwargs):
+        conections.close_all()
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
@@ -1066,11 +1114,14 @@ class viewMarketEvents(View):
 
             notify['title'] = "Event Deleted"
             notify['type'] = 'success'            
-                        
+
+        conections.close_all()           
         return self.get(request, notify=notify)
 
 class editMarketEvent(View):
     def get(self, request, **kwargs):
+        conections.close_all()
+
         context_dict = {}
         
         if(not (
@@ -1112,9 +1163,13 @@ class editMarketEvent(View):
         context_dict['dateto'] = dateto
         context_dict['timeto'] = timeto[:5]
         context_dict['can_edit'] = True
+
+        conections.close_all()
         return render(request, 'editMarketEvent.html', context=context_dict)
 
     def post(self, request, **kwargs):
+        conections.close_all()
+
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
@@ -1188,11 +1243,14 @@ class editMarketEvent(View):
             policy.delete()
             notify['title'] = "Event Policy Deleted"
             notify['type'] = 'success'
-            
+        
+        conections.close_all()
         return self.get(request, notify=notify)
 
 class editPolicyEvent(View):
     def get(self, request, **kwargs):
+        conections.close_all()
+
         context_dict = {}
 
         # check user is logged in
@@ -1225,9 +1283,13 @@ class editPolicyEvent(View):
 
         context_dict['polObj'] = policy
         context_dict['can_edit'] = True
+
+        conections.close_all()
         return render(request, 'editPolicyEvent.html', context=context_dict)
 
     def post(self, request, **kwargs):
+        conections.close_all()
+
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
@@ -1262,11 +1324,14 @@ class editPolicyEvent(View):
             policy.save()
             notify['title'] = "Event Updated"
             notify['type'] = 'success'
-            
+        
+        conections.close_all()
         return self.get(request, notify=notify)
 
 class ViewPolicies(View):
     def get(self, request, **kwargs):
+        conections.close_all()
+
         context_dict = {}
 
         if(not request.user.is_authenticated):
@@ -1281,9 +1346,13 @@ class ViewPolicies(View):
             context_dict['notify'] = kwargs['notify']
         
         context_dict['policies'] = Policy.objects.all().order_by('-id')
+
+        conections.close_all()
         return render(request, 'viewPolicies.html', context=context_dict)
 
     def post(self, request):
+        conections.close_all()
+
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -1323,4 +1392,6 @@ class ViewPolicies(View):
         policy.save()
         notify['type'] = "success" 
         notify['title'] = policy.name+" updated"
+
+        conections.close_all()
         return self.get(request, notify=notify)

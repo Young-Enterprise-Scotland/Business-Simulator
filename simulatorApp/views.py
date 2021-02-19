@@ -159,6 +159,7 @@ class Login(View):
     
     def post(self, request):
 
+        notify = {}
         # Hi sid, LoginForm is not defined yet
         # so I have used old fashoned html way
         # until you get your crispy forms working

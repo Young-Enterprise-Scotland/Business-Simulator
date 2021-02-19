@@ -145,9 +145,13 @@ class Logout(View):
 class Login(View):
 
     
-    def get(self,request):
+    def get(self,request, **kwargs):
         if request.user.is_authenticated:
             return redirect(reverse('simulatorApp:index'))
+
+        # Pass on any notification message to sweetalert plugin
+        if "notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
 
         return render(request=request,
                         template_name="accounts/login.html",
@@ -179,6 +183,8 @@ class Login(View):
                 # messages.info(request, f"You are now logged in as {username}")
                 return redirect(reverse('simulatorApp:index'))
             else:
+                notify['title'] = "Incorrect username or password"
+                notify['type'] = 'warning'
                 
                 return redirect(reverse('simulatorApp:login'))
                 # messages.error(request, "Invalid username or password.")

@@ -921,6 +921,12 @@ class GameSettings(View):
             ss = str(time)
             length = parse_duration(s+" "+ss)
             
+            # Convet strings to decimal
+            minPrice=Decimal(minPrice)
+            maxPrice=Decimal(maxPrice)
+            priceBoundary1=Decimal(priceBoundary1)
+            priceBoundary2=Decimal(priceBoundary2)
+
             # Check values are in the correct ranges
             
             if minPrice > maxPrice:

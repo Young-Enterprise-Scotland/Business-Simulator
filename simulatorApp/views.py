@@ -1158,6 +1158,10 @@ class editMarketEvent(View):
             # No event exists for this id return to index
             return redirect(reverse('simulatorApp:index'))
 
+        # Pass on any notification message to sweetalert plugin
+        if "notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+        
         # Split date and time in order to display it on form
         datefrom, timefrom = str(event.valid_from).split(" ")
         dateto, timeto = str(event.valid_to).split(" ")

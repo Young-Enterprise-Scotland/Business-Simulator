@@ -843,7 +843,7 @@ class EditStrategy(View):
                 pol.save()
 
             # Update the price
-            simulators = Simulator.objects.all():
+            simulators = Simulator.objects.all()
             if len(simulators)==0:
                 return self.get(request) 
             

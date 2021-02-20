@@ -216,3 +216,8 @@ django_heroku.settings(locals())
 
 #free up db connections after use
 DATABASES['default']['CONN_MAX_AGE'] = 0
+try:
+    DATABASES['d19omnqd3p1tpc']['CONN_MAX_AGE'] = 0
+except Exception as e:
+    print("Unable to use db: d19omnqd3p1tpc")
+    print(e)

@@ -486,7 +486,7 @@ class MarketEvent(models.Model):
             job.run_date = self.valid_from
             job.save()
         else:
-            MarketEventCronJobs.objects.create(market_event=self, run_date=self.valid_from)  
+            MarketEventCronJobs.objects.create(market_event=self, run_date=self.valid_from, cronjobid=self.__str__())  
         
         return return_vals
 

@@ -30,7 +30,7 @@
                         <div class="col-lg-2">
                           <div class="form-group">
                             <label class="form-control-label" for="start">Start Date</label>
-                            <input type="text" id="start" name="start" class="form-control date" required value="{{start}}">
+                            <input type="date" id="start" name="start" class="form-control date" required value="{{start}}">
                           </div>
                         </div>
                         <div class="col-lg-2">
@@ -44,7 +44,7 @@
                         <div class="col-lg-2">
                           <div class="form-group">
                             <label class="form-control-label" for="end">End Date</label>
-                            <input type="text" id="end" name="end" class="form-control"  required value="{{end}}">
+                            <input type="date" id="end" name="end" class="form-control"  required value="{{end}}">
                           </div>
                         </div>
                         <div class="col-lg-2">
@@ -234,15 +234,15 @@
     // });
   });
 
-  $(function () {
-    $('#start').datepicker({
-      format:"dd-mm-yyyy"
-    });
+  // $(function () {
+  //   $('#start').datepicker({
+  //     format:"dd-mm-yyyy"
+  //   });
 
-    $('#end').datepicker({
-      format:"dd-mm-yyyy"
-    });
-  });
+  //   $('#end').datepicker({
+  //     format:"dd-mm-yyyy"
+  //   });
+  // });
 
   function clicked(e) {
     if (!confirm('By pressing OK the simulator will be deleted, alongside all of its data.')){

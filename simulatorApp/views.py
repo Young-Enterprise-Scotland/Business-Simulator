@@ -62,11 +62,13 @@ class Index(View):
             context_dict['school_obj'] = School.objects.get(user=request.user)
         elif request.user.has_perm('simulatorApp.is_team'):
             context_dict['team_obj'] = Team.objects.get(user=request.user)
+
             # MARKET_ATTRIBUTE_TYPES defines the attribute being displayed in graph.
             #get net profit data
             context_dict['attribute_data'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[6])
             context_dict['graph_title'] = MARKET_ATTRIBUTE_TYPES[6]
             context_dict['average_net_profit'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[6]).get_average_value()
+            print("Len1:",len(context_dict['attribute_data']),"Len2:", len(context_dict['average_net_profit']))
             #get market share data
             team_share = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[8])
             if len(team_share) > 0:
@@ -74,11 +76,17 @@ class Index(View):
             else:
                 context_dict['team_market_share'] = 0
             context_dict['other_market_share'] = 100 - context_dict['team_market_share']
+
             #get sales data 
             context_dict['attribute_data_small'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[4])
             context_dict['graph_title_small'] = MARKET_ATTRIBUTE_TYPES[4]
             context_dict['average_sales'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[4]).get_average_value()
-
+            context_dict['product_name'] = Simulator.objects.all()[0].productName
+            
+            if context_dict['team_obj'].leaderboard_position ==-1:
+                context_dict['team_obj'].leaderboard_position = "Not Assigned"
+            if context_dict['team_obj'].school_position ==-1:
+                context_dict['team_obj'].school_position = "Not Assigned"
 
         # display market events as 'news articles'
         context_dict['news_articles'] = MarketEvent.objects.filter(valid_from__lte=timezone.now()).order_by("-id")
@@ -146,6 +154,8 @@ class Login(View):
 
     
     def get(self,request, **kwargs):
+        context_dict = {}
+
         if request.user.is_authenticated:
             return redirect(reverse('simulatorApp:index'))
 
@@ -747,7 +757,13 @@ class ViewLeaderboard(View):
                 context_dict['teams'] = teams.order_by('leaderboard_position')
             else:
                 context_dict['teams'] = teams.order_by('leaderboard_position')[:10]
-        
+            
+            for team in context_dict['teams']:
+                if team.leaderboard_position ==-1:
+                    team.leaderboard_position = "Not Assigned"
+                if team.school_position == -1:
+                    team.school_position == "Not assigned"
+
         context_dict['teams_global'] = Team.objects.all().order_by("leaderboard_position")
        
         return render(request, 'viewLeaderboard.html', context=context_dict)        
@@ -794,6 +810,7 @@ class EditStrategy(View):
         price = Price.objects.get(team=user_profile)
         maxPrice = float(price.simulator.maxPrice)-0.01
 
+        context_dict['product_name'] = price.simulator.productName
         context_dict['maxPrice'] = maxPrice
         context_dict['price'] = price
         context_dict['policies'] = policies
@@ -891,11 +908,11 @@ class GameSettings(View):
         if len(sims) >0:
             context_dict['simulator']=sims
             context_dict['start'] = sims[0].start.strftime("%d-%m-%Y")
-            context_dict['start_time'] = sims[0].start.strftime("%I:%M")
+            context_dict['start_time'] = sims[0].start.strftime("%H:%M")
 
             context_dict['end'] = sims[0].end.strftime("%d-%m-%Y")
-            context_dict['end_time'] = sims[0].end.strftime("%I:%M")
-            
+            context_dict['end_time'] = sims[0].end.strftime("%H:%M")
+            print(context_dict['start_time'],context_dict['end_time'])
             # Show days and time (hours,minutes,seconds)
             length = sims[0].lengthOfTradingDay.total_seconds()
             (days, hours, minutes, seconds,) = secondsToDHMS(length)
@@ -913,9 +930,7 @@ class GameSettings(View):
             context_dict['marketOpen'] = sims[0].marketOpen
        
         return render(request, 'gameSettings.html', context=context_dict)
-        
-    
-    
+           
     def post(self, request, **kwargs):
        
         if(not request.user.is_authenticated):
@@ -969,8 +984,8 @@ class GameSettings(View):
                 marketOpen = False
             
             # Convert strings into datetime objects
-            start_dt = datetime.strptime(start+" "+start_time, '%d-%m-%Y %H:%M')
-            end_dt = datetime.strptime(end+" "+end_time,'%d-%m-%Y %H:%M')
+            start_dt = datetime.strptime(start+" "+start_time, '%Y-%m-%d %H:%M')
+            end_dt = datetime.strptime(end+" "+end_time,'%Y-%m-%d %H:%M')
             start_t = make_aware(start_dt)
             end_t = make_aware(end_dt)
             s = str(days)

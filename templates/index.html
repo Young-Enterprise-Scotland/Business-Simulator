@@ -9,12 +9,25 @@
 
     <!-- Header -->
     <div class="header bg-gradient-primary pb-8 pt-5 pt-md-8">
+      <span class="mask bg-gradient-default opacity-8"></span>
       <div class="container-fluid">
         <div class="header-body">
           <!-- Card stats -->
           <div class="row">
             {% if perms.simulatorApp.is_team  %}
-            <div class="col-xl-4 col-lg-6">
+            <div class="col-xl-8 col-lg-8">
+              <div class="card card-stats mb-4 mb-xl-0">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col text-center">
+                      <h1 class="card-title text-uppercase mb-0">{{team_obj.team_name}}</h1>
+                      <span class="h2 font-weight-bold mb-0">{{product_name}}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-2 col-lg-2 col-6">
               <div class="card card-stats mb-4 mb-xl-0">
                 <div class="card-body">
                   <div class="row">
@@ -40,7 +53,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-xl-4 col-lg-6">
+            <div class="col-xl-2 col-lg-2 col-6">
               <div class="card card-stats mb-4 mb-xl-0">
                 <div class="card-body">
                   <div class="row">
@@ -182,6 +195,7 @@
 {% block javascripts %}
   
 {% if perms.simulatorApp.is_team %}
+  
   <script>
     var x_data = []; 
     var y_data = [];
@@ -237,9 +251,13 @@
                         } else {
                           return '-£' + value*-1;
                         }
-                        
                       }
                   }
+              }],
+              xAxes:[{
+                ticks: {
+                  autoSkip: true,
+                }
               }]
           },
           legend: {
@@ -284,7 +302,7 @@
           legend: {
             display: true, 
             position: 'top',
-          },
+          }
       }
   });
   </script>
@@ -340,6 +358,13 @@
             text: '{{graph_title_small}}',
             fontSize: 16
           },
+          scales:{
+            xAxes:[{
+                ticks: {
+                  autoSkip: true,
+                }
+            }]
+          }
         }
     });
   </script>
@@ -402,6 +427,6 @@
   {% endif %}
   <script>
     // refresh page every lengthoftradingday to check for market events
-    setInterval("location.reload(true);", {{refresh_rate}});
+    setInterval("location.reload(true);", {{refresh_rate}}*100);
   </script>
 {% endblock javascripts %}

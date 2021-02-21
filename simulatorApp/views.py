@@ -848,7 +848,7 @@ class EditStrategy(View):
                 return self.get(request) 
             
             simulator = simulators[0]
-            price.price = request.POST.get("price",price.price)
+            price.price = Decimal(request.POST.get("price",str(price.price)))
             if price.price < simulator.minPrice:
                 notify['title'] = f"£{price.price} cannot be less than £{simulator.minPrice}"
                 notify['type'] = 'warning'

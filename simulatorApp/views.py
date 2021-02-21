@@ -848,6 +848,7 @@ class EditStrategy(View):
                 return self.get(request) 
             
             simulator = simulators[0]
+            price.price = request.POST.get("price",price.price)
             if price.price < simulator.minPrice:
                 notify['title'] = f"£{price.price} cannot be less than £{simulator.minPrice}"
                 notify['type'] = 'warning'
@@ -855,9 +856,10 @@ class EditStrategy(View):
                 notify['title'] = f"£{price.price} cannot be greater than £{simulator.minPrice}"
                 notify['type'] = 'warning'
             else:
+                notify['title'] = f"Strategy Updated"
+                notify['type'] = 'success'
                 price.save()
 
-       
         return self.get(request, notify=notify)
 
 

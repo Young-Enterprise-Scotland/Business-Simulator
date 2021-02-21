@@ -215,4 +215,4 @@ SASS_OUTPUT_STYLE = 'compressed'
 django_heroku.settings(locals())
 
 #free up db connections after use
-DATABASES['default'] = dj_database_url.config(max_conn_age=0, ssl_require=True)
+DATABASES['default'] = dj_database_url.config(conn_max_age=0, ssl_require=True)

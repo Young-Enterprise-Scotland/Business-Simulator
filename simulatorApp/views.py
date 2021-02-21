@@ -59,7 +59,9 @@ class Index(View):
         if request.user.is_superuser:
             return redirect(reverse('simulatorApp:logout'))
         if request.user.has_perm('simulatorApp.is_school'):
-            context_dict['school_obj'] = School.objects.get(user=request.user)
+            return redirect(reverse('simulatorApp:viewTeams'))
+        elif request.user.has_perm('simulatorApp.is_yes_staff'):
+            return redirect(reverse('simulatorApp:viewTeams'))
         elif request.user.has_perm('simulatorApp.is_team'):
             context_dict['team_obj'] = Team.objects.get(user=request.user)
 
@@ -907,10 +909,10 @@ class GameSettings(View):
         sims = Simulator.objects.all()
         if len(sims) >0:
             context_dict['simulator']=sims
-            context_dict['start'] = sims[0].start.strftime("%d-%m-%Y")
+            context_dict['start'] = sims[0].start.strftime("%Y-%m-%d")
             context_dict['start_time'] = sims[0].start.strftime("%H:%M")
 
-            context_dict['end'] = sims[0].end.strftime("%d-%m-%Y")
+            context_dict['end'] = sims[0].end.strftime("%Y-%m-%d")
             context_dict['end_time'] = sims[0].end.strftime("%H:%M")
             print(context_dict['start_time'],context_dict['end_time'])
             # Show days and time (hours,minutes,seconds)

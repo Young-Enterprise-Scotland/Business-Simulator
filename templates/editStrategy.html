@@ -107,9 +107,11 @@
               step="0.01"
               onchange="setTwoNumberDecimal"
               >
+	    <label class="form-control-label">Keep your price between £{{ price.simulator.minPrice|floatformat:2 }} and £{{ price.simulator.maxPrice|floatformat:2 }}</label>
         </div>
       </div>
-		</div>             
+		</div> 
+            
     <div class="row">
       <div class="col-lg-12">
         <div class="form-group">

@@ -50,7 +50,7 @@ class Index(View):
     def get(self,request):
 
         # attempt to close stale connections
-       
+        connections.close_all() 
 
         context_dict = {}
         # check user is logged in
@@ -105,7 +105,8 @@ class Index(View):
         return render(request, 'index.html', context=context_dict)
 
     def post(self,request):
-       
+        connections.close_all() 
+
         team=None
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
@@ -128,6 +129,7 @@ class Index(View):
 class Logout(View):
 
     def get(self,request):
+        connections.close_all() 
 
         if not request.user.is_authenticated:
             return redirect(reverse('simulatorApp:login'))
@@ -142,6 +144,7 @@ class Logout(View):
 
     def post(self, request):
         #attempt to close stale connections
+        connections.close_all() 
        
         if not request.user.is_authenticated:
             return redirect(reverse('simulatorApp:login'))
@@ -156,6 +159,7 @@ class Login(View):
 
     
     def get(self,request, **kwargs):
+        connections.close_all() 
         context_dict = {}
 
         if request.user.is_authenticated:
@@ -170,7 +174,7 @@ class Login(View):
                     )
     
     def post(self, request):
-
+        connections.close_all() 
         notify = {}
         # Hi sid, LoginForm is not defined yet
         # so I have used old fashoned html way
@@ -211,7 +215,7 @@ class YesProfile(View):
 
     
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
  
         # check user is logged in
@@ -247,7 +251,7 @@ class YesProfile(View):
 
 
     def post(self, request):
-       
+        connections.close_all() 
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -297,7 +301,7 @@ class YesProfile(View):
 class SchoolProfile(View):
 
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
  
         # check user is logged in
@@ -337,7 +341,7 @@ class SchoolProfile(View):
         return render(request, 'accounts/school_profile.html', context=context_dict)
 
     def post(self, request):
-       
+        connections.close_all() 
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -391,7 +395,7 @@ class SchoolProfile(View):
 class TeamProfile(View):
      
      def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
  
         # check user is logged in
@@ -433,7 +437,7 @@ class TeamProfile(View):
         return render(request, 'accounts/team_profile.html', context=context_dict)
 
      def post(self, request):
-       
+        connections.close_all() 
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
@@ -487,7 +491,8 @@ class TeamProfile(View):
 class ViewTeams(View):
 
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
+
         context_dict = {}
         teams = None
         schools = None
@@ -524,7 +529,7 @@ class ViewTeams(View):
 
     
     def post(self, request):
-       
+        connections.close_all() 
         notify = {}
 
         # check permissions
@@ -629,7 +634,7 @@ class ViewTeams(View):
 class ViewSchools(View):
 
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
         schools = None
 
@@ -651,6 +656,7 @@ class ViewSchools(View):
         return render(request, 'viewSchools.html', context=context_dict)
 
     def post(self, request, **kwargs):
+        connections.close_all() 
         notify = {}
        
         # check permissions
@@ -738,7 +744,7 @@ class ViewSchools(View):
 
 class ViewLeaderboard(View):
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
         # check user is logged in
         if(not request.user.is_authenticated):
@@ -773,7 +779,7 @@ class ViewLeaderboard(View):
 class EditStrategy(View):
     
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
  
         # check user is logged in
@@ -823,7 +829,7 @@ class EditStrategy(View):
         return render(request, 'editStrategy.html', context=context_dict)
 
     def post(self, request, **kwargs):
-       
+        connections.close_all() 
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -891,7 +897,7 @@ class GameSettings(View):
         return str(unit)
 
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
         
          # check user is logged in
@@ -1075,7 +1081,7 @@ class GameSettings(View):
         
 class viewMarketEvents(View):
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
 
         # check user is logged in
         if(not request.user.is_authenticated):
@@ -1156,7 +1162,7 @@ class viewMarketEvents(View):
 
 class editMarketEvent(View):
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
 
         context_dict = {}
         
@@ -1289,7 +1295,7 @@ class editMarketEvent(View):
 
 class editPolicyEvent(View):
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
 
         context_dict = {}
 
@@ -1370,8 +1376,7 @@ class editPolicyEvent(View):
 
 class ViewPolicies(View):
     def get(self, request, **kwargs):
-       
-
+        connections.close_all() 
         context_dict = {}
 
         if(not request.user.is_authenticated):

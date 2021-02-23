@@ -33,6 +33,7 @@
                     <th scope="col">School Position</th>
                     <th scope="col">Leaderboard Position</th>
                     <th scope="col">Edit Account</th>
+                    <th scope="col">View Performance</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -81,6 +82,9 @@
                                     </div>
                                   
                                 </div>
+                            </td>
+                            <td>
+                              <a href="{% url 'simulatorApp:viewTeamStats' %}?profile_id={{ team.user.id }}" class="btn btn-primary" role="button" aria-pressed="true">View</a>
                             </td>
                         </tr>
                    {% endfor %}

@@ -724,6 +724,61 @@ class ViewSchools(View):
 
         return self.get(request, notify=notify)
 
+class ViewTeamStats(View):
+    def get(self, request, **kwargs):
+        context_dict = {}
+
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+
+        # retrieve the user account from the GET request
+        profile_id = request.GET.get("profile_id",False)
+
+        # check profile_id was passed in or return to index page
+        if not profile_id:
+            return redirect(reverse('simulatorApp:index'))
+
+        try: # Try to retrieve the team profile information
+            user = User.objects.get(id=profile_id)
+            user_profile = Team.objects.get(user=user)
+        except Exception:
+            # No profile exists for this id return to index
+            return redirect(reverse('simulatorApp:index'))
+            
+        context_dict['team_obj'] = user_profile
+        # MARKET_ATTRIBUTE_TYPES defines the attribute being displayed in graph.
+        #get net profit data
+        context_dict['attribute_data'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[6])
+        context_dict['graph_title'] = MARKET_ATTRIBUTE_TYPES[6]
+        context_dict['average_net_profit'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[6]).get_average_value()
+        #get market share data
+        team_share = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[8])
+        if len(team_share) > 0:
+            context_dict['team_market_share'] = team_share[len(team_share)-1].parameterValue
+        else:
+            context_dict['team_market_share'] = 0
+        context_dict['other_market_share'] = 100 - context_dict['team_market_share']
+        #get sales data 
+        context_dict['attribute_data_small'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[4])
+        context_dict['graph_title_small'] = MARKET_ATTRIBUTE_TYPES[4]
+        context_dict['average_sales'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[4]).get_average_value()
+
+
+        # display market events as 'news articles'
+        context_dict['news_articles'] = MarketEvent.objects.filter(valid_from__lte=timezone.now()).order_by("-id")
+        
+        # load any fullscreen notifications for the user
+        context_dict['fullscreen_popup'] = get_popup(request)
+
+        sims = Simulator.objects.all()
+        if len(sims)>0:
+            context_dict['refresh_rate'] = sims[0].lengthOfTradingDay.total_seconds() * 1000
+        else:
+            context_dict['refresh_rate'] = 60000*5
+
+        return render(request, 'viewTeamStats.html', context=context_dict)
+
 class ViewLeaderboard(View):
     def get(self, request, **kwargs):
        

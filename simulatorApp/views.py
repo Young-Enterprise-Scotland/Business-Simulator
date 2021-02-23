@@ -232,6 +232,8 @@ class YesProfile(View):
         # check profile_id was passed in or return to index page
         if not profile_id:
             return redirect(reverse('simulatorApp:index'))
+        if int(profile_id) != int(request.user.id):
+            return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
             user = User.objects.get(id=profile_id)
@@ -322,6 +324,8 @@ class SchoolProfile(View):
 
         # check profile_id was passed in or return to index page
         if not profile_id:
+            return redirect(reverse('simulatorApp:index'))
+        if int(profile_id) != int(request.user.id):
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
@@ -419,6 +423,8 @@ class TeamProfile(View):
 
         # check profile_id was passed in or return to index page
         if not profile_id:
+            return redirect(reverse('simulatorApp:index'))
+        if int(profile_id) != int(request.user.id):
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
@@ -799,7 +805,8 @@ class EditStrategy(View):
 
         # check profile_id was passed in or return to index page
         if not profile_id:
-           
+            return redirect(reverse('simulatorApp:index'))
+        if int(profile_id) != int(request.user.id):
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the profile information

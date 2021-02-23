@@ -745,6 +745,8 @@ class ViewTeamStats(View):
         except Exception:
             # No profile exists for this id return to index
             return redirect(reverse('simulatorApp:index'))
+
+        context_dict['product_name'] = Simulator.objects.all()[0].productName
             
         context_dict['team_obj'] = user_profile
         # MARKET_ATTRIBUTE_TYPES defines the attribute being displayed in graph.

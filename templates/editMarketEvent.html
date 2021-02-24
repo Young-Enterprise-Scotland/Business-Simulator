@@ -189,9 +189,6 @@
                         <tr>
                             <th scope="row">
                                 <div class="media align-items-center">
-                                    <a href="#" class="avatar rounded-circle mr-3">
-                                    <img alt="Image placeholder" src="/static/assets/img/brand/favicon.png">
-                                    </a>
                                     <div class="media-body">
                                     <span class="mb-0 text-sm">{{pol.policy.name}}</span>
                                     </div>
@@ -205,15 +202,15 @@
                                     <div class="dropdown-menu dropdown-menu-arrow">
                                       <a class="dropdown-item" href="{% url 'simulatorApp:editPolicyEvent' %}?pol_id={{ pol.id }}">Edit Policy</a>
                                       
-					<form method="POST" action="" id="delPolicy">
-		    			{% csrf_token %}
-					<input type="hidden" id="delpol" name="delpol" value="{{pol.id}}">
-					<div class="form-group">
-					<button type="submit" class="btn btn-primary" name="delPolicy" value="true">Delete Policy</button>
-					</div> 
-					</form> 
-					
-				    </div>
+                                <form method="POST" action="" id="delPolicy">
+                                      {% csrf_token %}
+                                  <input type="hidden" id="delpol" name="delpol" value="{{pol.id}}">
+                                  <div class="form-group">
+                                    <button type="submit" class="dropdown-item text-danger" name="delPolicy" value="true">Delete Policy</button>
+                                  </div> 
+                                </form> 
+                                
+                                  </div>
                                   
                                 </div>
                             </td>

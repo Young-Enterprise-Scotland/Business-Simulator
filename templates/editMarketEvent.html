@@ -205,15 +205,15 @@
                                     <div class="dropdown-menu dropdown-menu-arrow">
                                       <a class="dropdown-item" href="{% url 'simulatorApp:editPolicyEvent' %}?pol_id={{ pol.id }}">Edit Policy</a>
                                       
-					<form method="POST" action="" id="delPolicy">
-		    			{% csrf_token %}
-					<input type="hidden" id="delpol" name="delpol" value="{{pol.id}}">
-					<div class="form-group">
-					<button type="submit" class="btn btn-primary" name="delPolicy" value="true">Delete Policy</button>
-					</div> 
-					</form> 
-					
-				    </div>
+                                <form method="POST" action="" id="delPolicy">
+                                      {% csrf_token %}
+                                  <input type="hidden" id="delpol" name="delpol" value="{{pol.id}}">
+                                  <div class="form-group">
+                                    <button type="submit" class="dropdown-item text-danger" name="delPolicy" value="true">Delete Policy</button>
+                                  </div> 
+                                </form> 
+                                
+                                  </div>
                                   
                                 </div>
                             </td>

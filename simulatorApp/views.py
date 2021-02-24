@@ -70,7 +70,6 @@ class Index(View):
             context_dict['attribute_data'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[6])
             context_dict['graph_title'] = MARKET_ATTRIBUTE_TYPES[6]
             context_dict['average_net_profit'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[6]).get_average_value()
-            print("Len1:",len(context_dict['attribute_data']),"Len2:", len(context_dict['average_net_profit']))
             #get market share data
             team_share = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[8])
             if len(team_share) > 0:
@@ -927,7 +926,6 @@ class GameSettings(View):
 
             context_dict['end'] = sims[0].end.strftime("%Y-%m-%d")
             context_dict['end_time'] = sims[0].end.strftime("%H:%M")
-            print(context_dict['start_time'],context_dict['end_time'])
             # Show days and time (hours,minutes,seconds)
             length = sims[0].lengthOfTradingDay.total_seconds()
             (days, hours, minutes, seconds,) = secondsToDHMS(length)
@@ -979,7 +977,6 @@ class GameSettings(View):
          # if user has requested to add a simulation
         if(request.POST.get("add_market")):
             
-            
             start = request.POST.get('start')
             start_time = request.POST.get('start_time')
             end = request.POST.get('end')
@@ -1005,6 +1002,7 @@ class GameSettings(View):
             end_t = make_aware(end_dt)
             s = str(days)
             ss = str(time)
+            print("Length of trading day:"+s+" "+ss)
             length = parse_duration(s+" "+ss)
             
             # Convet strings to decimal

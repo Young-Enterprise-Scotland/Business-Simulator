@@ -32,7 +32,7 @@ os.environ['tz'] = "Europe/London"
 SECRET_KEY = "sidhantbcosjaoijdowaijiwdhiehfpoifjoiewajoiweajp1234567u54321f9ife0i"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True#False
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'localhost', 'yescotland-staging.herokuapp.com']
 

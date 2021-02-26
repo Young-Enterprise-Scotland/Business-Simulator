@@ -1002,6 +1002,11 @@ class GameSettings(View):
             end_t = make_aware(end_dt)
             s = str(days)
             ss = str(time)
+            
+            # hack to stop MM -> SS when no SS are supplied
+            if(len(ss)==5):
+                ss = ss+":00"
+
             print("Length of trading day:"+s+" "+ss)
             length = parse_duration(s+" "+ss)
             

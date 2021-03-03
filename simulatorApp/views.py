@@ -539,8 +539,7 @@ class ViewTeams(View):
 
        
         return render(request, 'viewTeams.html', context=context_dict)
-
-    
+   
     def post(self, request):
         connections.close_all() 
         notify = {}
@@ -580,7 +579,7 @@ class ViewTeams(View):
 
             # create new user
             (user,created) = User.objects.get_or_create(
-                username=username
+                username=username.lower()
             )
             
             if not created:
@@ -693,7 +692,7 @@ class ViewSchools(View):
 
             # create new user
             (user,created) = User.objects.get_or_create(
-                username=username
+                username=username.lower()
             )
             
             if not created:

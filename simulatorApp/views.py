@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
-from .models import AcknowledgedEvent, Strategy, YES, School, Team, PolicyStrategy, Price, Simulator, MarketEvent, PopupEvent, MarketAttributeType, PolicyEvent, Policy
+from .models import AcknowledgedEvent, PriceEffects, Strategy, YES, School, Team, PolicyStrategy, Price, Simulator, MarketEvent, PopupEvent, MarketAttributeType, PolicyEvent, Policy
 from .globals import MARKET_ATTRIBUTE_TYPES, secondsToDHMS
 
 # Create your views here.
@@ -1013,11 +1013,11 @@ class GameSettings(View):
             context_dict['startQuizUrl'] = sims[0].startQuizUrl
             context_dict['endQuizUrl'] = sims[0].endQuizUrl
             context_dict['marketOpen'] = sims[0].marketOpen
+            context_dict['priceEffects'] = PriceEffects.objects.all()
        
         return render(request, 'gameSettings.html', context=context_dict)
            
     def post(self, request, **kwargs):
-       
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -1113,8 +1113,6 @@ class GameSettings(View):
             if end_t < (start_t + length):
                 notify['title'] = "Overlapping dates "
                 notify['type'] = 'warning'
-
-               
                 return self.get(request, notify=notify)
 
             # create new Simulator
@@ -1135,11 +1133,9 @@ class GameSettings(View):
                 simulation.startQuizUrl = startQuizUrl
                 simulation.endQuizUrl = endQuizUrl
                 simulation.save()
-                notify['title'] = "Simulator created"
-                notify['type'] = 'success'
 
-               
-                return self.get(request, notify=notify)
+                notify['title'] = "Simulator created"
+                notify['type'] = 'success'   
             else:
                 simulation = sim[0]
                 simulation.start= start_t
@@ -1157,7 +1153,17 @@ class GameSettings(View):
                 simulation.save()
                 notify['title'] = "Simulator updated"
                 notify['type'] = 'success'
-
+            
+            # update price effects
+            for i in range(1,4):
+                price_effects_obj = PriceEffects.objects.get(boundary=i)
+                price_effects_obj.low_customers = int(request.POST.get(str(i)+"_low_customer"))
+                price_effects_obj.low_sales = request.POST.get(str(i)+"_low_sales") 
+                price_effects_obj.med_customers = int(request.POST.get(str(i)+"_med_customer"))
+                price_effects_obj.med_sales = request.POST.get(str(i)+"_med_sales") 
+                price_effects_obj.high_customers = int(request.POST.get(str(i)+"_high_customer"))
+                price_effects_obj.high_sales = request.POST.get(str(i)+"_high_sales") 
+                price_effects_obj.save()
        
         return self.get(request, notify=notify)
         

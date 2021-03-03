@@ -50,7 +50,7 @@
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-arrow">
                                       <a class="dropdown-item" href="{% url 'simulatorApp:viewSchoolAccount' %}?profile_id={{ school.user.id }}">Edit Account</a>
-                                      <a class="dropdown-item" href="javascript:void(0)" onClick="delete_account({{school.user.id }});">Delete Account</a>
+                                      <a class="dropdown-item text-danger" href="javascript:void(0)" onClick="delete_account({{school.user.id }});">Delete Account</a>
                                     </div>
                                   
                                 </div>

@@ -143,6 +143,11 @@
   */
   $(document).ready(function(){
 
+    {% if not canEdit %}
+      $("input").prop("disabled",true);
+      $("button").prop("disabled",true);
+    {% endif %}
+
     $("#policy_form").validate(
       {
         rules:{

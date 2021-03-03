@@ -197,9 +197,9 @@
 {% if perms.simulatorApp.is_team %}
   
   <script>
-    var x_data = []; 
-    var y_data = [];
-    var other_data = [];
+    var x_data = ['Start']; 
+    var y_data = [0];
+    var other_data = [0];
 
     {% for entry in attribute_data %}
       x_data.push('{{entry.date}}'.slice(0,7));
@@ -308,9 +308,9 @@
   </script>
   <script>
 
-    var x_data_small = []; 
-    var y_data_small = [];
-    var other_data_small = [];
+    var x_data_small = ['Start']; 
+    var y_data_small = [0];
+    var other_data_small = [0];
 
     {% for entry in attribute_data_small %}
       x_data_small.push('{{entry.date}}'.slice(0,7));

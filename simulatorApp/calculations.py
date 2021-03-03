@@ -110,7 +110,7 @@ def productCost(teamobject):
     policystrategies = PolicyStrategy.objects.filter(
         strategy=teamobject.strategyid, 
         # select 'quality of raw materials' and 'appearance of packaging' Policies 
-        policy__in=Policy.objects.filter(name__in=POLICIES[2:4])
+        policy__in=Policy.objects.filter(name__in=POLICIES[1:3])
     )
     total_cost = decimal.Decimal(0)
 

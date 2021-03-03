@@ -45,8 +45,7 @@ def secondsToDHMS(n: int)-> tuple:
     return (int(day),int(hour),int(minutes),int(seconds))
 
 POLICIES = [
-        "Market Research",
-        "Product Development",
+        "Market Research & Product Development",
         "Quality of Raw Materials",
         "Appearance of Packaging",
         "Physical Position in Market",

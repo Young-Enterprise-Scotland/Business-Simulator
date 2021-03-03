@@ -38,7 +38,6 @@ def get_popup(request):
     popups = get_popups(request)
     return popups[0] if len(popups)>0 else popups
 
-
 class Index(View):
 
     def get(self,request):
@@ -144,11 +143,7 @@ class Logout(View):
             return redirect(reverse('simulatorApp:login'))
 
         logout(request)
-        # Take the user back to the homepage.
-
-        #attempt to close stale connections
-       
-
+        # Take the user back to the login page.
         return redirect(reverse('simulatorApp:login'))
 
     def post(self, request):
@@ -160,8 +155,6 @@ class Logout(View):
 
         logout(request)
         # Take the user back to the homepage.
-
-       
         return redirect(reverse('simulatorApp:login'))
 
 class Login(View):
@@ -204,8 +197,6 @@ class Login(View):
             
             return self.get(request, notify=notify)
         
-        
-
 class YesProfile(View):
 
     
@@ -800,6 +791,10 @@ class ViewTeamStats(View):
         context_dict['graph_title_small'] = MARKET_ATTRIBUTE_TYPES[4]
         context_dict['average_sales'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[4]).get_average_value()
 
+        if context_dict['team_obj'].leaderboard_position ==-1:
+                context_dict['team_obj'].leaderboard_position = "Not Assigned"
+        if context_dict['team_obj'].school_position ==-1:
+            context_dict['team_obj'].school_position = "Not Assigned"
 
         # display market events as 'news articles'
         context_dict['news_articles'] = MarketEvent.objects.filter(valid_from__lte=timezone.now()).order_by("-id")
@@ -859,34 +854,34 @@ class EditStrategy(View):
     def get(self, request, **kwargs):
         connections.close_all() 
         context_dict = {}
+
+        # retrieve the user account from the GET request
+        profile_id = request.GET.get("profile_id",False)
  
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
         # check user has the correct view permission
-        if(not (
-            request.user.has_perm("simulatorApp.is_team")
-            )
-        ):
-           
+        if(request.user.has_perm("simulatorApp.is_team")):
+            if int(profile_id) != int(request.user.id):
+                return redirect(reverse('simulatorApp:index'))
+            context_dict['canEdit'] = True
+        if(request.user.has_perm("simulatorApp.is_school")):
             return redirect(reverse('simulatorApp:index'))
-
-        # retrieve the user account from the GET request
-        profile_id = request.GET.get("profile_id",False)
+        if(request.user.has_perm("simulatorApp.is_yes_staff")):
+            context_dict['canEdit'] = False
 
         # check profile_id was passed in or return to index page
         if not profile_id:
             return redirect(reverse('simulatorApp:index'))
-        if int(profile_id) != int(request.user.id):
-            return redirect(reverse('simulatorApp:index'))
+        
 
         try: # Try to retrieve the profile information
             user = User.objects.get(id=profile_id)
             user_profile = Team.objects.get(user=user)
         except Exception as e:
             # No profile exists for this id return to index
-           
             return redirect(reverse('simulatorApp:index'))
 
         # Pass on any notification message to sweetalert plugin
@@ -1416,6 +1411,7 @@ class editPolicyEvent(View):
             context_dict['notify'] = kwargs['notify']
 
         context_dict['polObj'] = policy
+        context_dict['market_event'] = policy.market_event
         context_dict['can_edit'] = True
 
        

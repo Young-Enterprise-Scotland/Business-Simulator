@@ -38,25 +38,34 @@
                 </thead>
                 <tbody>
                    {% for team in teams %}
-                        <tr>
-                            <th scope="row">
-                            <div class="media align-items-center">
-                                <a href="{% url 'simulatorApp:viewTeamAccount' %}?profile_id={{ team.user.id }}" class="avatar rounded-circle mr-3">
-                                <img alt="Image placeholder" src="/static/assets/img/brand/favicon.png">
-                                </a>
-                                <div class="media-body">
-                                <span class="mb-0 text-sm">{{team.team_name}}</span>
-                                </div>
-                            </div>
-                            </th>
-                            <td>
+                    <tr>
+                        <th scope="row">
+                          <div class="media align-items-center">
+                              <a href="{% url 'simulatorApp:viewTeamAccount' %}?profile_id={{ team.user.id }}" class="avatar rounded-circle mr-3">
+                              <img alt="Image placeholder" src="/static/assets/img/brand/favicon.png">
+                              </a>
+                              <div class="media-body">
+                              <span class="mb-0 text-sm">{{team.team_name}}</span>
+                              </div>
+                          </div>
+                        </th>
+                          <td>
                             {{team.schoolid.school_name}}
-                            </td>
-                            <td>
-                            <span class="badge badge-dot mr-4">
-                              {% if team.school_position > 3 %}
+                          </td>
+                        <td>
+                          <span class="badge badge-dot mr-4">
+                            {% if team.school_position > 3 %}
+                            <i class="bg-warning"></i> 
+                            {% else %}
+                            <i class="bg-success"></i>
+                            {% endif %} {{team.school_position}}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="badge badge-dot mr-4">
+                            {% if team.leaderboard_position > 3 %}
                               <i class="bg-warning"></i> 
-                              {% else %}
+                            {% else %}
                               <i class="bg-success"></i>
                               {% endif %} {{team.school_position}}
                             </span>

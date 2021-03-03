@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, connections
 from django.utils import timezone
 from django.conf import settings
 from .models import CalculationCronJobs, MarketAttributeType, \
@@ -22,6 +22,7 @@ def trigger_market_event_popup(marketid):
         title = market_event.market_event_title,
         body_text = market_event.market_event_text
     )
+    connections.close_all()
 
 def process_teams(simulation):
 
@@ -153,6 +154,7 @@ def process_teams(simulation):
 
     if settings.DEBUG:
         print(f"Market Re-opened {timezone.now()}")
+    connections.close_all()
     
 def start(simulation=None):
     'setup autocalculations when simulator is created/updated'
@@ -195,7 +197,7 @@ def start(simulation=None):
             job.minutes = minutes
             job.seconds = seconds
             job.save()
-    return
+    connections.close_all()
 
 def trigger_end_of_game_quiz(simulator):
     PopupEvent.objects.create(
@@ -205,4 +207,4 @@ def trigger_end_of_game_quiz(simulator):
         is_quiz=True,
         url = simulator.endQuizUrl
     )
-    return
+    connections.close_all()

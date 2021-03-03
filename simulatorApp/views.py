@@ -41,32 +41,39 @@ def get_popup(request):
 
 class Index(View):
 
-    '''
-        Djanjo allows for views to be done as classes instead of methods
-        for complex views this has the advantage that the get and post
-        handlers are separated allowing for more readable code.
-    '''
-
     def get(self,request):
 
         # attempt to close stale connections
-       
+        connections.close_all() 
 
         context_dict = {}
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
+        
+        # admins cannot use webapp
         if request.user.is_superuser:
             return redirect(reverse('simulatorApp:logout'))
+        
+        # school & admin dashboard is view team page
         if request.user.has_perm('simulatorApp.is_school'):
-            context_dict['school_obj'] = School.objects.get(user=request.user)
+            return redirect(reverse('simulatorApp:viewTeams'))
+        elif request.user.has_perm('simulatorApp.is_yes_staff'):
+            return redirect(reverse('simulatorApp:viewTeams'))
+        
+        # get team related dashboard data
         elif request.user.has_perm('simulatorApp.is_team'):
             context_dict['team_obj'] = Team.objects.get(user=request.user)
+
             # MARKET_ATTRIBUTE_TYPES defines the attribute being displayed in graph.
-            #get net profit data
-            context_dict['attribute_data'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[6])
+            context_dict['attribute_data'] = context_dict['team_obj'].get_team_attribute(
+                MARKET_ATTRIBUTE_TYPES[6] # get net profit data
+            )
             context_dict['graph_title'] = MARKET_ATTRIBUTE_TYPES[6]
-            context_dict['average_net_profit'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[6]).get_average_value()
+            context_dict['average_net_profit'] = MarketAttributeType.objects.get(
+                label = MARKET_ATTRIBUTE_TYPES[6]
+            ).get_average_value()
+            
             #get market share data
             team_share = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[8])
             if len(team_share) > 0:
@@ -74,14 +81,26 @@ class Index(View):
             else:
                 context_dict['team_market_share'] = 0
             context_dict['other_market_share'] = 100 - context_dict['team_market_share']
-            #get sales data 
-            context_dict['attribute_data_small'] = context_dict['team_obj'].get_team_attribute(MARKET_ATTRIBUTE_TYPES[4])
-            context_dict['graph_title_small'] = MARKET_ATTRIBUTE_TYPES[4]
-            context_dict['average_sales'] = MarketAttributeType.objects.get(label = MARKET_ATTRIBUTE_TYPES[4]).get_average_value()
 
+            #get sales data 
+            context_dict['attribute_data_small'] = context_dict['team_obj'].get_team_attribute(
+                MARKET_ATTRIBUTE_TYPES[4]
+            )
+            context_dict['graph_title_small'] = MARKET_ATTRIBUTE_TYPES[4]
+            context_dict['average_sales'] = MarketAttributeType.objects.get(
+                label = MARKET_ATTRIBUTE_TYPES[4]
+            ).get_average_value()
+            context_dict['product_name'] = Simulator.objects.all()[0].productName
+            
+            if context_dict['team_obj'].leaderboard_position ==-1:
+                context_dict['team_obj'].leaderboard_position = "Not Assigned"
+            if context_dict['team_obj'].school_position ==-1:
+                context_dict['team_obj'].school_position = "Not Assigned"
 
         # display market events as 'news articles'
-        context_dict['news_articles'] = MarketEvent.objects.filter(valid_from__lte=timezone.now()).order_by("-id")
+        context_dict['news_articles'] = MarketEvent.objects.filter(
+            valid_from__lte=timezone.now()
+        ).order_by("-id")
         
         # load any fullscreen notifications for the user
         context_dict['fullscreen_popup'] = get_popup(request)
@@ -95,7 +114,8 @@ class Index(View):
         return render(request, 'index.html', context=context_dict)
 
     def post(self,request):
-       
+        connections.close_all() 
+
         team=None
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
@@ -118,6 +138,7 @@ class Index(View):
 class Logout(View):
 
     def get(self,request):
+        connections.close_all() 
 
         if not request.user.is_authenticated:
             return redirect(reverse('simulatorApp:login'))
@@ -132,6 +153,7 @@ class Logout(View):
 
     def post(self, request):
         #attempt to close stale connections
+        connections.close_all() 
        
         if not request.user.is_authenticated:
             return redirect(reverse('simulatorApp:login'))
@@ -146,6 +168,9 @@ class Login(View):
 
     
     def get(self,request, **kwargs):
+        connections.close_all() 
+        context_dict = {}
+
         if request.user.is_authenticated:
             return redirect(reverse('simulatorApp:index'))
 
@@ -155,51 +180,37 @@ class Login(View):
 
         return render(request=request,
                         template_name="accounts/login.html",
+                        context=context_dict
                     )
     
     def post(self, request):
-
+        connections.close_all() 
         notify = {}
-        # Hi sid, LoginForm is not defined yet
-        # so I have used old fashoned html way
-        # until you get your crispy forms working
-        # I have commented out your prevous code 
-        # for now
 
         if request.user.is_authenticated:
+            return redirect(reverse('simulatorApp:index'))    
+            
+        user = authenticate(
+            username=request.POST.get("username","").strip().lower(),
+            password=request.POST.get("password","").strip()
+        )
+        if user is not None:
+            login(request, user)
+            # messages.info(request, f"You are now logged in as {username}")
             return redirect(reverse('simulatorApp:index'))
-
-        #form = LoginForm(request=request, data=request.POST)
-        
-        #if form.is_valid():
-        if True:
-
-            #username=form.cleaned_data.get('username')
-            #password=form.cleaned_data.get('password')
-            
-            
-            user=authenticate(username=request.POST.get("username","").strip().lower(), password=request.POST.get("password","").strip())
-            if user is not None:
-                login(request, user)
-                # messages.info(request, f"You are now logged in as {username}")
-                return redirect(reverse('simulatorApp:index'))
-            else:
-                notify['title'] = "Incorrect username or password"
-                notify['type'] = 'warning'
-                
-                return redirect(reverse('simulatorApp:login'))
-                # messages.error(request, "Invalid username or password.")
         else:
-            return redirect(reverse('simulatorApp:login'))
-            # messages.error(request, "Invalid username or password.")
+            notify['title'] = "Incorrect username or password"
+            notify['type'] = 'warning'
+            
+            return self.get(request, notify=notify)
         
-        return self.get(request)
+        
 
 class YesProfile(View):
 
     
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
  
         # check user is logged in
@@ -215,6 +226,8 @@ class YesProfile(View):
 
         # check profile_id was passed in or return to index page
         if not profile_id:
+            return redirect(reverse('simulatorApp:index'))
+        if int(profile_id) != int(request.user.id):
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
@@ -235,7 +248,7 @@ class YesProfile(View):
 
 
     def post(self, request):
-       
+        connections.close_all() 
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -263,7 +276,10 @@ class YesProfile(View):
         if(request.POST.get("update_account_info",False)):
             
             # set username and update user and YES model
-            user_profile.user.first_name = request.POST.get("first_name",user_profile.user.first_name).strip()
+            user_profile.user.first_name = request.POST.get(
+                "first_name",
+                user_profile.user.first_name
+            ).strip()
             user_profile.user.save()
             user_profile.save()
 
@@ -285,7 +301,7 @@ class YesProfile(View):
 class SchoolProfile(View):
 
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
  
         # check user is logged in
@@ -306,14 +322,22 @@ class SchoolProfile(View):
 
         # check profile_id was passed in or return to index page
         if not profile_id:
+            print("no profile id")
             return redirect(reverse('simulatorApp:index'))
+
+        # check that the school account owns the account they are
+        # attempting to edit
+        if request.user.has_perm("simulatorApp.is_school"):
+            if int(profile_id) != int(request.user.id):
+                print("profile id's do not match")
+                return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the YES profile information
             user = User.objects.get(id=profile_id)
             user_profile = School.objects.get(user=user)
         except Exception as e:
             # No profile exists for this id return to index
-            
+            print("User not found")
             return redirect(reverse('simulatorApp:index'))
 
         # Pass on any notification message to sweetalert plugin
@@ -325,7 +349,7 @@ class SchoolProfile(View):
         return render(request, 'accounts/school_profile.html', context=context_dict)
 
     def post(self, request):
-       
+        connections.close_all() 
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -379,39 +403,44 @@ class SchoolProfile(View):
 class TeamProfile(View):
      
      def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
- 
+
+        # retrieve the user account from the GET request
+        profile_id = request.GET.get("profile_id",False)
+
         # check user is logged in
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
         # Assign edit permissions based on users view permission
-        if(not (
-            request.user.has_perm("simulatorApp.is_yes_staff")
-            or 
-            request.user.has_perm("simulatorApp.is_school")
-            )
+        if(not (request.user.has_perm("simulatorApp.is_yes_staff")
+            or request.user.has_perm("simulatorApp.is_school"))
         ):
+            # check team is viewing their team info
+            if int(profile_id) != int(request.user.id):
+                return redirect(reverse('simulatorApp:index'))
             context_dict['can_edit'] = False
         else:
             context_dict['can_edit'] = True
-
-
-        # retrieve the user account from the GET request
-        profile_id = request.GET.get("profile_id",False)
 
         # check profile_id was passed in or return to index page
         if not profile_id:
             return redirect(reverse('simulatorApp:index'))
 
-        try: # Try to retrieve the YES profile information
+        try: # Try to retrieve the team profile information
             user = User.objects.get(id=profile_id)
             user_profile = Team.objects.get(user=user)
         except Exception:
             # No profile exists for this id return to index
             return redirect(reverse('simulatorApp:index'))
         
+        # if school editing team, check that 
+        # the team belongs to that school
+        if request.user.has_perm("simulatorApp.is_school"):
+            if int(user_profile.schoolid.user.id) != int(request.user.id):
+                return redirect(reverse('simulatorApp:index'))
+
         # Pass on any notification message to sweetalert plugin
         if"notify" in kwargs:
             context_dict['notify'] = kwargs['notify']
@@ -421,7 +450,7 @@ class TeamProfile(View):
         return render(request, 'accounts/team_profile.html', context=context_dict)
 
      def post(self, request):
-       
+        connections.close_all() 
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
 
@@ -475,7 +504,8 @@ class TeamProfile(View):
 class ViewTeams(View):
 
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
+
         context_dict = {}
         teams = None
         schools = None
@@ -509,10 +539,9 @@ class ViewTeams(View):
 
        
         return render(request, 'viewTeams.html', context=context_dict)
-
-    
+   
     def post(self, request):
-       
+        connections.close_all() 
         notify = {}
 
         # check permissions
@@ -530,7 +559,7 @@ class ViewTeams(View):
             schoolid = request.POST.get('school')
 
             try:
-                # If a school is adding then force the schoolid for 
+                # If a school is adding team then force the schoolid for 
                 # the team to be the authenticated school account 
                 # submitting the request. This is an extra layer on 
                 # top of the csrf token to stop schools from 
@@ -550,7 +579,7 @@ class ViewTeams(View):
 
             # create new user
             (user,created) = User.objects.get_or_create(
-                username=username
+                username=username.lower()
             )
             
             if not created:
@@ -593,7 +622,8 @@ class ViewTeams(View):
                 school = School.objects.get(user=request.user)
                 if(school!= Team.objects.get(user=User.objects.get(id=team_user_id)).schoolid):
                     resp['class'] = 'error'
-                    resp['msg'] = "You do not have permission to delete this team account. Try deleting one of your own teams!"
+                    resp['msg'] = "You do not have permission to delete this team account. \
+                        Try deleting one of your own teams!"
                     resp['title'] = 'Uh oh'
                     return JsonResponse(resp)
             if team_user_id is None:
@@ -617,14 +647,16 @@ class ViewTeams(View):
 class ViewSchools(View):
 
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
         schools = None
 
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
-        if request.user.has_perm("simulatorApp.is_team") or request.user.has_perm("simulatorApp.is_school"):
+        if (request.user.has_perm("simulatorApp.is_team") 
+            or request.user.has_perm("simulatorApp.is_school")
+        ):
             return redirect(reverse('simulatorApp:index'))
         
         if request.user.has_perm("simulatorApp.is_yes_staff"):
@@ -639,6 +671,7 @@ class ViewSchools(View):
         return render(request, 'viewSchools.html', context=context_dict)
 
     def post(self, request, **kwargs):
+        connections.close_all() 
         notify = {}
        
         # check permissions
@@ -659,7 +692,7 @@ class ViewSchools(View):
 
             # create new user
             (user,created) = User.objects.get_or_create(
-                username=username
+                username=username.lower()
             )
             
             if not created:
@@ -713,7 +746,8 @@ class ViewSchools(View):
                 school_user.delete()
 
                 resp['class'] = 'success'
-                resp['msg'] = "All associated school accounts and their data has also been deleted"
+                resp['msg'] = "All associated school accounts and \
+                    their data has also been deleted"
                 resp['title'] = 'School Deleted'
             except Exception as e:
                 # school object has already been deleted
@@ -783,7 +817,7 @@ class ViewTeamStats(View):
 
 class ViewLeaderboard(View):
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
         # check user is logged in
         if(not request.user.is_authenticated):
@@ -804,15 +838,26 @@ class ViewLeaderboard(View):
                 context_dict['teams'] = teams.order_by('leaderboard_position')
             else:
                 context_dict['teams'] = teams.order_by('leaderboard_position')[:10]
-        
+            
+        for i in range(len(context_dict['teams'])):
+            if context_dict['teams'][i].school_position ==-1:
+                context_dict['teams'][i].school_position = "Not Assigned"
+            if context_dict['teams'][i].leaderboard_position == -1:
+                context_dict['teams'][i].leaderboard_position = "Not Assigned"
+
         context_dict['teams_global'] = Team.objects.all().order_by("leaderboard_position")
+        for i in range(len(context_dict['teams_global'])):
+            if context_dict['teams_global'][i].school_position ==-1:
+                context_dict['teams_global'][i].school_position = "Not Assigned"
+            if context_dict['teams_global'][i].leaderboard_position == -1:
+                context_dict['teams_global'][i].leaderboard_position = "Not Assigned"
        
         return render(request, 'viewLeaderboard.html', context=context_dict)        
         
 class EditStrategy(View):
     
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
  
         # check user is logged in
@@ -832,7 +877,8 @@ class EditStrategy(View):
 
         # check profile_id was passed in or return to index page
         if not profile_id:
-           
+            return redirect(reverse('simulatorApp:index'))
+        if int(profile_id) != int(request.user.id):
             return redirect(reverse('simulatorApp:index'))
 
         try: # Try to retrieve the profile information
@@ -851,6 +897,7 @@ class EditStrategy(View):
         price = Price.objects.get(team=user_profile)
         maxPrice = float(price.simulator.maxPrice)-0.01
 
+        context_dict['product_name'] = price.simulator.productName
         context_dict['maxPrice'] = maxPrice
         context_dict['price'] = price
         context_dict['policies'] = policies
@@ -861,7 +908,7 @@ class EditStrategy(View):
         return render(request, 'editStrategy.html', context=context_dict)
 
     def post(self, request, **kwargs):
-       
+        connections.close_all() 
         if(not request.user.is_authenticated):
             return redirect(reverse('simulatorApp:login'))
         
@@ -905,6 +952,7 @@ class EditStrategy(View):
                 return self.get(request) 
             
             simulator = simulators[0]
+            price.price = Decimal(request.POST.get("price",str(price.price)))
             if price.price < simulator.minPrice:
                 notify['title'] = f"£{price.price} cannot be less than £{simulator.minPrice}"
                 notify['type'] = 'warning'
@@ -912,11 +960,11 @@ class EditStrategy(View):
                 notify['title'] = f"£{price.price} cannot be greater than £{simulator.minPrice}"
                 notify['type'] = 'warning'
             else:
+                notify['title'] = f"Strategy Updated"
+                notify['type'] = 'success'
                 price.save()
 
-       
         return self.get(request, notify=notify)
-
 
 class GameSettings(View):
     
@@ -927,7 +975,7 @@ class GameSettings(View):
         return str(unit)
 
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
         context_dict = {}
         
          # check user is logged in
@@ -945,12 +993,11 @@ class GameSettings(View):
         sims = Simulator.objects.all()
         if len(sims) >0:
             context_dict['simulator']=sims
-            context_dict['start'] = sims[0].start.strftime("%d-%m-%Y")
-            context_dict['start_time'] = sims[0].start.strftime("%I:%M")
+            context_dict['start'] = sims[0].start.strftime("%Y-%m-%d")
+            context_dict['start_time'] = sims[0].start.strftime("%H:%M")
 
-            context_dict['end'] = sims[0].end.strftime("%d-%m-%Y")
-            context_dict['end_time'] = sims[0].end.strftime("%I:%M")
-            
+            context_dict['end'] = sims[0].end.strftime("%Y-%m-%d")
+            context_dict['end_time'] = sims[0].end.strftime("%H:%M")
             # Show days and time (hours,minutes,seconds)
             length = sims[0].lengthOfTradingDay.total_seconds()
             (days, hours, minutes, seconds,) = secondsToDHMS(length)
@@ -968,9 +1015,7 @@ class GameSettings(View):
             context_dict['marketOpen'] = sims[0].marketOpen
        
         return render(request, 'gameSettings.html', context=context_dict)
-        
-    
-    
+           
     def post(self, request, **kwargs):
        
         if(not request.user.is_authenticated):
@@ -1004,7 +1049,6 @@ class GameSettings(View):
          # if user has requested to add a simulation
         if(request.POST.get("add_market")):
             
-            
             start = request.POST.get('start')
             start_time = request.POST.get('start_time')
             end = request.POST.get('end')
@@ -1024,12 +1068,18 @@ class GameSettings(View):
                 marketOpen = False
             
             # Convert strings into datetime objects
-            start_dt = datetime.strptime(start+" "+start_time, '%d-%m-%Y %H:%M')
-            end_dt = datetime.strptime(end+" "+end_time,'%d-%m-%Y %H:%M')
+            start_dt = datetime.strptime(start+" "+start_time, '%Y-%m-%d %H:%M')
+            end_dt = datetime.strptime(end+" "+end_time,'%Y-%m-%d %H:%M')
             start_t = make_aware(start_dt)
             end_t = make_aware(end_dt)
             s = str(days)
             ss = str(time)
+            
+            # hack to stop MM -> SS when no SS are supplied
+            if(len(ss)==5):
+                ss = ss+":00"
+
+            print("Length of trading day:"+s+" "+ss)
             length = parse_duration(s+" "+ss)
             
             # Convet strings to decimal
@@ -1113,7 +1163,7 @@ class GameSettings(View):
         
 class viewMarketEvents(View):
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
 
         # check user is logged in
         if(not request.user.is_authenticated):
@@ -1194,7 +1244,7 @@ class viewMarketEvents(View):
 
 class editMarketEvent(View):
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
 
         context_dict = {}
         
@@ -1327,7 +1377,7 @@ class editMarketEvent(View):
 
 class editPolicyEvent(View):
     def get(self, request, **kwargs):
-       
+        connections.close_all() 
 
         context_dict = {}
 
@@ -1408,8 +1458,7 @@ class editPolicyEvent(View):
 
 class ViewPolicies(View):
     def get(self, request, **kwargs):
-       
-
+        connections.close_all() 
         context_dict = {}
 
         if(not request.user.is_authenticated):

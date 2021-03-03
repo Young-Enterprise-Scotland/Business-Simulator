@@ -32,37 +32,33 @@
                   </tr>
                 </thead>
                 <tbody>
-		    {% for event in events %}
+		            {% for event in events %}
                         <tr>
-                            <th scope="row">
-                                <div class="media align-items-center">
-                                    <a href="#" class="avatar rounded-circle mr-3">
-                                    <img alt="Image placeholder" src="/static/assets/img/brand/favicon.png">
-                                    </a>
-                                    <div class="media-body">
-                                    <span class="mb-0 text-sm">{{event.market_event_title}}</span>
-                                    </div>
-                                </div>
-                            </th>
-                            <td>
-                                <div class="dropdown">
-                                  <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="ni ni-settings-gear-65 text-blue"></i>
-                                  </a>
-                                  <div class="dropdown-menu dropdown-menu-arrow">
-                                    <a class="dropdown-item" href="{% url 'simulatorApp:editMarketEvent' %}?event_id={{ event.id }}">Edit Event</a>
-                                <form method="POST" action="" id="del_event">
-                                  {% csrf_token %}
-                                <input type="hidden" id="delevent" name="delevent" value="{{event.id}}">
-                                <div class="form-group">
-                                <button type="submit" class="btn btn-primary" name="delEvent" value="true">Delete Event</button>
-                              </div> 
-					                  </form>
-                          </div>          
-                        </div>
-                      </td>
-                    </tr>
-                   {% endfor %}
+                          <th scope="row">
+                            <div class="media align-items-center">
+                              <div class="media-body">
+                              <span class="mb-0 text-sm">{{event.market_event_title}}</span>
+                              </div>
+                            </div>
+                      </th>
+                      <td>
+                          <div class="dropdown">
+                            <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              <i class="ni ni-settings-gear-65 text-blue"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-arrow">
+                              <a class="dropdown-item" href="{% url 'simulatorApp:editMarketEvent' %}?event_id={{ event.id }}">Edit Event</a>
+                          <form method="POST" action="" id="del_event">
+                              {% csrf_token %}
+                            <input type="hidden" id="delevent" name="delevent" value="{{event.id}}">
+                            
+                            <button type="submit" class="dropdown-item text-danger" name="delEvent" value="true">Delete Event</button>
+                          </form>
+                    </div>          
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
                 </tbody>
               </table>
               </div>

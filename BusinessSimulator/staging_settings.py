@@ -32,7 +32,7 @@ os.environ['tz'] = "Europe/London"
 SECRET_KEY = "sidhantbcosjaoijdowaijiwdhiehfpoifjoiewajoiweajp1234567u54321f9ife0i"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True#False
 
 ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com', 'localhost', 'yescotland-staging.herokuapp.com']
 
@@ -117,8 +117,8 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': ('%(asctime)s [%(process)d] [%(levelname)s] '
-                       'pathname=%(pathname)s lineno=%(lineno)s '
+            'format': ('%(asctime)s [%(process)d] [%(levelname)s] ' +
+                       'pathname=%(pathname)s lineno=%(lineno)s ' +
                        'funcname=%(funcName)s %(message)s'),
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
@@ -132,24 +132,19 @@ LOGGING = {
             'class': 'logging.NullHandler',
         },
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         }
     },
     'loggers': {
-        'django': {
+        'testlogger': {
             'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
+            'level': 'INFO',
+        }
     }
 }
+
 
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
@@ -198,7 +193,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'), ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles/') #os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static') #os.path.join(BASE_DIR, 'staticfiles')
 
 # Incase of shit hitting the fan due to this malfunctioning, please refer to https://github.com/jrief/django-sass-processor
 SASS_PROCESSOR_ROOT = STATIC_ROOT #os.path.join(, 'assets')
@@ -209,8 +204,11 @@ SASS_PROCESSOR_ROOT = STATIC_ROOT #os.path.join(, 'assets')
 #     'sass_processor.finders.CssFinder',
 # ]
 
+DEBUG_PROPAGATE_EXCEPTIONS = True
+
 
 SASS_OUTPUT_STYLE = 'compressed'
+COMPRESS_ENABLED = os.environ.get('COMPRESS_ENABLED', False)
 
 django_heroku.settings(locals())
 

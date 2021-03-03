@@ -11,7 +11,7 @@
           <div class="row">
               <div class="col-lg-7 col-md-10">
               <h1 class="display-2 text-white">Game Settings</h1>
-              <p class="text-white mt-0 mb-5">Use this page to edit the settings for the game. By setting the simulation start date to be in the future you can use the spare time to setup teams and accounts. These users can then set use the get used to the system before the first trading day begins.</p>
+              <p class="text-white mt-0 mb-5">Use this page to edit the settings for the game. By setting the simulation start date to be in the future you can use the spare time to setup teams and accounts. These users can then get used to the system before the first trading day begins.</p>
               </div>
           </div>
       </div>
@@ -26,6 +26,14 @@
                 <div class="row">
                   <div class="col-lg-12">
                     <div class="pl-lg-4">
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group">
+                            <label class="form-control-label" for="input-productName">Product Name</label>
+                            <input type="text" id="productName" name="productName" class="form-control" required value="{{productName}}">
+                          </div>
+                        </div>
+                      </div>
                       <div class="row">
                         <div class="col-lg-3">
                           <div class="form-group">
@@ -79,20 +87,12 @@
                       <div class="row">
                         <div class="col-lg-6">
                           <div class="form-group">
-                            <label class="form-control-label" for="input-productName">Product Name</label>
-                            <input type="text" id="productName" name="productName" class="form-control" required value="{{productName}}">
-                          </div>
-                        </div>
-                      </div>
-                      <div class="row">
-                        <div class="col-lg-6">
-                          <div class="form-group">
                             <label class="form-control-label" for="image">Image</label>
                             <input type="file" id="image" name="image" class="form-control">
                           </div>
                         </div>
                       </div>
-                      <div class="row">
+                      <div class="row mt-6">
                         <div class="col-lg-6">
                           <div class="form-group">
                             <label class="form-control-label" for="input_price">Max Price</label>
@@ -116,11 +116,80 @@
                           </div>
                         </div>
                       </div>
-                      <div class="row">
+                      <div class="row mb-6">
                         <div class="col-lg-6">
                           <div class="form-group">
                             <label class="form-control-label" for="input-price">Price Boundary 2</label>
                             <input type="number" step="0.0001" id="priceBoundary2" name="priceBoundary2" required min=0 class="form-control" value="{{priceBoundary2}}">
+                          </div>
+                        </div>
+                      </div>
+                      {% for priceEffect in priceEffects %}
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group mb-0 mt-4">
+                            <label class="form-label">Price Effect {% if priceEffect.boundary == 1 %}Low{% elif priceEffect.boundary == 2 %}Medium{% else %}High{% endif %}</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">Low Cutomer</label>
+                            <input type="number" step="1" class="form-control" required min="0" name="{{priceEffect.boundary}}_low_customer" value="{{priceEffect.low_customers}}">
+                          </div>
+                        </div>
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">Low Sales</label>
+                            <input type="number" step="0.0001" class="form-control" required min="0" name="{{priceEffect.boundary}}_low_sales" value="{{priceEffect.low_sales}}">
+
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">Medium Cutomer</label>
+                            <input type="number" step="1" class="form-control" required min="0" name="{{priceEffect.boundary}}_med_customer" value="{{priceEffect.med_customers}}">
+                          </div>
+                        </div>
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">Medium Sales</label>
+                            <input type="number" step="0.0001" class="form-control" required min="0" name="{{priceEffect.boundary}}_med_sales" value="{{priceEffect.med_sales}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">High Cutomer</label>
+                            <input type="number" step="1" class="form-control" required min="0" name="{{priceEffect.boundary}}_high_customer" value="{{priceEffect.high_customers}}">
+                          </div>
+                        </div>
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">High Sales</label>
+                            <input type="number" step="0.0001" class="form-control" required min="0" name="{{priceEffect.boundary}}_high_sales" value="{{priceEffect.high_sales}}">
+
+                          </div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                      <div class="row mt-6">
+                        <div class="col-lg-6">
+                          <div class="form-group">
+                            <label class="form-control-label" for="startQuizUrl">Start Quiz url</label>
+                            <input type="url" id="startQuizUrl" name="startQuizUrl" required class="form-control" value="{{startQuizUrl}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group">
+                            <label class="form-control-label" for="endQuizUrl">End Quiz url</label>
+                            <input type="url" id="endQuizUrl" name="endQuizUrl" required class="form-control" value="{{endQuizUrl}}">
                           </div>
                         </div>
                       </div>
@@ -135,22 +204,6 @@
                               <input type="checkbox" name="marketOpen" id="marketOpen" value="1" checked>
                               <span class="custom-toggle-slider rounded-circle" data-label-off="Closed" data-label-on="Open"></span>
                             </label>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="row">
-                        <div class="col-lg-6">
-                          <div class="form-group">
-                            <label class="form-control-label" for="startQuizUrl">Start Quiz url</label>
-                            <input type="url" id="startQuizUrl" name="startQuizUrl" required class="form-control" value="{{startQuizUrl}}">
-                          </div>
-                        </div>
-                      </div>
-                      <div class="row">
-                        <div class="col-lg-6">
-                          <div class="form-group">
-                            <label class="form-control-label" for="endQuizUrl">End Quiz url</label>
-                            <input type="url" id="endQuizUrl" name="endQuizUrl" required class="form-control" value="{{endQuizUrl}}">
                           </div>
                         </div>
                       </div>

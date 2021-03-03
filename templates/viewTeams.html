@@ -33,6 +33,7 @@
                     <th scope="col">School Position</th>
                     <th scope="col">Leaderboard Position</th>
                     <th scope="col">Edit Account</th>
+                    <th scope="col">View Performance</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -66,22 +67,35 @@
                               <i class="bg-warning"></i> 
                             {% else %}
                               <i class="bg-success"></i>
-                            {% endif %}
-                              {{team.leaderboard_position}}
-                          </span>
-                        </td>
-                        <td>
-                          <div class="dropdown">
-                            <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="ni ni-settings-gear-65 text-blue"></i>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-arrow">
-                              <a class="dropdown-item" href="{% url 'simulatorApp:viewTeamAccount' %}?profile_id={{ team.user.id }}">Edit Account</a>
-                              <a class="dropdown-item" href="javascript:void(0)" onclick="delete_account({{team.user.id}})">Delete Account</a>
-                            </div>
-                          </div>
-                        </td>
-                    </tr>
+                              {% endif %} {{team.school_position}}
+                            </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-dot mr-4">
+                                    {% if team.leaderboard_position > 3 %}
+                                    <i class="bg-warning"></i> 
+                                    {% else %}
+                                    <i class="bg-success"></i>
+                                    {% endif %}
+                                     {{team.leaderboard_position}}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="ni ni-settings-gear-65 text-blue"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-arrow">
+                                      <a class="dropdown-item" href="{% url 'simulatorApp:viewTeamAccount' %}?profile_id={{ team.user.id }}">Edit Account</a>
+                                      <a class="dropdown-item" href="javascript:void(0)" onclick="delete_account({{team.user.id}})">Delete Account</a>
+                                    </div>
+                                  
+                                </div>
+                            </td>
+                            <td>
+                              <a href="{% url 'simulatorApp:viewTeamStats' %}?profile_id={{ team.user.id }}" class="btn btn-primary" role="button" aria-pressed="true">View</a>
+                            </td>
+                        </tr>
                    {% endfor %}
                 </tbody>
               </table>

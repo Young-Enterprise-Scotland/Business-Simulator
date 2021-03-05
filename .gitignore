@@ -127,7 +127,6 @@ mysql/*
 
 # Staticfiles #
 BusinessSimulator/staticfiles/*
-staticfiles/*
 
 # Datbase files #
 BusinessSimulator/.DS_Store

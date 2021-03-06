@@ -4,6 +4,9 @@
   "keywords": ["Multiplayer", "Game", "Business", "Young Enterprise Scotland"],
   "repository": "https://github.com/Young-Enterprise-Scotland/Business-Simulator",
   "success_url": "/login",
+  "scripts": {
+    "postdeploy": "chmod +x deploy-script.sh && ./deploy-script.sh"
+  },
   "env": {
     "DEBUG_COLLECTSTATIC": {
       "description": "when collect static is run store stuff in logs",

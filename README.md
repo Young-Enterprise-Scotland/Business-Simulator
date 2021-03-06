@@ -1,5 +1,9 @@
 # Business Simulator
 
+## Deploy
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
 ## Docker
 
 1. Install docker from the [offical website](https://www.docker.com/).

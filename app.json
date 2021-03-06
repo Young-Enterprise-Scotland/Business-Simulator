@@ -1,0 +1,49 @@
+{
+  "name": "YES Business Simulator Game",
+  "description": "This app is a Django-based multiplayer game to teach basic business concepts.",
+  "keywords": ["Multiplayer", "Game", "Business", "Young Enterprise Scotland"],
+  "repository": "https://github.com/Young-Enterprise-Scotland/Business-Simulator",
+  "success_url": "/login",
+  "env": {
+    "DEBUG_COLLECTSTATIC": {
+      "description": "when collect static is run store stuff in logs",
+      "value": "1"
+    },
+    "DISABLE_COLLECTSTATIC": {
+      "description": "Runs collect static",
+      "value": "0"
+    },
+    "SECRET_KEY": {
+      "description": "A secret key for verifying the integrity of signed cookies and Django's internal features.",
+      "generator": "secret"
+    },
+    "DJANGO_SETTINGS_MODULE": {
+      "description": "Settings file to use",
+      "value": "BusinessSimulator.staging_settings"
+    },
+    "WEB_CONCURRENCY": {
+      "description": "The number of processes to run.",
+      "value": "3"
+    },
+    "ADMIN_USERNAME": {
+        "description": "Admin Username",
+        "value": "admin"
+    },
+    "ADMIN_PASSWORD": {
+        "description": "Super User Password",
+        "required": "true"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "standard-1x"
+    }
+  },
+  "image": "heroku/python",
+  "addons": [
+    {
+      "plan": "heroku-postgresql:standard-0"
+    }
+  ]
+}

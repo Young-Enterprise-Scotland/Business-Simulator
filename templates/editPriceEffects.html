@@ -1,0 +1,198 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Game Settings {% endblock title %}
+{% block stylesheets %}{% endblock stylesheets %}
+{% block content %}
+
+    <!-- Header -->
+    <div class="header bg-gradient-primary pb-8 pt-5 pt-md-8">
+      <span class="mask bg-gradient-default opacity-8"></span>
+      <div class="container-fluid d-flex align-items-center">
+          <div class="row">
+              <div class="col-lg-7 col-md-10">
+              <h1 class="display-2 text-white">Price Effects Settings</h1>
+              <p class="text-white mt-0 mb-5">Use this page to edit the price effects for the game. The price effects settings allow for teams to be rewarded or peanlised depending on the prices they set in accordance with their business strategy.</p>
+              </div>
+          </div>
+      </div>
+    </div>
+    <div class="container-fluid mt--7">
+      <div class="row mt-2">
+        <div class="col-lg-12">
+          <div class="card shadow border-0">
+            <div class="card-body py-4">
+              <form method="POST" action="" id="game_form">
+                {% csrf_token %}
+                <div class="row">
+                  <div class="col-lg-12">
+                    <div class="pl-lg-4">
+                      
+                      {% for priceEffect in priceEffects %}
+                      <div class="row">
+                        <div class="col-lg-6">
+                          <div class="form-group mb-0 mt-4">
+                            <label class="form-label">Price Effect {% if priceEffect.boundary == 1 %}Low{% elif priceEffect.boundary == 2 %}Medium{% else %}High{% endif %}</label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">Low Cutomer</label>
+                            <input type="number" step="1" class="form-control" required min="0" name="{{priceEffect.boundary}}_low_customer" value="{{priceEffect.low_customers}}">
+                          </div>
+                        </div>
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">Low Sales</label>
+                            <input type="number" step="0.0001" class="form-control" required min="0" name="{{priceEffect.boundary}}_low_sales" value="{{priceEffect.low_sales}}">
+
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">Medium Cutomer</label>
+                            <input type="number" step="1" class="form-control" required min="0" name="{{priceEffect.boundary}}_med_customer" value="{{priceEffect.med_customers}}">
+                          </div>
+                        </div>
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">Medium Sales</label>
+                            <input type="number" step="0.0001" class="form-control" required min="0" name="{{priceEffect.boundary}}_med_sales" value="{{priceEffect.med_sales}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">High Cutomer</label>
+                            <input type="number" step="1" class="form-control" required min="0" name="{{priceEffect.boundary}}_high_customer" value="{{priceEffect.high_customers}}">
+                          </div>
+                        </div>
+                        <div class="col-lg-3">
+                          <div class="form-group">
+                            <label class="form-control-label">High Sales</label>
+                            <input type="number" step="0.0001" class="form-control" required min="0" name="{{priceEffect.boundary}}_high_sales" value="{{priceEffect.high_sales}}">
+                          </div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                      {% if not priceEffects %}
+                      <div class="row">
+                        <div class="col-lg-6">
+                            <p>
+                                Once a simulator has been setup you will be able to edit the price effects using this page. 
+                            </p>
+                        </div>
+                      </div>
+                      {% else %}
+                      <div class="row">
+                        <div class="col-lg-12">
+                          <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-primary" name="edit_price_effects" value="true">Save</button>
+                          </div>
+                        </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+          {% include "includes/footer.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+<script>
+  /**
+   * This is jQuery not reactJS
+  */
+  $(document).ready(function(){
+
+    $("#game_form").validate(
+      {
+        rules:{
+          start:{
+            required:true
+          }, 
+          end:{
+            required:true
+          },
+          start_time:{
+            required:true
+          },
+          end_time:{
+            required:true
+          },
+          days:{
+            required:true,
+            min:0,
+            max:365
+          },
+          time:{
+            required:true,
+            step:false
+          },
+          productName:{
+            required:true
+          },
+          maxPrice:{
+            required:true,
+            min:0
+          },
+          minPrice:{
+            required:true,
+            min: 0
+          },
+          priceBoundary1:{
+            required:true,
+          },
+          priceBoundary2:{
+            required:true
+          },
+          startQuizUrl:{
+            required:true
+          },
+          endQuizUrl:{
+            required:true
+          }
+        },
+        submitHandler: function(form) {
+          form.submit();
+        }
+      }
+    );
+
+  });
+
+  function clicked(e) {
+    e.preventDefault();
+    Swal.fire({
+        title: 'Delete Simulation?',
+        {% autoescape off %}
+        showCancelButton: true,
+        confirmButtonText: 'Delete',
+        confirmButtonColor: '#d33',
+        focusCancel:true,
+        html: "All school, team and market event data will be permanently deleted.",
+        {% endautoescape %}
+        icon: '{{ fullscreen_popup.icon_class }}',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $("#game_form").submit();
+        }
+      });
+  }
+
+</script>{% endblock javascripts %}
+

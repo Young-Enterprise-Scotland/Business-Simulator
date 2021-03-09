@@ -166,7 +166,7 @@ class Logout(View):
         # Take the user back to the homepage.
         return redirect(reverse('simulatorApp:login'))
 
-
+ 
 class Login(View):
 
     def get(self, request, **kwargs):
@@ -1030,7 +1030,6 @@ class GameSettings(View):
             context_dict['startQuizUrl'] = sims[0].startQuizUrl
             context_dict['endQuizUrl'] = sims[0].endQuizUrl
             context_dict['marketOpen'] = sims[0].marketOpen
-            context_dict['priceEffects'] = PriceEffects.objects.all()
 
         return render(request, 'gameSettings.html', context=context_dict)
 
@@ -1171,6 +1170,38 @@ class GameSettings(View):
                 notify['title'] = "Simulator updated"
                 notify['type'] = 'success'
 
+        return self.get(request, notify=notify)
+
+
+class EditPriceEffects(View):
+    
+    def get(self, request, **kwargs):
+        connections.close_all()
+        context_dict = {}
+
+        # check user is logged in
+        if(not request.user.is_authenticated):
+            return redirect(reverse('simulatorApp:login'))
+
+        # check user has the correct view permission
+        if(not request.user.has_perm("simulatorApp.is_yes_staff")):
+            return redirect(reverse('simulatorApp:index'))
+
+        # Pass on any notification message to sweetalert plugin
+        if"notify" in kwargs:
+            context_dict['notify'] = kwargs['notify']
+
+        context_dict['priceEffects'] = PriceEffects.objects.all()
+        return render(request, "editPriceEffects.html", context=context_dict)
+        
+
+    def post(self, request):
+        connections.close_all()
+        context_dict = {}
+        notify = {}
+
+        if(request.POST.get("edit_price_effects")):
+            
             # update price effects
             for i in range(1, 4):
                 price_effects_obj = PriceEffects.objects.get(boundary=i)
@@ -1188,7 +1219,15 @@ class GameSettings(View):
                     str(i)+"_high_sales")
                 price_effects_obj.save()
 
+                notify['title'] = "Price Effects Updated"
+                notify['type'] = 'success'
+        else:
+            notify['title'] = "Unknown Request"
+            notify['type'] = 'error'
+
         return self.get(request, notify=notify)
+
+
 
 
 class viewMarketEvents(View):

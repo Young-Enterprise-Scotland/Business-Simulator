@@ -27,4 +27,5 @@ urlpatterns = [
     path('editPolictEvent', views.editPolicyEvent.as_view(), name="editPolicyEvent"),
     path('viewPolicies', views.ViewPolicies.as_view(), name="viewPolicies"),
     path('viewTeamStats/team', views.ViewTeamStats.as_view(), name="viewTeamStats"),
+    path('priceEffects', views.EditPriceEffects.as_view(), name="priceEffects"),
 ]

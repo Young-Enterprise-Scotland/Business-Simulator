@@ -40,13 +40,13 @@
   "formation": {
     "web": {
       "quantity": 1,
-      "size": "standard-1x"
+      "size": "hobby"
     }
   },
   "image": "heroku/python",
   "addons": [
     {
-      "plan": "heroku-postgresql:standard-0"
+      "plan": "heroku-postgresql"
     }
   ]
 }

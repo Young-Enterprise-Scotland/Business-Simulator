@@ -73,4 +73,35 @@
       {% endif %}
     });
   </script>
+  <script>
+    $(document).ready(function () {
+ 
+        $(".navbar-nav a").click(function (event) {
+            var elem = $(this);
+            $(".active").removeClass("active");
+            $(elem).addClass("active");
+
+            if($(elem).text().trim()=="Logout"){
+              localStorage.removeItem("selectedolditem"); 
+            }else{
+              localStorage.setItem("selectedolditem", $(elem).text().trim());
+            }
+        });
+
+        var selectedolditem = localStorage.getItem('selectedolditem');
+        console.log(selectedolditem);
+        if (selectedolditem !== null) {
+            $("a:contains('" + selectedolditem + "')").addClass("active");
+        }
+        else{
+          $(".active").removeClass("active");
+          {% if perms.simulatorApp.is_team %}
+            console.log($("#nav_dashboard").text());
+            $("#nav_dashboard").addClass("active");
+          {% else %}
+            $("#nav_teams").addClass("active");
+          {% endif %}
+        }
+    });
+  </script>
  

@@ -78,8 +78,10 @@
  
         $(".navbar-nav a").click(function (event) {
             var elem = $(this);
-            $(".active").removeClass("active");
-            $(elem).addClass("active");
+            if($(elem).text().trim()!="Help"){
+              $(".active").removeClass("active");
+              $(elem).addClass("active");
+            }
 
             if($(elem).text().trim()=="Logout"){
               localStorage.removeItem("selectedolditem"); 

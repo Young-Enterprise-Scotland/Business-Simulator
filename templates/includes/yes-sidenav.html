@@ -90,7 +90,7 @@
         <!-- Navigation -->
         <ul class="navbar-nav">
           <li class="nav-item ">
-            <a class=" nav-link " href="/"> 
+            <a class=" nav-link " href="/" id="nav_dashboard"> 
               <i class="ni ni-tv-2 text-primary"></i>Dashboard
             </a>
           </li>
@@ -106,7 +106,7 @@
           </li>
           <li class="nav-item">
             <a class="nav-link " href="{% url 'simulatorApp:priceEffects' %}">
-              <i class="ni ni-settings text-blue"></i>Price Effects
+              <i class="ni ni-money-coins text-default"></i>Price Effects
             </a>
           </li>
           <li class="nav-item">
@@ -141,6 +141,11 @@
         <!-- Navigation -->
         <ul class="navbar-nav mb-md-3">
 
+          <li class="help-nav-item">
+            <a class="nav-link" href="https://yes.org.uk/business-simulation-help.php" target="_blank">
+                <i class="ni ni-support-16 text-red"></i>Help
+            </a>
+          </li>
           <li class="nav-item">
               <a class="nav-link" href="{% url 'simulatorApp:logout' %}">
                   <i class="ni ni-button-power text-red"></i>Logout

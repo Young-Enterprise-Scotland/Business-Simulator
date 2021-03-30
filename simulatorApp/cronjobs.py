@@ -22,7 +22,7 @@ def trigger_market_event_popup(marketid):
         title = market_event.market_event_title,
         body_text = market_event.market_event_text
     )
-    connections.close_all()
+    #connections.close_all()
 
 def process_teams(simulation):
 
@@ -197,7 +197,6 @@ def start(simulation=None):
             job.minutes = minutes
             job.seconds = seconds
             job.save()
-    connections.close_all()
 
 def trigger_end_of_game_quiz(simulator):
     PopupEvent.objects.create(

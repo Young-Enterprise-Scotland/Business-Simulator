@@ -98,7 +98,6 @@
         else{
           $(".active").removeClass("active");
           {% if perms.simulatorApp.is_team %}
-            console.log($("#nav_dashboard").text());
             $("#nav_dashboard").addClass("active");
           {% else %}
             $("#nav_teams").addClass("active");
